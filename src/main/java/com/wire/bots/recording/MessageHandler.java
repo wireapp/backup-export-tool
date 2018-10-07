@@ -80,10 +80,8 @@ public class MessageHandler extends MessageHandlerBase {
                         sendText(client, userId, record);
                     } else if (record.type.startsWith("image")) {
                         sendPicture(client, userId, record);
-                    } else if (record.type.startsWith("file")) {
-                        sendAttachment(client, userId, record);
                     } else {
-                        Logger.warning("What the hell is: %s", record.type);
+                        sendAttachment(client, userId, record);
                     }
                 }
                 return;
@@ -121,10 +119,14 @@ public class MessageHandler extends MessageHandlerBase {
             final String url = record.text;
             final String title = UrlUtil.extractPageTitle(url);
             final Picture preview = Cache.getPictureUrl(client, UrlUtil.extractPagePreview(url));
-            String text = String.format("**%s** sent:", record.sender);
-
-            client.sendDirectText(text, userId);
-            client.sendDirectLinkPreview(url, title, preview, userId);
+            if (preview != null) {
+                String text = String.format("**%s** sent:", record.sender);
+                client.sendDirectText(text, userId);
+                client.sendDirectLinkPreview(url, title, preview, userId);
+            } else {
+                String format = String.format("**%s**: _%s_", record.sender, record.text);
+                client.sendDirectText(format, userId);
+            }
         } else {
             String format = String.format("**%s**: _%s_", record.sender, record.text);
             client.sendDirectText(format, userId);

@@ -18,7 +18,7 @@ class Cache {
             try {
                 return upload(client, k);
             } catch (Exception e) {
-                Logger.warning("getPicture: url: %s, error: %s", url, e.getMessage());
+                Logger.warning("Cache.getPicture: url: %s, ex: %s", url, e);
                 return null;
             }
         });
