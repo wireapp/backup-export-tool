@@ -1,0 +1,43 @@
+{
+  "receiver": "admins",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "startsAt": "2018-09-26T07:15:37.892Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "https://staging-ie-prometheus.zinfra.io/graph?g0.expr=increase%28metrics_teams_billing_logger_errors_value%5B5m%5D%29+%3E+0&g0.tab=0",
+      "labels": {
+        "alertname": "LoggedErrorsCrit",
+        "env": "staging",
+        "instance": "10.76.19.204:8081",
+        "job": "jmx-exporter",
+        "role": "ibis",
+        "severity": "critical",
+        "icon": "🚨"
+      },
+      "annotations": {
+        "summary": "ibis logs many errors"
+      }
+    }
+  ],
+  "groupLabels": {
+    "alertname": "something_happened",
+    "instance": "server01.int:9100"
+  },
+  "commonLabels": {
+    "alertname": "something_happened",
+    "env": "prod",
+    "instance": "server01.int:9100",
+    "job": "node",
+    "service": "prometheus_bot",
+    "severity": "warning",
+    "supervisor": "runit"
+  },
+  "commonAnnotations": {
+    "summary": "runit service prometheus_bot restarted, server01.int:9100",
+    "icon": "🔥"
+  },
+  "externalURL": "https://alert-manager.example.com",
+  "version": "3"
+}

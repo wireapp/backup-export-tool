@@ -1,0 +1,10 @@
+{{#alerts}}
+{{commonAnnotations.icon}} **{{status}}**
+{{#labels}}
+{{alertname}} **{{severity}}** {{icon}}
+{{role}} @ {{instance}} on {{env}}
+{{/labels}}
+{{annotations.summary}}
+[link]({{{generatorURL}}})
+__
+{{/alerts}}

@@ -1,0 +1,6 @@
+🔥 **firing**
+LoggedErrorsCrit **critical** 🚨
+ibis @ 10.76.19.204:8081 on staging
+ibis logs many errors
+[link](https://staging-ie-prometheus.zinfra.io/graph?g0.expr=increase%28metrics_teams_billing_logger_errors_value%5B5m%5D%29+%3E+0&g0.tab=0)
+__

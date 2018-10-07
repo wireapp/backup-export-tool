@@ -1,0 +1,17 @@
+CREATE TABLE History (
+ botId UUID NOT NULL,
+ messageId varchar NOT NULL,
+ sender varchar NOT NULL,
+ mimeType varchar NOT NULL,
+ text varchar,
+ assetKey varchar,
+ assetToken varchar,
+ sha256 bytea,
+ otrKey bytea,
+ PRIMARY KEY(botId, messageId)
+);
+
+
+ALTER TABLE History ADD COLUMN timestamp INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE History ADD COLUMN filename varchar;
