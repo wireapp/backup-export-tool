@@ -74,7 +74,7 @@ public class MessageHandler extends MessageHandlerBase {
             if (cmd.equals("/history")) {
                 ArrayList<Database.Record> records = db.getRecords(botId);
 
-                Logger.debug("Sending %d records", records.size());
+                Logger.info("Sending %d records", records.size());
                 for (Database.Record record : records) {
                     if (record.type.equals("txt")) {
                         sendText(client, userId, record);

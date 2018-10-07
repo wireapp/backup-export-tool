@@ -8,8 +8,17 @@ server:
 
 logging:
   level: INFO
-  loggers:
-    com.wire.bots.sdk.tools.logger: DEBUG
+
+  appenders:
+      - type: console
+        threshold: INFO
+        target: stderr
+
+     - type: file
+          currentLogFilename: current.log
+          archivedLogFilenamePattern: current-%d.log.gz
+          archivedFileCount: 5
+          timeZone: UTC
       
 auth: ${RECORDING_WIRE_TOKEN}
 

@@ -1,1 +1,13 @@
+sudo: 'required'
+
 language: java
+
+services:
+- docker
+
+after_success:
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
+      docker build -t dejankovacevic/recording-bot:latest . ;
+      docker push dejankovacevic/recording-bot ;
+    fi
