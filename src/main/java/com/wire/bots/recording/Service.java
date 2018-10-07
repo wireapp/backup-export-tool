@@ -15,9 +15,9 @@
 // along with this program. If not, see http://www.gnu.org/licenses/.
 //
 
-package com.wire.bots.alert;
+package com.wire.bots.recording;
 
-import com.wire.bots.alert.model.Config;
+import com.wire.bots.recording.model.Config;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import com.wire.bots.sdk.crypto.CryptoDatabase;

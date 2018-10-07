@@ -1,4 +1,4 @@
-package com.wire.bots.alert;
+package com.wire.bots.recording;
 
 import com.wire.bots.sdk.Configuration;
 
@@ -6,8 +6,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.UUID;
 import java.util.Date;
+import java.util.UUID;
 
 class Database {
     private final Configuration.DB conf;

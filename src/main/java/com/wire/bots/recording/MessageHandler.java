@@ -1,7 +1,8 @@
-package com.wire.bots.alert;
+package com.wire.bots.recording;
 
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
+import com.wire.bots.sdk.assets.Picture;
 import com.wire.bots.sdk.models.AttachmentMessage;
 import com.wire.bots.sdk.models.ImageMessage;
 import com.wire.bots.sdk.models.TextMessage;
@@ -23,9 +24,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public boolean onNewBot(NewBot newBot) {
-        Logger.info(String.format("onNewBot: bot: %s, user: %s",
-                newBot.id,
-                newBot.origin.id));
+        Logger.debug("onNewBot: bot: %s, user: %s", newBot.id, newBot.origin.id);
         return true;
     }
 
@@ -41,6 +40,8 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onMemberJoin(WireClient client, ArrayList<String> userIds) {
         try {
+            Logger.debug("onMemberJoin: %s users: %s", client.getId(), userIds);
+
             for (String userId : userIds) {
                 client.sendDirectText("Recording enabled.\n" +
                         "In order to show the history of all messages posted here type: /history", userId);
@@ -53,6 +54,8 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onBotRemoved(String botId) {
         try {
+            Logger.debug("onBotRemoved: %s", botId);
+
             db.unsubscribe(botId);
         } catch (SQLException e) {
             Logger.error("onBotRemoved: %s %s", botId, e);
@@ -63,40 +66,22 @@ public class MessageHandler extends MessageHandlerBase {
     public void onText(WireClient client, TextMessage msg) {
         try {
             String userId = msg.getUserId();
-            Logger.info("Text. bot: %s, from: %s", client.getId(), userId);
+            Logger.debug("Text. bot: %s, from: %s", client.getId(), userId);
 
             String botId = client.getId();
             String messageId = msg.getMessageId();
             String cmd = msg.getText().toLowerCase().trim();
             if (cmd.equals("/history")) {
-                for (Database.Record record : db.getRecords(botId)) {
+                ArrayList<Database.Record> records = db.getRecords(botId);
+
+                Logger.debug("Sending %d records", records.size());
+                for (Database.Record record : records) {
                     if (record.type.equals("txt")) {
-                        String format = String.format("**%s**: _%s_", record.sender, record.text);
-                        client.sendDirectText(format, userId);
+                        sendText(client, userId, record);
                     } else if (record.type.startsWith("image")) {
-                        byte[] img = client.downloadAsset(record.assetKey,
-                                record.assetToken,
-                                record.sha256,
-                                record.otrKey);
-
-                        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-                        client.sendDirectPicture(img, record.type, userId);
+                        sendPicture(client, userId, record);
                     } else if (record.type.startsWith("file")) {
-                        byte[] img = client.downloadAsset(record.assetKey,
-                                record.assetToken,
-                                record.sha256,
-                                record.otrKey);
-
-                        // save it locally
-                        File file = new File(record.filename);
-                        try (FileOutputStream fos = new FileOutputStream(file)) {
-                            fos.write(img);
-                        }
-
-                        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-                        client.sendDirectFile(file, record.type, userId);
-
-                        file.delete();
+                        sendAttachment(client, userId, record);
                     } else {
                         Logger.warning("What the hell is: %s", record.type);
                     }
@@ -104,17 +89,61 @@ public class MessageHandler extends MessageHandlerBase {
                 return;
             }
 
+            Logger.debug("Inserting text, bot: %s %s", botId, messageId);
+
             User user = client.getUser(userId);
             db.insertTextRecord(botId, messageId, user.name, msg.getText());
         } catch (Exception e) {
-            e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
         }
     }
 
+    private void sendAttachment(WireClient client, String userId, Database.Record record) throws Exception {
+        byte[] img = client.downloadAsset(record.assetKey,
+                record.assetToken,
+                record.sha256,
+                record.otrKey);
+
+        // save it locally
+        File file = new File(record.filename);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(img);
+        }
+
+        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
+        client.sendDirectFile(file, record.type, userId);
+
+        file.delete();
+    }
+
+    private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
+        if (record.text.startsWith("http")) {
+            final String url = record.text;
+            final String title = UrlUtil.extractPageTitle(url);
+            final Picture preview = Cache.getPictureUrl(client, UrlUtil.extractPagePreview(url));
+            String text = String.format("**%s** sent:", record.sender);
+
+            client.sendDirectText(text, userId);
+            client.sendDirectLinkPreview(url, title, preview, userId);
+        } else {
+            String format = String.format("**%s**: _%s_", record.sender, record.text);
+            client.sendDirectText(format, userId);
+        }
+    }
+
+    private void sendPicture(WireClient client, String userId, Database.Record record) throws Exception {
+        byte[] img = client.downloadAsset(record.assetKey,
+                record.assetToken,
+                record.sha256,
+                record.otrKey);
+
+        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
+        client.sendDirectPicture(img, record.type, userId);
+    }
+
     public void onImage(WireClient client, ImageMessage msg) {
         try {
-            Logger.info("Image: type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
+            Logger.debug("Image: type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                     msg.getMimeType(),
                     msg.getSize() / 1024,
                     msg.getHeight(),
@@ -122,6 +151,8 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getTag()
             );
             User user = client.getUser(msg.getUserId());
+
+            Logger.debug("Inserting image, bot: %s %s", client.getId(), msg.getMessageId());
 
             db.insertAssetRecord(client.getId(),
                     msg.getMessageId(),
@@ -140,13 +171,15 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
         try {
-            Logger.info("Attachment: name: %s, type: %s, size: %,d KB",
+            Logger.debug("Attachment: name: %s, type: %s, size: %,d KB",
                     msg.getName(),
                     msg.getMimeType(),
                     msg.getSize() / 1024
             );
 
             User user = client.getUser(msg.getUserId());
+
+            Logger.debug("Inserting attachment, bot: %s %s", client.getId(), msg.getMessageId());
 
             db.insertAssetRecord(client.getId(),
                     msg.getMessageId(),

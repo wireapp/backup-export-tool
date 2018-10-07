@@ -7,8 +7,10 @@ server:
     appenders: []
 
 logging:
-  level: DEBUG
-  
+  level: INFO
+  loggers:
+    com.wire.bots.sdk.tools.logger: DEBUG
+      
 auth: ${RECORDING_WIRE_TOKEN}
 
 storage:

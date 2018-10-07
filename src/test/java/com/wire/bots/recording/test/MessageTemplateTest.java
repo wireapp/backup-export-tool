@@ -1,4 +1,4 @@
-package com.wire.bots.alert.test;
+package com.wire.bots.recording.test;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;

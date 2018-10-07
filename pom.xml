@@ -30,6 +30,11 @@
             <version>0.9.5</version>
         </dependency>
         <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.8.3</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
@@ -85,7 +90,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.wire.bots.alert.Service</mainClass>
+                                    <mainClass>com.wire.bots.recording.Service</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
