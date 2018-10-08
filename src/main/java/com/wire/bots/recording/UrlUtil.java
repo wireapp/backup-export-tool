@@ -5,9 +5,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 class UrlUtil {
+    @Nullable
     static String extractPagePreview(String url) throws IOException {
         Connection con = Jsoup.connect(url);
         Document doc = con.get();

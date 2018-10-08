@@ -115,22 +115,31 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
-        if (record.text.startsWith("http")) {
-            final String url = record.text;
-            final String title = UrlUtil.extractPageTitle(url);
-            final Picture preview = Cache.getPictureUrl(client, UrlUtil.extractPagePreview(url));
-            if (preview != null) {
-                String text = String.format("**%s** sent:", record.sender);
-                client.sendDirectText(text, userId);
-                client.sendDirectLinkPreview(url, title, preview, userId);
-            } else {
-                String format = String.format("**%s**: _%s_", record.sender, record.text);
-                client.sendDirectText(format, userId);
-            }
-        } else {
-            String format = String.format("**%s**: _%s_", record.sender, record.text);
-            client.sendDirectText(format, userId);
+        //is this an url
+        if (record.text.startsWith("http") && sendLinkPreview(client, userId, record)) {
+            return;
         }
+
+        // This is plain text.. send it
+        String format = String.format("**%s**: _%s_", record.sender, record.text);
+        client.sendDirectText(format, userId);
+    }
+
+    private boolean sendLinkPreview(WireClient client, String userId, Database.Record record) throws Exception {
+        final String url = record.text;
+        final String title = UrlUtil.extractPageTitle(url);
+        String previewUrl = UrlUtil.extractPagePreview(url);
+        if (previewUrl == null)
+            return false;
+
+        final Picture preview = Cache.getPictureUrl(client, previewUrl);
+        if (preview != null) {
+            String text = String.format("**%s** sent:", record.sender);
+            client.sendDirectText(text, userId);
+            client.sendDirectLinkPreview(url, title, preview, userId);
+            return true;
+        }
+        return false;
     }
 
     private void sendPicture(WireClient client, String userId, Database.Record record) throws Exception {
