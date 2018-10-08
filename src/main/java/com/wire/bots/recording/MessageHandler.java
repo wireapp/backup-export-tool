@@ -98,6 +98,7 @@ public class MessageHandler extends MessageHandlerBase {
         }
     }
 
+    @Override
     public void onEditText(WireClient client, TextMessage msg) {
         if (msg.getText().equals("/history")) {
             onText(client, msg);
@@ -111,7 +112,19 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
 
         } catch (SQLException e) {
-            Logger.error("onEditText: bot: %s message: %s %s", botId, messageId, e);
+            Logger.error("onEditText: bot: %s message: %s, %s", botId, messageId, e);
+        }
+    }
+
+    @Override
+    public void onDelete(WireClient client, TextMessage msg) {
+        String botId = client.getId();
+        String messageId = msg.getMessageId();
+        try {
+            if (!db.deleteRecord(botId, messageId))
+                Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
+        } catch (SQLException e) {
+            Logger.error("onDelete: %s, %s, %s", botId, messageId, e);
         }
     }
 

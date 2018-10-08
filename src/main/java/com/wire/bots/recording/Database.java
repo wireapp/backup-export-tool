@@ -33,11 +33,19 @@ class Database {
 
     boolean updateTextRecord(String botId, String msgId, String text) throws SQLException {
         try (Connection c = newConnection()) {
-            PreparedStatement stmt = c.prepareStatement("UPDATE History SET text = ? WHERE botId = ? AND messageId = ?" +
-                    " VALUES (?, ?, ?)");
+            PreparedStatement stmt = c.prepareStatement("UPDATE History SET text = ? WHERE botId = ? AND messageId = ?");
             stmt.setString(1, text);
             stmt.setObject(2, UUID.fromString(botId));
             stmt.setString(3, msgId);
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
+    boolean deleteRecord(String botId, String msgId) throws SQLException {
+        try (Connection c = newConnection()) {
+            PreparedStatement stmt = c.prepareStatement("DELETE FROM History WHERE botId = ? AND messageId = ?");
+            stmt.setObject(1, UUID.fromString(botId));
+            stmt.setString(2, msgId);
             return stmt.executeUpdate() == 1;
         }
     }
