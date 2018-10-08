@@ -162,7 +162,7 @@ public class MessageHandler extends MessageHandlerBase {
         final String url = record.text;
         final String title = UrlUtil.extractPageTitle(url);
         String previewUrl = UrlUtil.extractPagePreview(url);
-        if (previewUrl == null)
+        if (previewUrl == null || previewUrl.isEmpty())
             return false;
 
         final Picture preview = Cache.getPictureUrl(client, previewUrl);
