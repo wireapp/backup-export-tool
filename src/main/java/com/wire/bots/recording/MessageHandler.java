@@ -56,7 +56,8 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             Logger.debug("onBotRemoved: %s", botId);
 
-            db.unsubscribe(botId);
+            if (!db.unsubscribe(botId))
+                Logger.warning("Failed to unsubscribe. bot: %s", botId);
         } catch (SQLException e) {
             Logger.error("onBotRemoved: %s %s", botId, e);
         }
@@ -90,9 +91,27 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.debug("Inserting text, bot: %s %s", botId, messageId);
 
             User user = client.getUser(userId);
-            db.insertTextRecord(botId, messageId, user.name, msg.getText());
+            if (!db.insertTextRecord(botId, messageId, user.name, msg.getText()))
+                Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("OnText: %s ex: %s", client.getId(), e);
+        }
+    }
+
+    public void onEditText(WireClient client, TextMessage msg) {
+        if (msg.getText().equals("/history")) {
+            onText(client, msg);
+            return;
+        }
+
+        String botId = client.getId();
+        String messageId = msg.getMessageId();
+        try {
+            if (!db.updateTextRecord(botId, messageId, msg.getText()))
+                Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
+
+        } catch (SQLException e) {
+            Logger.error("onEditText: bot: %s message: %s %s", botId, messageId, e);
         }
     }
 
@@ -111,7 +130,8 @@ public class MessageHandler extends MessageHandlerBase {
         client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
         client.sendDirectFile(file, record.type, userId);
 
-        file.delete();
+        if (!file.delete())
+            Logger.warning("Failed to delete file: %s", file.getName());
     }
 
     private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
@@ -163,10 +183,12 @@ public class MessageHandler extends MessageHandlerBase {
             );
             User user = client.getUser(msg.getUserId());
 
-            Logger.debug("Inserting image, bot: %s %s", client.getId(), msg.getMessageId());
+            String messageId = msg.getMessageId();
+            String botId = client.getId();
+            Logger.debug("Inserting image, bot: %s %s", botId, messageId);
 
-            db.insertAssetRecord(client.getId(),
-                    msg.getMessageId(),
+            boolean insertRecord = db.insertAssetRecord(botId,
+                    messageId,
                     user.name,
                     msg.getMimeType(),
                     msg.getAssetKey(),
@@ -174,6 +196,10 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getSha256(),
                     msg.getOtrKey(),
                     msg.getName());
+
+            if (!insertRecord)
+                Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
+
         } catch (Exception e) {
             Logger.error("onImage: %s", e);
         }
@@ -190,10 +216,12 @@ public class MessageHandler extends MessageHandlerBase {
 
             User user = client.getUser(msg.getUserId());
 
-            Logger.debug("Inserting attachment, bot: %s %s", client.getId(), msg.getMessageId());
+            String botId = client.getId();
+            String messageId = msg.getMessageId();
+            Logger.debug("Inserting attachment, bot: %s %s", botId, messageId);
 
-            db.insertAssetRecord(client.getId(),
-                    msg.getMessageId(),
+            boolean insertRecord = db.insertAssetRecord(botId,
+                    messageId,
                     user.name,
                     msg.getMimeType(),
                     msg.getAssetKey(),
@@ -201,6 +229,10 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getSha256(),
                     msg.getOtrKey(),
                     msg.getName());
+
+            if (!insertRecord)
+                Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
+
         } catch (Exception e) {
             Logger.error("onAttachment: %s", e);
         }

@@ -13,11 +13,11 @@ class Cache {
 
     @Nullable
     static Picture getPictureUrl(WireClient client, String url) {
-
         return pictures.computeIfAbsent(url, k -> {
             try {
-                return upload(client, k);
+                return upload(client, url);
             } catch (Exception e) {
+                e.printStackTrace();
                 Logger.warning("Cache.getPicture: url: %s, ex: %s", url, e);
                 return null;
             }

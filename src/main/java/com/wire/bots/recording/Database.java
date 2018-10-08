@@ -1,6 +1,7 @@
 package com.wire.bots.recording;
 
 import com.wire.bots.sdk.Configuration;
+import com.wire.bots.sdk.tools.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -26,6 +27,17 @@ class Database {
             stmt.setString(4, "txt");
             stmt.setString(5, text);
             stmt.setInt(6, (int) (new Date().getTime() / 1000));
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
+    boolean updateTextRecord(String botId, String msgId, String text) throws SQLException {
+        try (Connection c = newConnection()) {
+            PreparedStatement stmt = c.prepareStatement("UPDATE History SET text = ? WHERE botId = ? AND messageId = ?" +
+                    " VALUES (?, ?, ?)");
+            stmt.setString(1, text);
+            stmt.setObject(2, UUID.fromString(botId));
+            stmt.setString(3, msgId);
             return stmt.executeUpdate() == 1;
         }
     }
@@ -66,10 +78,13 @@ class Database {
                     record.assetToken = rs.getString("assetToken");
                     InputStream sha256 = rs.getBinaryStream("sha256");
                     record.sha256 = new byte[sha256.available()];
-                    sha256.read(record.sha256);
+                    if (sha256.available() != sha256.read(record.sha256))
+                        Logger.warning("Sha256 incomplete read");
                     InputStream otrKey = rs.getBinaryStream("otrKey");
                     record.otrKey = new byte[otrKey.available()];
-                    otrKey.read(record.otrKey);
+                    if (otrKey.available() != otrKey.read(record.otrKey))
+                        Logger.warning("otrKey incomplete read");
+
                     record.filename = rs.getString("filename");
                 }
                 ret.add(record);
@@ -82,7 +97,7 @@ class Database {
         try (Connection c = newConnection()) {
             PreparedStatement stmt = c.prepareStatement("DELETE FROM History WHERE botId = ?");
             stmt.setObject(1, UUID.fromString(botId));
-            return stmt.executeUpdate() == 1;
+            return stmt.executeUpdate() > 0;
         }
     }
 
