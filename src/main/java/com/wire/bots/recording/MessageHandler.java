@@ -2,6 +2,8 @@ package com.wire.bots.recording;
 
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
+import com.wire.bots.sdk.assets.FileAsset;
+import com.wire.bots.sdk.assets.FileAssetPreview;
 import com.wire.bots.sdk.assets.Picture;
 import com.wire.bots.sdk.models.AttachmentMessage;
 import com.wire.bots.sdk.models.ImageMessage;
@@ -10,10 +12,9 @@ import com.wire.bots.sdk.server.model.NewBot;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class MessageHandler extends MessageHandlerBase {
     private final Database db;
@@ -100,11 +101,6 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onEditText(WireClient client, TextMessage msg) {
-        if (msg.getText().equals("/history")) {
-            onText(client, msg);
-            return;
-        }
-
         String botId = client.getId();
         String messageId = msg.getMessageId();
         try {
@@ -129,22 +125,30 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private void sendAttachment(WireClient client, String userId, Database.Record record) throws Exception {
-        byte[] img = client.downloadAsset(record.assetKey,
-                record.assetToken,
-                record.sha256,
-                record.otrKey);
+//        byte[] img = client.downloadAsset(record.assetKey,
+//                record.assetToken,
+//                record.sha256,
+//                record.otrKey);
+//
+//        // save it locally
+//        File file = new File(record.filename);
+//        try (FileOutputStream fos = new FileOutputStream(file)) {
+//            fos.write(img);
+//        }
+//
+//        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
+//        client.sendDirectFile(file, record.type, userId);
+//
+//        if (!file.delete())
+//            Logger.warning("Failed to delete file: %s", file.getName());
 
-        // save it locally
-        File file = new File(record.filename);
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(img);
-        }
+
+        String messageId = UUID.randomUUID().toString();
+        FileAssetPreview preview = new FileAssetPreview(record.filename, record.type, record.size, messageId);
+        FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
 
         client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-        client.sendDirectFile(file, record.type, userId);
-
-        if (!file.delete())
-            Logger.warning("Failed to delete file: %s", file.getName());
+        client.sendDirectFile(preview, asset, userId);
     }
 
     private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
@@ -176,13 +180,18 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private void sendPicture(WireClient client, String userId, Database.Record record) throws Exception {
-        byte[] img = client.downloadAsset(record.assetKey,
-                record.assetToken,
-                record.sha256,
-                record.otrKey);
+        Picture picture = new Picture();
+        picture.setAssetKey(record.assetKey);
+        picture.setAssetToken(record.assetToken);
+        picture.setSha256(record.sha256);
+        picture.setOtrKey(record.otrKey);
+        picture.setMimeType(record.type);
+        picture.setSize(record.size);
+        picture.setHeight(record.height);
+        picture.setWidth(record.width);
 
         client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-        client.sendDirectPicture(img, record.type, userId);
+        client.sendPicture(picture);
     }
 
     public void onImage(WireClient client, ImageMessage msg) {
@@ -208,7 +217,10 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getAssetToken(),
                     msg.getSha256(),
                     msg.getOtrKey(),
-                    msg.getName());
+                    msg.getName(),
+                    (int) msg.getSize(),
+                    msg.getHeight(),
+                    msg.getWidth());
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
@@ -241,7 +253,10 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getAssetToken(),
                     msg.getSha256(),
                     msg.getOtrKey(),
-                    msg.getName());
+                    msg.getName(),
+                    (int) msg.getSize(),
+                    0,
+                    0);
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);

@@ -51,11 +51,11 @@ class Database {
     }
 
     boolean insertAssetRecord(String botId, String msgId, String sender, String mimeType, String assetKey, String token,
-                              byte[] sha256, byte[] otrKey, String filename) throws SQLException {
+                              byte[] sha256, byte[] otrKey, String filename, int size, int height, int width) throws SQLException {
         try (Connection c = newConnection()) {
             PreparedStatement stmt = c.prepareStatement("INSERT INTO History (botId, messageId, sender, mimeType," +
-                    " assetKey, assetToken, sha256, otrKey, timestamp, filename)" +
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    " assetKey, assetToken, sha256, otrKey, timestamp, filename, size, height, width)" +
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             stmt.setObject(1, UUID.fromString(botId));
             stmt.setString(2, msgId);
             stmt.setString(3, sender);
@@ -66,6 +66,10 @@ class Database {
             stmt.setBinaryStream(8, new ByteArrayInputStream(otrKey));
             stmt.setInt(9, (int) (new Date().getTime() / 1000));
             stmt.setString(10, filename);
+            stmt.setInt(11, size);
+            stmt.setInt(12, height);
+            stmt.setInt(13, width);
+
             return stmt.executeUpdate() == 1;
         }
     }
@@ -94,6 +98,9 @@ class Database {
                         Logger.warning("otrKey incomplete read");
 
                     record.filename = rs.getString("filename");
+                    record.size = rs.getInt("size");
+                    record.height = rs.getInt("height");
+                    record.width = rs.getInt("width");
                 }
                 ret.add(record);
             }
@@ -115,6 +122,9 @@ class Database {
     }
 
     static class Record {
+        public int size;
+        public int height;
+        public int width;
         String sender;
         String text;
         String type;
