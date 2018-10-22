@@ -8,11 +8,10 @@ server:
 
 logging:
   level: INFO
-  
   loggers:
     "com.wire.bots.sdk.tools.logger": INFO
 
-auth: ${RECORDING_WIRE_TOKEN}
+auth: ${WIRE_RECORDING_SERVICE_TOKEN}
 
 storage:
   host: localhost

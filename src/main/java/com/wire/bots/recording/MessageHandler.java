@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class MessageHandler extends MessageHandlerBase {
+    private static final String WELCOME_LABEL = "Welcome to the MLS implementation discussion channel on Wire!\n\n" +
+            "Due to popular demand, a recording bot was added to this conversation to make it easier for newcomers to " +
+            "browse past messages.\n" +
+            "You can type `/history` to see older messages.";
     private final Database db;
 
     MessageHandler() {
@@ -32,7 +36,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onNewConversation(WireClient client) {
         try {
-            client.sendText("Recording enabled.\nIn order to show the history of all messages posted here type: /history");
+            client.sendText(WELCOME_LABEL);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
@@ -44,8 +48,7 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.debug("onMemberJoin: %s users: %s", client.getId(), userIds);
 
             for (String userId : userIds) {
-                client.sendDirectText("Recording enabled.\n" +
-                        "In order to show the history of all messages posted here type: /history", userId);
+                client.sendDirectText(WELCOME_LABEL, userId);
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", client.getId(), e);
@@ -54,9 +57,8 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onBotRemoved(String botId) {
+        Logger.debug("onBotRemoved: %s", botId);
         try {
-            Logger.debug("onBotRemoved: %s", botId);
-
             if (!db.unsubscribe(botId))
                 Logger.warning("Failed to unsubscribe. bot: %s", botId);
         } catch (SQLException e) {
@@ -66,12 +68,12 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onText(WireClient client, TextMessage msg) {
-        try {
-            String userId = msg.getUserId();
-            Logger.debug("Text. bot: %s, from: %s", client.getId(), userId);
+        String userId = msg.getUserId();
+        String botId = client.getId();
+        String messageId = msg.getMessageId();
 
-            String botId = client.getId();
-            String messageId = msg.getMessageId();
+        Logger.debug("onText. bot: %s, msgId: %s", botId, messageId);
+        try {
             String cmd = msg.getText().toLowerCase().trim();
             if (cmd.equals("/history")) {
                 ArrayList<Database.Record> records = db.getRecords(botId);
@@ -106,7 +108,6 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             if (!db.updateTextRecord(botId, messageId, msg.getText()))
                 Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
-
         } catch (SQLException e) {
             Logger.error("onEditText: bot: %s message: %s, %s", botId, messageId, e);
         }
@@ -142,7 +143,6 @@ public class MessageHandler extends MessageHandlerBase {
 //        if (!file.delete())
 //            Logger.warning("Failed to delete file: %s", file.getName());
 
-
         String messageId = UUID.randomUUID().toString();
         FileAssetPreview preview = new FileAssetPreview(record.filename, record.type, record.size, messageId);
         FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
@@ -152,7 +152,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
-        //is this an url
+        // Is this an url?
         if (record.text.startsWith("http") && sendLinkPreview(client, userId, record)) {
             return;
         }
@@ -191,24 +191,23 @@ public class MessageHandler extends MessageHandlerBase {
         picture.setWidth(record.width);
 
         client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-        client.sendPicture(picture);
+        client.sendDirectPicture(picture, userId);
     }
 
     public void onImage(WireClient client, ImageMessage msg) {
+        String messageId = msg.getMessageId();
+        String botId = client.getId();
+        Logger.debug("onImage: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
+                botId,
+                msg.getMimeType(),
+                msg.getSize() / 1024,
+                msg.getHeight(),
+                msg.getWidth(),
+                msg.getTag()
+        );
+
         try {
-            Logger.debug("Image: type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
-                    msg.getMimeType(),
-                    msg.getSize() / 1024,
-                    msg.getHeight(),
-                    msg.getWidth(),
-                    msg.getTag()
-            );
             User user = client.getUser(msg.getUserId());
-
-            String messageId = msg.getMessageId();
-            String botId = client.getId();
-            Logger.debug("Inserting image, bot: %s %s", botId, messageId);
-
             boolean insertRecord = db.insertAssetRecord(botId,
                     messageId,
                     user.name,
@@ -224,27 +223,24 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
-
         } catch (Exception e) {
-            Logger.error("onImage: %s", e);
+            Logger.error("onImage: %s %s %s", botId, messageId, e);
         }
     }
 
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
+        String botId = client.getId();
+        String messageId = msg.getMessageId();
+        Logger.debug("onAttachment: %s, name: %s, type: %s, size: %,d KB",
+                botId,
+                msg.getName(),
+                msg.getMimeType(),
+                msg.getSize() / 1024
+        );
+
         try {
-            Logger.debug("Attachment: name: %s, type: %s, size: %,d KB",
-                    msg.getName(),
-                    msg.getMimeType(),
-                    msg.getSize() / 1024
-            );
-
             User user = client.getUser(msg.getUserId());
-
-            String botId = client.getId();
-            String messageId = msg.getMessageId();
-            Logger.debug("Inserting attachment, bot: %s %s", botId, messageId);
-
             boolean insertRecord = db.insertAssetRecord(botId,
                     messageId,
                     user.name,
@@ -260,9 +256,8 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
-
         } catch (Exception e) {
-            Logger.error("onAttachment: %s", e);
+            Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
     }
 }

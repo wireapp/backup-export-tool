@@ -17,7 +17,6 @@ class Cache {
             try {
                 return upload(client, url);
             } catch (Exception e) {
-                e.printStackTrace();
                 Logger.warning("Cache.getPicture: url: %s, ex: %s", url, e);
                 return null;
             }
@@ -27,7 +26,6 @@ class Cache {
     private static Picture upload(WireClient client, String imgUrl) throws Exception {
         Picture preview = new Picture(imgUrl);
         preview.setPublic(true);
-        preview.setRetention("eternal");
 
         AssetKey assetKey = client.uploadAsset(preview);
         preview.setAssetKey(assetKey.key);
