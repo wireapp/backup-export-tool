@@ -28,21 +28,18 @@ import com.wire.bots.sdk.state.RedisState;
 import io.dropwizard.setup.Environment;
 
 public class Service extends Server<Config> {
-    public static Config config;
-
     public static void main(String[] args) throws Exception {
         new Service().run(args);
     }
 
     @Override
     protected void initialize(Config config, Environment env) {
-        Service.config = config;
         env.jersey().setUrlPattern("/recording/*");
     }
 
     @Override
     protected MessageHandlerBase createHandler(Config config, Environment env) {
-        return new MessageHandler();
+        return new MessageHandler(config);
     }
     
     /**

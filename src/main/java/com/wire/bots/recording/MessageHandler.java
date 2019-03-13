@@ -1,5 +1,6 @@
 package com.wire.bots.recording;
 
+import com.wire.bots.recording.model.Config;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.assets.FileAsset;
@@ -23,8 +24,8 @@ public class MessageHandler extends MessageHandlerBase {
             "You can type `/history` to see older messages.";
     private final Database db;
 
-    MessageHandler() {
-        db = new Database(Service.config.getStorage());
+    MessageHandler(Config config) {
+        db = new Database(config.getStorage());
     }
 
     @Override
@@ -47,8 +48,22 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             Logger.debug("onMemberJoin: %s users: %s", client.getId(), userIds);
 
+            ArrayList<Database.Record> records = db.getRecords(client.getId());
+
             for (String userId : userIds) {
-                client.sendDirectText(WELCOME_LABEL, userId);
+                Logger.info("Sending %d records", records.size());
+                for (Database.Record record : records) {
+                    if (isTxt(record) && record.text.startsWith("http") && sendLinkPreview(client, userId, record)) {
+                        continue;
+                    }
+                    if (isTxt(record)) {
+                        sendText(client, userId, record);
+                    } else if (record.type.startsWith("image")) {
+                        sendPicture(client, userId, record);
+                    } else {
+                        sendAttachment(client, userId, record);
+                    }
+                }
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", client.getId(), e);
@@ -259,5 +274,9 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
+    }
+
+    private boolean isTxt(Database.Record record) {
+        return record.type.equals("txt");
     }
 }

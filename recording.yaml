@@ -11,6 +11,13 @@ logging:
   loggers:
     "com.wire.bots.sdk.tools.logger": INFO
 
+swagger:
+  resourcePackage: com.wire.bots.sdk.server.resources
+  uriPrefix: /recording
+  schemes:
+    - http
+    - https
+
 auth: ${WIRE_RECORDING_SERVICE_TOKEN}
 
 storage:
