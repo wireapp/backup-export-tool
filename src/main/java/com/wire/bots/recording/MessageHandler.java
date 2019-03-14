@@ -3,9 +3,6 @@ package com.wire.bots.recording;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.assets.FileAsset;
-import com.wire.bots.sdk.assets.FileAssetPreview;
-import com.wire.bots.sdk.assets.Picture;
 import com.wire.bots.sdk.models.AttachmentMessage;
 import com.wire.bots.sdk.models.ImageMessage;
 import com.wire.bots.sdk.models.TextMessage;
@@ -15,7 +12,6 @@ import com.wire.bots.sdk.tools.Logger;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class MessageHandler extends MessageHandlerBase {
     private static final String WELCOME_LABEL = "Welcome to the MLS implementation discussion channel on Wire!\n\n" +
@@ -49,21 +45,15 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.debug("onMemberJoin: %s users: %s", client.getId(), userIds);
 
             ArrayList<Database.Record> records = db.getRecords(client.getId());
+            Logger.info("Sending %d records", records.size());
 
             for (String userId : userIds) {
-                Logger.info("Sending %d records", records.size());
+                Formatter formatter = new Formatter();
                 for (Database.Record record : records) {
-                    if (isTxt(record) && record.text.startsWith("http") && sendLinkPreview(client, userId, record)) {
-                        continue;
-                    }
-                    if (isTxt(record)) {
-                        sendText(client, userId, record);
-                    } else if (record.type.startsWith("image")) {
-                        sendPicture(client, userId, record);
-                    } else {
-                        sendAttachment(client, userId, record);
-                    }
+                    if (!formatter.add(record))
+                        formatter.print(client, userId);
                 }
+                formatter.print(client, userId);
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", client.getId(), e);
@@ -92,17 +82,16 @@ public class MessageHandler extends MessageHandlerBase {
             String cmd = msg.getText().toLowerCase().trim();
             if (cmd.equals("/history")) {
                 ArrayList<Database.Record> records = db.getRecords(botId);
-
                 Logger.info("Sending %d records", records.size());
+
+                Formatter formatter = new Formatter();
                 for (Database.Record record : records) {
-                    if (record.type.equals("txt")) {
-                        sendText(client, userId, record);
-                    } else if (record.type.startsWith("image")) {
-                        sendPicture(client, userId, record);
-                    } else {
-                        sendAttachment(client, userId, record);
+                    if (!formatter.add(record)) {
+                        formatter.print(client, userId);
+                        formatter.add(record);
                     }
                 }
+                formatter.print(client, userId);
                 return;
             }
 
@@ -112,6 +101,7 @@ public class MessageHandler extends MessageHandlerBase {
             if (!db.insertTextRecord(botId, messageId, user.name, msg.getText()))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
         } catch (Exception e) {
+            e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
         }
     }
@@ -138,75 +128,6 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (SQLException e) {
             Logger.error("onDelete: %s, %s, %s", botId, messageId, e);
         }
-    }
-
-    private void sendAttachment(WireClient client, String userId, Database.Record record) throws Exception {
-//        byte[] img = client.downloadAsset(record.assetKey,
-//                record.assetToken,
-//                record.sha256,
-//                record.otrKey);
-//
-//        // save it locally
-//        File file = new File(record.filename);
-//        try (FileOutputStream fos = new FileOutputStream(file)) {
-//            fos.write(img);
-//        }
-//
-//        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-//        client.sendDirectFile(file, record.type, userId);
-//
-//        if (!file.delete())
-//            Logger.warning("Failed to delete file: %s", file.getName());
-
-        String messageId = UUID.randomUUID().toString();
-        FileAssetPreview preview = new FileAssetPreview(record.filename, record.type, record.size, messageId);
-        FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
-
-        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-        client.sendDirectFile(preview, asset, userId);
-    }
-
-    private void sendText(WireClient client, String userId, Database.Record record) throws Exception {
-        // Is this an url?
-        if (record.text.startsWith("http") && sendLinkPreview(client, userId, record)) {
-            return;
-        }
-
-        // This is plain text.. send it
-        String format = String.format("**%s**: _%s_", record.sender, record.text);
-        client.sendDirectText(format, userId);
-    }
-
-    private boolean sendLinkPreview(WireClient client, String userId, Database.Record record) throws Exception {
-        final String url = record.text;
-        final String title = UrlUtil.extractPageTitle(url);
-        String previewUrl = UrlUtil.extractPagePreview(url);
-        if (previewUrl == null || previewUrl.isEmpty())
-            return false;
-
-        final Picture preview = Cache.getPictureUrl(client, previewUrl);
-        if (preview != null) {
-            String text = String.format("**%s** sent:", record.sender);
-            client.sendDirectText(text, userId);
-            client.sendDirectLinkPreview(url, title, preview, userId);
-            return true;
-        }
-        return false;
-    }
-
-    private void sendPicture(WireClient client, String userId, Database.Record record) throws Exception {
-        Picture picture = new Picture();
-        picture.setAssetKey(record.assetKey);
-        picture.setAssetToken(record.assetToken);
-        picture.setSha256(record.sha256);
-        picture.setOtrKey(record.otrKey);
-        picture.setMimeType(record.type);
-        picture.setSize(record.size);
-        picture.setHeight(record.height);
-        picture.setWidth(record.width);
-
-        client.sendDirectText(String.format("**%s** sent:", record.sender), userId);
-        client.sendDirectPicture(picture, userId);
     }
 
     public void onImage(WireClient client, ImageMessage msg) {
@@ -274,9 +195,5 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
-    }
-
-    private boolean isTxt(Database.Record record) {
-        return record.type.equals("txt");
     }
 }
