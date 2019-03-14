@@ -29,7 +29,7 @@ public class CollectorTest {
         collector.add(newRecord("Lipis", saturday, "14"));
         collector.add(newRecord("Lipis", saturday, "15"));
 
-        LinkedList<Collector.Day> days = collector.getConversation().days;
+        LinkedList<Collector.Day> days = collector.getConversation("Test").days;
         assert days.size() == 3;
         assert days.getFirst().senders.size() == 4;
         assert days.getFirst().senders.getFirst().name.equals("Dejan");

@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.LinkedList;
 
 class Collector {
+    private static MustacheFactory mf = new DefaultMustacheFactory();
 
     private LinkedList<Day> days = new LinkedList<>();
 
@@ -68,29 +69,31 @@ class Collector {
         return df.format(new Date(timestamp * 1000L));
     }
 
-    public Conversation getConversation() {
+    Conversation getConversation(String convName) {
         Conversation ret = new Conversation();
         ret.days = days;
+        ret.name = convName;
         return ret;
     }
 
     void send(WireClient client, String userId) throws Exception {
-        Mustache mustache = compileTemplate("conversation.html");
-        String html = execute(mustache, getConversation());
-        String filename = "export.html";
+        String convName = client.getConversation().name;
+        Conversation conversation = getConversation(convName);
+        String html = execute(conversation);
+        String filename = String.format("%s.html", conversation.name);
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
             writer.write(html);
         }
         client.sendDirectFile(new File(filename), "text/html", userId);
     }
 
-    private Mustache compileTemplate(String template) {
-        MustacheFactory mf = new DefaultMustacheFactory();
-        String path = String.format("templates/%s", template);
+    private Mustache compileTemplate() {
+        String path = "templates/conversation.html";
         return mf.compile(path);
     }
 
-    private String execute(Mustache mustache, Object model) throws IOException {
+    private String execute(Object model) throws IOException {
+        Mustache mustache = compileTemplate();
         try (StringWriter sw = new StringWriter()) {
             mustache.execute(new PrintWriter(sw), model).flush();
             return sw.toString();
@@ -98,30 +101,31 @@ class Collector {
     }
 
     static class Conversation {
-        public LinkedList<Day> days = new LinkedList<>();
+        LinkedList<Day> days = new LinkedList<>();
+        String name;
     }
 
     static class Day {
-        public String date;
-        public LinkedList<Sender> senders = new LinkedList<>();
+        String date;
+        LinkedList<Sender> senders = new LinkedList<>();
 
-        public boolean equals(Day d) {
+        boolean equals(Day d) {
             return date.equals(d.date);
         }
     }
 
     static class Sender {
-        public String avatar;
-        public String name;
-        public ArrayList<Message> messages = new ArrayList<>();
+        String avatar;
+        String name;
+        ArrayList<Message> messages = new ArrayList<>();
 
-        public boolean equals(Sender s) {
+        boolean equals(Sender s) {
             return name.equals(s.name);
         }
     }
 
     static class Message {
-        public String text;
-        public String time;
+        String text;
+        String time;
     }
 }

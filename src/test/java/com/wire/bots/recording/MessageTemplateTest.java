@@ -36,7 +36,8 @@ public class MessageTemplateTest {
         collector.add(newRecord("Lipis", saturday, "14"));
         collector.add(newRecord("Lipis", saturday, "15"));
 
-        String html = execute(mustache, collector.getConversation());
+        Collector.Conversation conversation = collector.getConversation("Test Conversation Name");
+        String html = execute(mustache, conversation);
         assert html != null;
     }
 
