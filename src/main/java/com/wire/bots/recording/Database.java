@@ -19,8 +19,9 @@ class Database {
 
     boolean insertTextRecord(String botId, String msgId, String sender, String text) throws SQLException {
         try (Connection c = newConnection()) {
-            PreparedStatement stmt = c.prepareStatement("INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp)" +
-                    " VALUES (?, ?, ?, ?, ?, ?)");
+            String sql = "INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp)" +
+                    " VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmt = c.prepareStatement(sql);
             stmt.setObject(1, UUID.fromString(botId));
             stmt.setString(2, msgId);
             stmt.setString(3, sender);
@@ -51,7 +52,8 @@ class Database {
     }
 
     boolean insertAssetRecord(String botId, String msgId, String sender, String mimeType, String assetKey, String token,
-                              byte[] sha256, byte[] otrKey, String filename, int size, int height, int width) throws SQLException {
+                              byte[] sha256, byte[] otrKey, String filename, int size, int height, int width)
+            throws SQLException {
         try (Connection c = newConnection()) {
             PreparedStatement stmt = c.prepareStatement("INSERT INTO History (botId, messageId, sender, mimeType," +
                     " assetKey, assetToken, sha256, otrKey, timestamp, filename, size, height, width)" +
@@ -85,6 +87,7 @@ class Database {
                 record.sender = rs.getString("sender");
                 record.text = rs.getString("text");
                 record.type = rs.getString("mimeType");
+                record.timestamp = rs.getInt("timestamp");
                 if (!record.type.equals("txt")) {
                     record.assetKey = rs.getString("assetKey");
                     record.assetToken = rs.getString("assetToken");
@@ -125,6 +128,7 @@ class Database {
         public int size;
         public int height;
         public int width;
+        public int timestamp;
         String sender;
         String text;
         String type;

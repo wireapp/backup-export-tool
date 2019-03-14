@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif;
+      }
+
+      .date {
+        text-align: center;
+        margin: 16px 0;
+      }
+
+      .sender {
+        background: red;
+        display: flex;
+        flex-direction: row;
+        flex-basis: 0;
+        margin-bottom: 16px;
+      }
+
+      .avatar {
+        width: 48px;
+        background: blue;
+        text-align: center;
+      }
+
+      .avatar img {
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+      }
+
+      .container {
+        padding: 0 4px;
+        flex-grow: 1;
+      }
+
+      .name {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .message {
+        display: flex;
+        flex-direction: row;
+        flex-basis: 0;
+        background: yellow;
+      }
+
+      .message p {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+
+      .message .contents {
+        flex-grow: 1;
+      }
+
+      .time {
+        width: 64px;
+        color: #444;
+        text-align: right;
+        background: green;
+      }
+
+
+    </style>
+</head>
+<body>
+{{#days}}
+<div class="date">{{date}}</div>
+{{#senders}}
+<div class="sender">
+    <div class="avatar">
+        <img src="https://avatars0.githubusercontent.com/u/4378852?s=64&v=4"/>
+    </div>
+    <div class="container">
+        <div class="name">{{name}}</div>
+        {{#messages}}
+        <div class="messages">
+            <div class="message">
+                <div class="contents">
+                    <p>{{text}}</p>
+                </div>
+                <div class="time">{{time}}</div>
+            </div>
+        </div>
+        {{/messages}}
+    </div>
+</div>
+{{/senders}}
+{{/days}}
+</body>
+</html>

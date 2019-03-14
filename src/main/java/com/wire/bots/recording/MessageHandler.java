@@ -81,17 +81,23 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             String cmd = msg.getText().toLowerCase().trim();
             if (cmd.equals("/history")) {
-                ArrayList<Database.Record> records = db.getRecords(botId);
-                Logger.info("Sending %d records", records.size());
-
                 Formatter formatter = new Formatter();
-                for (Database.Record record : records) {
+                for (Database.Record record : db.getRecords(botId)) {
                     if (!formatter.add(record)) {
                         formatter.print(client, userId);
                         formatter.add(record);
                     }
                 }
                 formatter.print(client, userId);
+                return;
+            }
+
+            if (cmd.equals("/pdf")) {
+                Collector collector = new Collector();
+                for (Database.Record record : db.getRecords(botId)) {
+                    collector.add(record);
+                }
+                collector.send(client, userId);
                 return;
             }
 
