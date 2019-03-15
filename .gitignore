@@ -1,5 +1,6 @@
 target/
 data/
+images/
 .idea/
 *.iml
 *.log

@@ -68,6 +68,7 @@ public class MessageTemplateTest {
     private Database.Record newRecord(String name, int timestamp, String text) {
         Database.Record record = new Database.Record();
         record.sender = name;
+        record.senderId = name;
         record.timestamp = timestamp;
         record.text = text;
         record.type = "txt";

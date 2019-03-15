@@ -49,7 +49,7 @@ class Collector {
     private Sender newSender(Database.Record record, Message message) {
         Sender sender = new Sender();
         sender.name = record.sender;
-        sender.avatar = getImagePath(record.senderId);
+        sender.avatar = new File(getImagePath(record.senderId)).getAbsolutePath();
         sender.accent = record.accent;
         sender.senderId = record.senderId;
         sender.messages.add(message);
@@ -57,7 +57,7 @@ class Collector {
     }
 
     private String getImagePath(String senderId) {
-        return String.format("images/%s.jpg", senderId);
+        return String.format("images/%s.png", senderId);
     }
 
     private Message newMessage(Database.Record record) {
@@ -91,7 +91,7 @@ class Collector {
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
         String htmlFilename = String.format("%s.html", convName);
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlFilename), StandardCharsets.UTF_8))) {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(htmlFilename), StandardCharsets.UTF_8)) {
             writer.write(html);
         }
         client.sendDirectFile(new File(htmlFilename), "text/html", userId);
@@ -104,9 +104,12 @@ class Collector {
     private void downloadProfiles() {
         for (Day day : days) {
             for (Sender sender : day.senders) {
+                if (sender.senderId == null)
+                    continue;
+
                 try {
                     File file = new File(getImagePath(sender.senderId));
-                    if (!file.exists() && sender.senderId != null) {
+                    if (!file.exists()) {
                         byte[] profile = Helper.getProfile(UUID.fromString(sender.senderId));
                         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
                             if (profile != null)
