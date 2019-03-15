@@ -80,11 +80,15 @@ class Collector {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
-        String filename = String.format("%s.html", conversation.name);
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+        String htmlFilename = String.format("%s.html", convName);
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlFilename), StandardCharsets.UTF_8))) {
             writer.write(html);
         }
-        client.sendDirectFile(new File(filename), "text/html", userId);
+        client.sendDirectFile(new File(htmlFilename), "text/html", userId);
+
+        String pdfFilename = String.format("%s.pdf", convName);
+        PdfGenerator.save(pdfFilename, html);
+        client.sendDirectFile(new File(pdfFilename), "application/pdf", userId);
     }
 
     private Mustache compileTemplate() {

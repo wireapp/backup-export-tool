@@ -17,7 +17,9 @@
             </releases>
         </repository>
     </repositories>
-
+    <properties>
+        <openhtml.version>0.0.1-RC11</openhtml.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.wire.bots</groupId>
@@ -39,6 +41,21 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-core</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-svg-support</artifactId>
+            <version>${openhtml.version}</version>
         </dependency>
     </dependencies>
     <build>

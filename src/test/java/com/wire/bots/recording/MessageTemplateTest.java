@@ -12,7 +12,7 @@ import java.io.StringWriter;
 public class MessageTemplateTest {
     // ------------------- Tests -------------------
     @Test
-    public void templateTest() {
+    public void templateTest() throws Exception {
         Mustache mustache = compileTemplate("conversation.html");
 
         int thursday = 1552596670;
@@ -36,9 +36,12 @@ public class MessageTemplateTest {
         collector.add(newRecord("Lipis", saturday, "14"));
         collector.add(newRecord("Lipis", saturday, "15"));
 
-        Collector.Conversation conversation = collector.getConversation("Test Conversation Name");
+        Collector.Conversation conversation = collector.getConversation("export");
         String html = execute(mustache, conversation);
         assert html != null;
+
+        String pdfFilename = String.format("%s.pdf", conversation.name);
+        PdfGenerator.save(pdfFilename, html);
     }
 
     // ------------------- Tests -------------------
