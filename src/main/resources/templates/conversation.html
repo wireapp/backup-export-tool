@@ -18,7 +18,7 @@
       }
 
       .sender {
-        background: red;
+        background: white;
         display: flex;
         flex-direction: row;
         flex-basis: 0;
@@ -27,7 +27,7 @@
 
       .avatar {
         width: 48px;
-        background: blue;
+        background: white;
         text-align: center;
       }
 
@@ -51,7 +51,7 @@
         display: flex;
         flex-direction: row;
         flex-basis: 0;
-        background: yellow;
+        background: white;
       }
 
       .message p {
@@ -67,9 +67,8 @@
         width: 64px;
         color: #444;
         text-align: right;
-        background: green;
+        background: white;
       }
-
 
     </style>
 </head>
@@ -81,6 +80,7 @@
     <div class="avatar">
         <img src="https://avatars0.githubusercontent.com/u/4378852?s=64"/>
     </div>
+    <div class="accent">{{accent}}</div>
     <div class="container">
         <div class="name">{{name}}</div>
         {{#messages}}

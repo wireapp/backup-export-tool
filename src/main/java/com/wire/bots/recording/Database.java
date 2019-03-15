@@ -17,10 +17,10 @@ class Database {
         this.conf = conf;
     }
 
-    boolean insertTextRecord(String botId, String msgId, String sender, String text) throws SQLException {
+    boolean insertTextRecord(String botId, String msgId, String sender, String text, int accent) throws SQLException {
         try (Connection c = newConnection()) {
-            String sql = "INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp)" +
-                    " VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp, accent)" +
+                    " VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = c.prepareStatement(sql);
             stmt.setObject(1, UUID.fromString(botId));
             stmt.setString(2, msgId);
@@ -28,6 +28,7 @@ class Database {
             stmt.setString(4, "txt");
             stmt.setString(5, text);
             stmt.setInt(6, (int) (new Date().getTime() / 1000));
+            stmt.setInt(7, accent);
             return stmt.executeUpdate() == 1;
         }
     }
@@ -88,6 +89,7 @@ class Database {
                 record.text = rs.getString("text");
                 record.type = rs.getString("mimeType");
                 record.timestamp = rs.getInt("timestamp");
+                record.accent = rs.getInt("accent");
                 if (!record.type.equals("txt")) {
                     record.assetKey = rs.getString("assetKey");
                     record.assetToken = rs.getString("assetToken");
@@ -125,10 +127,11 @@ class Database {
     }
 
     static class Record {
-        public int size;
-        public int height;
-        public int width;
-        public int timestamp;
+        int size;
+        int height;
+        int width;
+        int timestamp;
+        int accent;
         String sender;
         String text;
         String type;

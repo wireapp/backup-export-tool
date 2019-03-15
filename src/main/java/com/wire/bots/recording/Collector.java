@@ -48,6 +48,7 @@ class Collector {
         Sender sender = new Sender();
         sender.name = record.sender;
         sender.avatar = "todo";//todo
+        sender.accent = record.accent;
         sender.messages.add(message);
         return sender;
     }
@@ -121,6 +122,7 @@ class Collector {
     static class Sender {
         String avatar;
         String name;
+        int accent;
         ArrayList<Message> messages = new ArrayList<>();
 
         boolean equals(Sender s) {

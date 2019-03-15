@@ -104,7 +104,7 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.debug("Inserting text, bot: %s %s", botId, messageId);
 
             User user = client.getUser(userId);
-            if (!db.insertTextRecord(botId, messageId, user.name, msg.getText()))
+            if (!db.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
         } catch (Exception e) {
             e.printStackTrace();
