@@ -4,6 +4,7 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.sdk.WireClient;
+import com.wire.bots.sdk.tools.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.UUID;
 
 class Collector {
     private static MustacheFactory mf = new DefaultMustacheFactory();
@@ -47,10 +49,15 @@ class Collector {
     private Sender newSender(Database.Record record, Message message) {
         Sender sender = new Sender();
         sender.name = record.sender;
-        sender.avatar = "todo";//todo
+        sender.avatar = getImagePath(record.senderId);
         sender.accent = record.accent;
+        sender.senderId = record.senderId;
         sender.messages.add(message);
         return sender;
+    }
+
+    private String getImagePath(String senderId) {
+        return String.format("images/%s.jpg", senderId);
     }
 
     private Message newMessage(Database.Record record) {
@@ -78,6 +85,8 @@ class Collector {
     }
 
     void send(WireClient client, String userId) throws Exception {
+        downloadProfiles();
+
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
@@ -90,6 +99,25 @@ class Collector {
         String pdfFilename = String.format("%s.pdf", convName);
         PdfGenerator.save(pdfFilename, html);
         client.sendDirectFile(new File(pdfFilename), "application/pdf", userId);
+    }
+
+    private void downloadProfiles() {
+        for (Day day : days) {
+            for (Sender sender : day.senders) {
+                try {
+                    File file = new File(getImagePath(sender.senderId));
+                    if (!file.exists() && sender.senderId != null) {
+                        byte[] profile = Helper.getProfile(UUID.fromString(sender.senderId));
+                        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
+                            if (profile != null)
+                                os.write(profile);
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.warning("downloadProfiles: %s", e);
+                }
+            }
+        }
     }
 
     private Mustache compileTemplate() {
@@ -120,6 +148,7 @@ class Collector {
     }
 
     static class Sender {
+        String senderId;
         String avatar;
         String name;
         int accent;

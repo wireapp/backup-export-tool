@@ -17,10 +17,10 @@ class Database {
         this.conf = conf;
     }
 
-    boolean insertTextRecord(String botId, String msgId, String sender, String text, int accent) throws SQLException {
+    boolean insertTextRecord(String botId, String msgId, String sender, String text, int accent, String userId) throws SQLException {
         try (Connection c = newConnection()) {
-            String sql = "INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp, accent)" +
-                    " VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO History (botId, messageId, sender, mimeType, text, timestamp, accent, senderId)" +
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = c.prepareStatement(sql);
             stmt.setObject(1, UUID.fromString(botId));
             stmt.setString(2, msgId);
@@ -29,6 +29,7 @@ class Database {
             stmt.setString(5, text);
             stmt.setInt(6, (int) (new Date().getTime() / 1000));
             stmt.setInt(7, accent);
+            stmt.setObject(8, UUID.fromString(userId));
             return stmt.executeUpdate() == 1;
         }
     }
@@ -90,6 +91,7 @@ class Database {
                 record.type = rs.getString("mimeType");
                 record.timestamp = rs.getInt("timestamp");
                 record.accent = rs.getInt("accent");
+                record.senderId = rs.getString("senderId");
                 if (!record.type.equals("txt")) {
                     record.assetKey = rs.getString("assetKey");
                     record.assetToken = rs.getString("assetToken");
@@ -133,6 +135,7 @@ class Database {
         int timestamp;
         int accent;
         String sender;
+        String senderId;
         String text;
         String type;
         String assetKey;

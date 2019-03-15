@@ -41,7 +41,13 @@ public class Service extends Server<Config> {
     protected MessageHandlerBase createHandler(Config config, Environment env) {
         return new MessageHandler(config);
     }
-    
+
+    @Override
+    protected void onRun(Config config, Environment env) {
+        Helper.client = getClient();
+        env.healthChecks().register("User login", new UserHealthCheck());
+    }
+
     /**
      * Instructs the framework to use Storage Service for the state.
      * Remove this override in order to use local File system storage
