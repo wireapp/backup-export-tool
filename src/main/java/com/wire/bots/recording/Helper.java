@@ -13,12 +13,12 @@ import javax.naming.AuthenticationException;
 import javax.ws.rs.client.Client;
 import java.util.UUID;
 
-public class Helper {
+class Helper {
 
-    public static Client client;
+    static Client client;
 
     @Nullable
-    public static byte[] getProfile(UUID userId) throws HttpException, AuthenticationException {
+    static byte[] getProfile(UUID userId) throws HttpException, AuthenticationException {
         String email = Configuration.propOrEnv("email", true);
         String password = Configuration.propOrEnv("password", true);
 
@@ -26,8 +26,7 @@ public class Helper {
         User robin = loginClient.login(email, password);
         String token = robin.getToken();
         API api = new API(client, null, token);
-        com.wire.bots.sdk.server.model.User user = api.getUser(userId);
-        for (Asset asset : user.assets) {
+        for (Asset asset : api.getUser(userId).assets) {
             Logger.debug("Downloading asset:%s %s:%s", asset.size, asset.type, asset.key);
             if (asset.size.equals("preview"))
                 return api.downloadAsset(asset.key, null);

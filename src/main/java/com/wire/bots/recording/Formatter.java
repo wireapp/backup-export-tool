@@ -105,7 +105,7 @@ class Formatter {
     }
 
     private void sendAttachment(WireClient client, String userId, Database.Record record) throws Exception {
-        String messageId = UUID.randomUUID().toString();
+        UUID messageId = UUID.randomUUID();
         FileAssetPreview preview = new FileAssetPreview(record.filename, record.type, record.size, messageId);
         FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
         client.sendDirectFile(preview, asset, userId);
