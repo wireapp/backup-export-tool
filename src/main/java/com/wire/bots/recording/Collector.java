@@ -94,7 +94,7 @@ class Collector {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(htmlFilename), StandardCharsets.UTF_8)) {
             writer.write(html);
         }
-        client.sendDirectFile(new File(htmlFilename), "text/html", userId);
+        //client.sendDirectFile(new File(htmlFilename), "text/html", userId);
 
         String pdfFilename = String.format("%s.pdf", convName);
         PdfGenerator.save(pdfFilename, html);

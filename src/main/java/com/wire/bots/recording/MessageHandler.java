@@ -33,7 +33,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onNewConversation(WireClient client) {
         try {
-            client.sendText(WELCOME_LABEL);
+            //client.sendText(WELCOME_LABEL);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }

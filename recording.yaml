@@ -1,15 +1,12 @@
 server:
-  applicationConnectors:
-    - type: http
-      port: 8080
-
+  rootPath: /recording/*
   requestLog:
     appenders: []
 
 logging:
   level: INFO
   loggers:
-    "com.wire.bots.sdk.tools.logger": INFO
+    "com.wire.bots.logger": INFO
 
 swagger:
   resourcePackage: com.wire.bots.sdk.server.resources
