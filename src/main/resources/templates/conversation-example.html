@@ -15,12 +15,9 @@
       h1 {
         text-align: center;
       }
-      a,
-      a:visited,
-      a:active {
+      a {
         color: #2391D3;
       }
-
       p {
         margin-top: 0;
         margin-bottom: 8px;
@@ -37,13 +34,21 @@
       .message-date {
         font-weight: 600;
       }
+      .message-body {
+        padding-left: 4px;
+      }
       .message-body img {
         max-width: 420px;
+      }
+      .message-body ul {
+        margin-top: 0;
+        margin-bottom: 8px;
+        padding-left: 20px;
       }
     </style>
   </head>
   <body>
-    <h1>History Export Test</h1>
+    <h1>{{ name }}</h1>
     <div class="message">
       <div class="message-title">
         <span class="message-sender">Benny</span>
@@ -74,7 +79,7 @@
       </div>
       <div class="message-body">
         <p>Nice <strong>photo</strong>!</p>
-        <p>Did you get it from <a href="https://vlad.studio">vlad.studio</a> </p>
+        <p>Did you get it from <a href="https://vlad.studio">https://vlad.studio</a> </p>
       </div>
     </div>
 
