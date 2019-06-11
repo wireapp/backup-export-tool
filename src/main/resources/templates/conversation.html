@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>{{name}}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{{ name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
         margin: 0;
@@ -69,33 +69,32 @@
         text-align: right;
         background: white;
       }
-
     </style>
-</head>
-<body>
-{{#days}}
-<div class="date">{{date}}</div>
-{{#senders}}
-<div class="sender">
-    <div class="avatar">
-        <img src="file://{{{avatar}}}"/>
-    </div>
-    <div class="accent">{{accent}}</div>
-    <div class="container">
-        <div class="name">{{name}}</div>
+  </head>
+  <body>
+    {{#days}}
+    <div class="date">{{ date }}</div>
+    {{#senders}}
+    <div class="sender">
+      <div class="avatar">
+        <img src="file://{{{avatar}}}" />
+      </div>
+      <div class="accent">{{ accent }}</div>
+      <div class="container">
+        <div class="name">{{ name }}</div>
         {{#messages}}
         <div class="messages">
-            <div class="message">
-                <div class="contents">
-                    <p>{{text}}</p>
-                </div>
-                <div class="time">{{time}}</div>
+          <div class="message">
+            <div class="contents">
+              <p>{{ text }}</p>
             </div>
+            <div class="time">{{ time }}</div>
+          </div>
         </div>
         {{/messages}}
+      </div>
     </div>
-</div>
-{{/senders}}
-{{/days}}
-</body>
+    {{/senders}}
+    {{/days}}
+  </body>
 </html>
