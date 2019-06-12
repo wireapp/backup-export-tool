@@ -13,27 +13,12 @@
         font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif;
         color: #34383b;
       }
-
       h1 {
         text-align: center;
       }
-
       a {
         color: #2391d3;
       }
-
-      .date {
-        text-align: center;
-        margin: 16px 0;
-      }
-
-      .sender {
-        display: flex;
-        flex-direction: row;
-        flex-basis: 0;
-        margin-bottom: 16px;
-      }
-
       .avatar {
         width: 48px;
         height: 48px;
@@ -45,93 +30,108 @@
         border-style: solid;
         border-width: 2px;
         border-color: transparent;
-        flex-shrink: 0;
       }
-
-      .container {
-        padding: 0 8px;
-        flex-grow: 1;
-      }
-
       .name {
         font-weight: 600;
         margin-bottom: 8px;
       }
-
       .message {
         display: flex;
         flex-direction: row;
         flex-basis: 0;
       }
-
       .message p {
         margin-top: 0;
         margin-bottom: 8px;
       }
-
       .message img {
         max-width: 100%;
         width: 500px;
       }
-      .message .contents {
-        flex-grow: 1;
-      }
 
-      .time {
+      table {
+        width: 100%;
+      }
+      td {
+        border: 1px solid red;
+      }
+      .date-td {
+        text-align: center;
+        height: 34px;
+      }
+      .avatar-td {
+        width: 50px;
+        vertical-align: top;
+      }
+      .time-td {
         width: 64px;
         color: #bac8d1;
         text-align: right;
-        flex-shrink: 0;
+        vertical-align: top;
       }
     </style>
   </head>
   <body>
     <h1>History Recording</h1>
 
-    <div class="date">Tuesday, June 11th, 2019</div>
-    <div class="sender">
-      <div
-        class="avatar"
-        style="
-        background-image: url(https://avatars1.githubusercontent.com/u/125676?s=460&v=4);
-        border-color: violet;
-        "
-      ></div>
-      <div class="container">
-        <div class="name" style="color: violet">Lipis</div>
-        <div class="messages">
-          <div class="message">
-            <div class="contents">
-              <p>Hello, world!</p>
-              <p>Hello, world!</p>
-              <p>Hello, world!</p>
-              <p><img src="https://vlad.studio/fullscreen-preview/?f=bird_bird_bird_bird_bird&w=1680&h=1050" /></p>
+    <table>
+      <tr>
+        <td class="date-td" colspan="3">
+          Tuesday, June 11th, 2019
+        </td>
+      </tr>
+      <tr>
+        <td class="avatar-td">
+          <div
+            class="avatar"
+            style="
+              background-image: url(https://avatars1.githubusercontent.com/u/125676?s=460&v=4);
+              border-color: violet;"
+          ></div>
+        </td>
+        <td>
+          <div class="name" style="color: violet">Lipis</div>
+          <div class="messages">
+            <div class="message">
+              <div class="contents">
+                <p>Hello, world!</p>
+                <p>Hello, world!</p>
+                <p>Hello, world!</p>
+                <p><img src="https://vlad.studio/fullscreen-preview/?f=bird_bird_bird_bird_bird&w=1680&h=1050" /></p>
+              </div>
             </div>
-            <div class="time">14:23</div>
           </div>
-        </div>
-      </div>
-    </div>
-    <div class="sender">
-      <div
-        class="avatar"
-        style="
-          background-image: url(https://avatars3.githubusercontent.com/u/469989?s=460&v=4);
-          border-color: tomato;
-          "
-      ></div>
-      <div class="container">
-        <div class="name" style="color: tomato">Benny</div>
-        <div class="messages">
-          <div class="message">
-            <div class="contents">
-              <p>Hello, world!</p>
-              <p>Did you get it from <a href="https://vlad.studio">https://vlad.studio</a>?</p>
+        </td>
+        <td class="time-td">
+          14:23
+        </td>
+      </tr>
+
+      <tr>
+        <td class="avatar-td">
+          <div
+            class="avatar"
+            style="
+                background-image: url(https://avatars3.githubusercontent.com/u/469989?s=460&v=4);
+                border-color: tomato;"
+          ></div>
+        </td>
+        <td>
+          <div class="name" style="color: violet">Lipis</div>
+          <div class="messages">
+            <div class="message">
+              <div class="contents">
+                <p>Hello, world!</p>
+                <p>Did you get it from <a href="https://vlad.studio">https://vlad.studio</a>?</p>
+              </div>
             </div>
-            <div class="time">14:25</div>
           </div>
-        </div>
-      </div>
+        </td>
+        <td class="time-td">
+          14:33
+        </td>
+      </tr>
+    </table>
     </div>
   </body>
 </html>
