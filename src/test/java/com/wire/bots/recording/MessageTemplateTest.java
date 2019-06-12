@@ -22,7 +22,7 @@ public class MessageTemplateTest {
 
         Collector collector = new Collector();
         collector.add(newTxtRecord("Dejan", thursday, "1"));
-        collector.add(newImageRecord("Dejan", thursday, "images/Praha", "jpeg"));
+        collector.add(newImageRecord("Dejan", thursday, "images/Praha", "image/jpeg"));
         collector.add(newTxtRecord("Lipis", thursday, "2"));
         collector.add(newTxtRecord("Dejan", thursday, "3"));
         collector.add(newTxtRecord("Dejan", thursday, "4"));

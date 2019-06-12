@@ -74,8 +74,9 @@ class Collector {
         Message message = new Message();
         message.text = record.text;
         message.time = toTime(record.timestamp);
-        if (!record.type.equalsIgnoreCase("txt")) {
-            File file = new File(String.format("%s.%s", record.assetKey, record.type));
+        if (record.type.startsWith("image")) {
+            String extension = record.type.replace("image/", "");
+            File file = new File(String.format("%s.%s", record.assetKey, extension));
             message.image = file.getAbsolutePath();
         }
         return message;
