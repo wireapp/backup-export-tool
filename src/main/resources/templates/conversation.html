@@ -87,7 +87,7 @@
   </head>
   <body>
     <h1>{{ title }}</h1>
-
+    {{#days}}
     <div class="date">{{ date }}</div>
     {{#senders}}
     <div class="sender">
@@ -104,9 +104,14 @@
         <div class="messages">
           <div class="message">
             <div class="contents">
-              <p>{{ text }}</p>
+                {{#text}}
+                <p>{{ text }}</p>
+                {{/text}}
+                {{#image}}
+                <p><img src="file://{{ image }}"/></p>
+                {{/image}}
             </div>
-            <div class="time">14:23</div>
+              <div class="time">{{ time }}</div>
           </div>
         </div>
         {{/messages}}

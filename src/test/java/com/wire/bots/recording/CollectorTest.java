@@ -1,5 +1,6 @@
 package com.wire.bots.recording;
 
+import com.wire.bots.recording.model.Day;
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -29,7 +30,7 @@ public class CollectorTest {
         collector.add(newRecord("Lipis", saturday, "14"));
         collector.add(newRecord("Lipis", saturday, "15"));
 
-        LinkedList<Collector.Day> days = collector.getConversation("Test").days;
+        LinkedList<Day> days = collector.getConversation("Test").days;
         assert days.size() == 3;
         assert days.getFirst().senders.size() == 4;
         assert days.getFirst().senders.getFirst().name.equals("Dejan");

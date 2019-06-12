@@ -3,6 +3,7 @@ package com.wire.bots.recording;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.wire.bots.recording.model.Conversation;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,39 +21,40 @@ public class MessageTemplateTest {
         int saturday = 1552769470;
 
         Collector collector = new Collector();
-        collector.add(newRecord("Dejan", thursday, "1"));
-        collector.add(newRecord("Lipis", thursday, "2"));
-        collector.add(newRecord("Dejan", thursday, "3"));
-        collector.add(newRecord("Dejan", thursday, "4"));
-        collector.add(newRecord("Lipis", thursday, "5"));
-        collector.add(newRecord("Lipis", thursday, "6"));
-        collector.add(newRecord("Dejan", friday, "7"));
-        collector.add(newRecord("Dejan", saturday, "8"));
-        collector.add(newRecord("Dejan", saturday, "9"));
-        collector.add(newRecord("Dejan", saturday, "10"));
-        collector.add(newRecord("Lipis", saturday, "11"));
-        collector.add(newRecord("Dejan", saturday, "12"));
-        collector.add(newRecord("Lipis", saturday, "13"));
-        collector.add(newRecord("Lipis", saturday, "14"));
-        collector.add(newRecord("Lipis", saturday, "15"));
-        collector.add(newRecord("Dejan", saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+        collector.add(newTxtRecord("Dejan", thursday, "1"));
+        collector.add(newImageRecord("Dejan", thursday, "images/Praha", "jpeg"));
+        collector.add(newTxtRecord("Lipis", thursday, "2"));
+        collector.add(newTxtRecord("Dejan", thursday, "3"));
+        collector.add(newTxtRecord("Dejan", thursday, "4"));
+        collector.add(newTxtRecord("Lipis", thursday, "5"));
+        collector.add(newTxtRecord("Lipis", thursday, "6"));
+        collector.add(newTxtRecord("Dejan", friday, "7"));
+        collector.add(newTxtRecord("Dejan", saturday, "8"));
+        collector.add(newTxtRecord("Dejan", saturday, "9"));
+        collector.add(newTxtRecord("Dejan", saturday, "10"));
+        collector.add(newTxtRecord("Lipis", saturday, "11"));
+        collector.add(newTxtRecord("Dejan", saturday, "12"));
+        collector.add(newTxtRecord("Lipis", saturday, "13"));
+        collector.add(newTxtRecord("Lipis", saturday, "14"));
+        collector.add(newTxtRecord("Lipis", saturday, "15"));
+        collector.add(newTxtRecord("Dejan", saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
-        collector.add(newRecord("Lipis", saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+        collector.add(newTxtRecord("Lipis", saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
 
-        Collector.Conversation conversation = collector.getConversation("export");
+        Conversation conversation = collector.getConversation("export");
         String html = execute(mustache, conversation);
         assert html != null;
 
-        String pdfFilename = String.format("%s.pdf", conversation.name);
+        String pdfFilename = String.format("%s.pdf", conversation.title);
         PdfGenerator.save(pdfFilename, html);
     }
 
@@ -77,13 +79,23 @@ public class MessageTemplateTest {
         }
     }
 
-    private Database.Record newRecord(String name, int timestamp, String text) {
+    private Database.Record newTxtRecord(String name, int timestamp, String text) {
         Database.Record record = new Database.Record();
         record.sender = name;
         record.senderId = name;
         record.timestamp = timestamp;
         record.text = text;
         record.type = "txt";
+        return record;
+    }
+
+    private Database.Record newImageRecord(String name, int timestamp, String key, String type) {
+        Database.Record record = new Database.Record();
+        record.sender = name;
+        record.senderId = name;
+        record.timestamp = timestamp;
+        record.assetKey = key;
+        record.type = type;
         return record;
     }
 }

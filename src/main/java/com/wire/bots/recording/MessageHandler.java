@@ -10,6 +10,9 @@ import com.wire.bots.sdk.server.model.NewBot;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -95,6 +98,9 @@ public class MessageHandler extends MessageHandlerBase {
             if (cmd.equals("/pdf")) {
                 Collector collector = new Collector();
                 for (Database.Record record : db.getRecords(botId)) {
+                    if (record.type.startsWith("image")) {
+                        downloadImage(client, record);
+                    }
                     collector.add(record);
                 }
                 collector.send(client, userId);
@@ -109,6 +115,21 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
+        }
+    }
+
+    private void downloadImage(WireClient client, Database.Record record) {
+        try {
+            String filename = String.format("%s.%s", record.assetKey, record.type.replace("image/", ""));
+            File file = new File(filename);
+            if (!file.exists()) {
+                byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);
+                try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
+                    os.write(image);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
