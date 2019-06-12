@@ -36,9 +36,7 @@
         margin-bottom: 8px;
       }
       .message {
-        display: flex;
-        flex-direction: row;
-        flex-basis: 0;
+        vertical-align: top;
       }
       .message p {
         margin-top: 0;
@@ -48,7 +46,6 @@
         max-width: 100%;
         width: 500px;
       }
-
       table {
         width: 100%;
       }
@@ -88,18 +85,21 @@
         </td>
         <td>
           <div class="name" style="color: {{ accent }}">{{ name }}</div>
-          {{#messages}}
-          <div class="messages">
-            <div class="message">
-              <div class="contents">
+          <table>
+            {{#messages}}
+            <tr>
+              <td class="message">
+                {{#text}}
                 <p>{{ text }}</p>
-              </div>
-            </div>
-          </div>
-          {{/messages}}
-        </td>
-        <td class="time-td">
-          {{ time }}
+                {{/text}}
+                {{#image}}
+                <p><img src="file://{{ image }}" /></p>
+                {{/image}}
+              </td>
+              <td class="time-td">{{ time }}</td>
+            </tr>
+            {{/messages}}
+          </table>
         </td>
       </tr>
       {{/senders}}
