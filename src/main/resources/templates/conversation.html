@@ -89,7 +89,12 @@
             {{#messages}}
             <tr>
               <td class="message">
+                {{#text}}
                 <p>{{ text }}</p>
+                {{/text}}
+                {{#image}}
+                <p><img src="file://{{ image }}" /></p>
+                {{/image}}
               </td>
               <td class="time-td">{{ time }}</td>
             </tr>
