@@ -42,7 +42,7 @@
         margin-top: 0;
         margin-bottom: 8px;
       }
-      .message img {
+      .image {
         max-width: 100%;
         width: 500px;
       }
@@ -93,7 +93,7 @@
                 <p>{{ text }}</p>
                 {{/text}}
                 {{#image}}
-                <p><img src="file://{{ image }}" /></p>
+                <img class="image" src="file://{{ image }}" />
                 {{/image}}
               </td>
               <td class="time-td">{{ time }}</td>
