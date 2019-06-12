@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>{{ title }}</title>
+    <title>{{ name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
@@ -86,33 +86,78 @@
     </style>
   </head>
   <body>
-    <h1>{{ title }}</h1>
-
+    <!-- {{#days}}
     <div class="date">{{ date }}</div>
     {{#senders}}
     <div class="sender">
       <div
         class="avatar"
-        style="
-        background-image: url({{ avatar }});
-        border-color: {{ accent }};
-        "
+        style="background-image: url(https://avatars1.githubusercontent.com/u/125676?s=460&v=4)"
       ></div>
+      <div class="accent">{{ accent }}</div>
       <div class="container">
-        <div class="name" style="color: {{ accent }}">{{ name }}</div>
+        <div class="name">{{ name }}</div>
         {{#messages}}
         <div class="messages">
           <div class="message">
             <div class="contents">
               <p>{{ text }}</p>
             </div>
-            <div class="time">14:23</div>
+            <div class="time">{{ time }}</div>
           </div>
         </div>
         {{/messages}}
       </div>
     </div>
     {{/senders}}
-    {{/days}}
+    {{/days}} -->
+
+    <h1>History Recording</h1>
+
+    <div class="date">Tuesday, June 11th, 2019</div>
+    <div class="sender">
+      <div
+        class="avatar"
+        style="
+        background-image: url(https://avatars1.githubusercontent.com/u/125676?s=460&v=4);
+        border-color: violet;
+        "
+      ></div>
+      <div class="container">
+        <div class="name" style="color: violet">Lipis</div>
+        <div class="messages">
+          <div class="message">
+            <div class="contents">
+              <p>Hello, world!</p>
+              <p>Hello, world!</p>
+              <p>Hello, world!</p>
+              <p><img src="https://vlad.studio/fullscreen-preview/?f=bird_bird_bird_bird_bird&w=1680&h=1050" /></p>
+            </div>
+            <div class="time">14:23</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sender">
+      <div
+        class="avatar"
+        style="
+          background-image: url(https://avatars3.githubusercontent.com/u/469989?s=460&v=4);
+          border-color: tomato;
+          "
+      ></div>
+      <div class="container">
+        <div class="name" style="color: tomato">Benny</div>
+        <div class="messages">
+          <div class="message">
+            <div class="contents">
+              <p>Hello, world!</p>
+              <p>Did you get it from <a href="https://vlad.studio">https://vlad.studio</a>?</p>
+            </div>
+            <div class="time">14:25</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

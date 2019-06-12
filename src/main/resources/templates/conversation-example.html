@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{{ name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        font-size: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif;
+      }
+      h1 {
+        text-align: center;
+      }
+      a {
+        color: #2391D3;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+      .message {
+        margin-bottom: 24px;
+      }
+      .message-title {
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      .message-body {
+        padding-left: 4px;
+      }
+      .message-body img {
+        max-width: 420px;
+      }
+      .message-body ul {
+        margin-top: 0;
+        margin-bottom: 8px;
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>{{ name }}</h1>
+
+
+
+
+    <div class="message">
+      <div class="message-title">
+        <span class="message-sender">Benny</span>
+        on
+        <span class="message-date">Tuesday, June 11, 2019 12:31 PM</span>
+      </div>
+      <div class="message-body">
+        Hello, world!
+      </div>
+    </div>
+
+    <div class="message">
+      <div class="message-title">
+        <span class="message-sender">Lipis</span>
+        on
+        <span class="message-date">Tuesday, June 11, 2019 12:33 PM</span>
+      </div>
+      <div class="message-body">
+        <img src="https://vlad.studio/fullscreen-preview/?f=bird_bird_bird_bird_bird&w=1680&h=1050" />
+      </div>
+    </div>
+
+    <div class="message">
+      <div class="message-title">
+        <span class="message-sender">Benny</span>
+        on
+        <span class="message-date">Tuesday, June 11, 2019 12:31 PM</span>
+      </div>
+      <div class="message-body">
+        <p>Nice <strong>photo</strong>!</p>
+        <p>Did you get it from <a href="https://vlad.studio">https://vlad.studio</a>?</p>
+      </div>
+    </div>
+
+    <div class="message">
+      <div class="message-title">
+        <span class="message-sender">Benny</span>
+        on
+        <span class="message-date">Tuesday, June 11, 2019 12:31 PM</span>
+      </div>
+      <div class="message-body">
+        <ul>
+          <li>Hello, world!</li>
+          <li>Foo bar</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
