@@ -13,14 +13,16 @@ import com.wire.bots.sdk.tools.Logger;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import static com.wire.bots.recording.UrlUtil.getFile;
+
 public class MessageHandler extends MessageHandlerBase {
-    private static final String WELCOME_LABEL = "Welcome to the MLS implementation discussion channel on Wire!\n\n" +
-            "Due to popular demand, a recording bot was added to this conversation to make it easier for newcomers to " +
-            "browse past messages.\n" +
-            "You can type `/history` to see older messages.";
+    private static final String WELCOME_LABEL = "Recording was enabled.\nAvailable commands:\n" +
+            "`/history` - receive previous messages\n" +
+            "`/pdf` - receive previous messages in PDF format";
     private final Database db;
 
     MessageHandler(Config config) {
@@ -36,7 +38,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onNewConversation(WireClient client) {
         try {
-            //client.sendText(WELCOME_LABEL);
+            client.sendText(WELCOME_LABEL);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
@@ -51,13 +53,7 @@ public class MessageHandler extends MessageHandlerBase {
             ArrayList<Database.Record> records = db.getRecords(botId);
             Logger.info("Sending %d records", records.size());
 
-            Collector collector = new Collector();
-            for (Database.Record record : db.getRecords(botId)) {
-                if (record.type.startsWith("image")) {
-                    downloadImage(client, record);
-                }
-                collector.add(record);
-            }
+            Collector collector = collect(client, botId);
 
             for (String userId : userIds) {
                 collector.send(client, userId);
@@ -100,13 +96,7 @@ public class MessageHandler extends MessageHandlerBase {
             }
 
             if (cmd.equals("/pdf")) {
-                Collector collector = new Collector();
-                for (Database.Record record : db.getRecords(botId)) {
-                    if (record.type.startsWith("image")) {
-                        downloadImage(client, record);
-                    }
-                    collector.add(record);
-                }
+                Collector collector = collect(client, botId);
                 collector.send(client, userId);
                 return;
             }
@@ -119,21 +109,6 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
-        }
-    }
-
-    private void downloadImage(WireClient client, Database.Record record) {
-        try {
-            String filename = String.format("images/%s.%s", record.assetKey, record.type.replace("image/", ""));
-            File file = new File(filename);
-            if (!file.exists()) {
-                byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);
-                try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
-                    os.write(image);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -161,6 +136,7 @@ public class MessageHandler extends MessageHandlerBase {
         }
     }
 
+    @Override
     public void onImage(WireClient client, ImageMessage msg) {
         String messageId = msg.getMessageId();
         String botId = client.getId();
@@ -226,5 +202,36 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
+    }
+
+    private Collector collect(WireClient client, String botId) throws Exception {
+        Collector collector = new Collector();
+        for (Database.Record record : db.getRecords(botId)) {
+            if (record.type.startsWith("image")) {
+                downloadImage(client, record);
+            }
+            collector.add(record);
+        }
+        return collector;
+    }
+
+    private void downloadImage(WireClient client, Database.Record record) {
+        try {
+            byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);
+            File file = saveImage(image, record.assetKey, record.type);
+            assert file.exists();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private File saveImage(byte[] image, String assetKey, String mimeType) throws IOException {
+        File file = getFile(assetKey, mimeType);
+        if (!file.exists()) {
+            try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
+                os.write(image);
+            }
+        }
+        return file;
     }
 }

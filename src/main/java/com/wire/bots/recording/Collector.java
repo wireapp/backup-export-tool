@@ -75,10 +75,9 @@ class Collector {
         message.text = record.text;
         message.time = toTime(record.timestamp);
         if (record.type.startsWith("image")) {
-            String extension = record.type.replace("image/", "");
-            File file = new File(String.format("%s.%s", record.assetKey, extension));
-            String absolutePath = file.getAbsolutePath();
-            message.image = String.format("file://%s", absolutePath);
+            File file = UrlUtil.getFile(record.assetKey, record.type);
+            if (file.exists())
+                message.image = String.format("file://%s", file.getAbsolutePath());
         }
         return message;
     }
