@@ -6,6 +6,20 @@
     <title>export</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <style>
+    @media print {
+        body{
+            width: 21cm;
+            height: 29.7cm;
+            margin: 30mm 45mm 30mm 45mm;
+            /* change the margins as you want them to be. */
+          }
+        }
+      div.chapter, div.appendix {
+        page-break-after: always;
+        }
+        div.titlepage {
+  page: blank;
+}
       body {
         margin: 0;
         padding: 16px;
@@ -43,8 +57,8 @@
         margin-bottom: 8px;
       }
       .image {
-        width: 50%;
-        height: 50%;
+        width: 500px;
+        height: 100%;
       }
       table {
         width: 100%;
@@ -63,6 +77,7 @@
         text-align: right;
         vertical-align: top;
       }
+
 
     </style>
 </head>

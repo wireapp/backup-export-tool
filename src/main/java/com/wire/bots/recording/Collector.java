@@ -24,7 +24,6 @@ class Collector {
     private LinkedList<Day> days = new LinkedList<>();
 
     void add(Database.Record record) {
-
         Message message = newMessage(record);
         Sender sender = newSender(record, message);
         Day day = newDay(record, sender);

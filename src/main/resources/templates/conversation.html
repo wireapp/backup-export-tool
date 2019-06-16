@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <title>{{ title }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <style>
+    @media print {
+        body{
+            width: 21cm;
+            height: 29.7cm;
+            margin: 30mm 45mm 30mm 45mm;
+            /* change the margins as you want them to be. */
+          }
+        }
+      div.chapter, div.appendix {
+        page-break-after: always;
+        }
+        div.titlepage {
+  page: blank;
+}
       body {
         margin: 0;
         padding: 16px;
@@ -43,8 +57,8 @@
         margin-bottom: 8px;
       }
       .image {
-        width: 50%;
-        height: 50%;
+        width: 500px;
+        height: 100%;
       }
       table {
         width: 100%;
@@ -63,47 +77,49 @@
         text-align: right;
         vertical-align: top;
       }
-    </style>
-  </head>
-  <body>
-    <h1>{{ title }}</h1>
 
-    <table>
-      {{#days}}
-      <tr>
+
+    </style>
+</head>
+<body>
+<h1>{{ title }}</h1>
+
+<table>
+    {{#days}}
+    <tr>
         <td class="date-td" colspan="3">{{ date }}</td>
-      </tr>
-      {{#senders}}
-      <tr>
+    </tr>
+    {{#senders}}
+    <tr>
         <td class="avatar-td">
-          <div
-            class="avatar"
-            style="
+            <div
+                    class="avatar"
+                    style="
               background-image: url({{ avatar }});
               border-color: {{ accent }};"
-          ></div>
+            ></div>
         </td>
         <td>
-          <div class="name" style="color: {{ accent }}">{{ name }}</div>
-          <table>
-            {{#messages}}
-            <tr>
-              <td class="message">
-                {{#text}}
-                <p>{{ text }}</p>
-                {{/text}}
-                {{#image}}
-                <img class="image" src="{{ image }}"/>
-                {{/image}}
-              </td>
-              <td class="time-td">{{ time }}</td>
-            </tr>
-            {{/messages}}
-          </table>
+            <div class="name" style="color: {{ accent }}">{{ name }}</div>
+            <table>
+                {{#messages}}
+                <tr>
+                    <td class="message">
+                        {{#text}}
+                        <p>{{ text }}</p>
+                        {{/text}}
+                        {{#image}}
+                        <img class="image" src="{{ image }}"/>
+                        {{/image}}
+                    </td>
+                    <td class="time-td">{{ time }}</td>
+                </tr>
+                {{/messages}}
+            </table>
         </td>
-      </tr>
-      {{/senders}}
-      {{/days}}
-    </table>
-  </body>
+    </tr>
+    {{/senders}}
+    {{/days}}
+</table>
+</body>
 </html>

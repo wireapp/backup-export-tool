@@ -24,18 +24,18 @@ public class MessageTemplateTest {
         collector.add(newTxtRecord("Lipis", thursday, "2"));
         collector.add(newTxtRecord("Dejan", thursday, "3"));
         collector.add(newTxtRecord("Dejan", thursday, "4"));
-        collector.add(newImageRecord("Dejan", thursday, "images/SP", "image/jpeg"));
+        collector.add(newImageRecord("Dejan", thursday, "SP", "image/jpeg"));
         collector.add(newTxtRecord("Lipis", thursday, "5"));
         collector.add(newTxtRecord("Lipis", thursday, "6"));
         collector.add(newTxtRecord("Dejan", friday, "7"));
         collector.add(newTxtRecord("Dejan", saturday, "8"));
-        collector.add(newImageRecord("Lipis", saturday, "images/ognjiste2", "image/png"));
+        collector.add(newImageRecord("Lipis", saturday, "ognjiste2", "image/png"));
         collector.add(newTxtRecord("Dejan", saturday, "9"));
         collector.add(newTxtRecord("Dejan", saturday, "10"));
         collector.add(newTxtRecord("Lipis", saturday, "11"));
         collector.add(newTxtRecord("Dejan", saturday, "12"));
         collector.add(newTxtRecord("Lipis", saturday, "13"));
-        collector.add(newImageRecord("Dejan", saturday, "images/ognjiste", "image/png"));
+        collector.add(newImageRecord("Dejan", saturday, "ognjiste", "image/png"));
         collector.add(newTxtRecord("Lipis", saturday, "14"));
         collector.add(newTxtRecord("Lipis", saturday, "15"));
         collector.add(newTxtRecord("Dejan", saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
@@ -50,7 +50,7 @@ public class MessageTemplateTest {
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
-        collector.add(newImageRecord("Dejan", saturday, "images/Praha", "image/jpeg"));
+        collector.add(newImageRecord("Dejan", saturday, "Praha", "image/jpeg"));
 
         Conversation conversation = collector.getConversation("export");
         String html = execute(mustache, conversation);
