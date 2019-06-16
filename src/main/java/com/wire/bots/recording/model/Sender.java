@@ -7,7 +7,7 @@ public class Sender {
     public String senderId;
     public String avatar;
     public String name;
-    public int accent;
+    public String accent;
     public ArrayList<Message> messages = new ArrayList<>();
 
     public boolean equals(Sender s) {

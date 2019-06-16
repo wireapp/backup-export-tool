@@ -59,10 +59,27 @@ class Collector {
         sender.name = record.sender;
         File file = new File(getImagePath(record.senderId));
         sender.avatar = String.format("file://%s", file.getAbsolutePath());
-        sender.accent = record.accent;
+        sender.accent = toColor(record.accent);
         sender.senderId = record.senderId;
         sender.messages.add(message);
         return sender;
+    }
+
+    private String toColor(int accent) {
+        switch (accent) {
+            case 0:
+                return "blue";
+            case 1:
+                return "green";
+            case 2:
+                return "red";
+            case 3:
+                return "orange";
+            case 4:
+                return "pink";
+            default:
+                return "purple";
+        }
     }
 
     private String getImagePath(String senderId) {

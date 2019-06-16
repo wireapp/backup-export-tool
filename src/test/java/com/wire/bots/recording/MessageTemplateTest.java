@@ -93,6 +93,7 @@ public class MessageTemplateTest {
         record.timestamp = timestamp;
         record.text = text;
         record.type = "txt";
+        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 0;
         return record;
     }
 
@@ -103,6 +104,7 @@ public class MessageTemplateTest {
         record.timestamp = timestamp;
         record.assetKey = key;
         record.type = type;
+        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 0;
         return record;
     }
 }
