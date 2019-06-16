@@ -44,22 +44,26 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onMemberJoin(WireClient client, ArrayList<String> userIds) {
-        try {
-            Logger.debug("onMemberJoin: %s users: %s", client.getId(), userIds);
+        String botId = client.getId();
+        Logger.debug("onMemberJoin: %s users: %s", botId, userIds);
 
-            ArrayList<Database.Record> records = db.getRecords(client.getId());
+        try {
+            ArrayList<Database.Record> records = db.getRecords(botId);
             Logger.info("Sending %d records", records.size());
 
-            for (String userId : userIds) {
-                Formatter formatter = new Formatter();
-                for (Database.Record record : records) {
-                    if (!formatter.add(record))
-                        formatter.print(client, userId);
+            Collector collector = new Collector();
+            for (Database.Record record : db.getRecords(botId)) {
+                if (record.type.startsWith("image")) {
+                    downloadImage(client, record);
                 }
-                formatter.print(client, userId);
+                collector.add(record);
+            }
+
+            for (String userId : userIds) {
+                collector.send(client, userId);
             }
         } catch (Exception e) {
-            Logger.error("onMemberJoin: %s %s", client.getId(), e);
+            Logger.error("onMemberJoin: %s %s", botId, e);
         }
     }
 
@@ -120,7 +124,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     private void downloadImage(WireClient client, Database.Record record) {
         try {
-            String filename = String.format("%s.%s", record.assetKey, record.type.replace("image/", ""));
+            String filename = String.format("images/%s.%s", record.assetKey, record.type.replace("image/", ""));
             File file = new File(filename);
             if (!file.exists()) {
                 byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);

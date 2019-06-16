@@ -77,7 +77,8 @@ class Collector {
         if (record.type.startsWith("image")) {
             String extension = record.type.replace("image/", "");
             File file = new File(String.format("%s.%s", record.assetKey, extension));
-            message.image = file.getAbsolutePath();
+            String absolutePath = file.getAbsolutePath();
+            message.image = String.format("file://%s", absolutePath);
         }
         return message;
     }

@@ -7,8 +7,7 @@ import com.wire.bots.recording.model.Conversation;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 
 public class MessageTemplateTest {
     // ------------------- Tests -------------------
@@ -56,6 +55,11 @@ public class MessageTemplateTest {
 
         String pdfFilename = String.format("%s.pdf", conversation.title);
         PdfGenerator.save(pdfFilename, html);
+
+        File file = new File(String.format("%s.html", conversation.title));
+        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
+            os.write(html.getBytes());
+        }
     }
 
     // ------------------- Tests -------------------
