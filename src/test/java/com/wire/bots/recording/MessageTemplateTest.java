@@ -24,11 +24,11 @@ public class MessageTemplateTest {
         collector.add(newTxtRecord("Lipis", thursday, "2"));
         collector.add(newTxtRecord("Dejan", thursday, "3"));
         collector.add(newTxtRecord("Dejan", thursday, "4"));
-        collector.add(newImageRecord("Dejan", thursday, "SP", "image/jpeg"));
         collector.add(newTxtRecord("Lipis", thursday, "5"));
         collector.add(newTxtRecord("Lipis", thursday, "6"));
+        collector.add(newImageRecord("Dejan", friday, "SP", "image/jpeg"));
         collector.add(newTxtRecord("Dejan", friday, "7"));
-        collector.add(newTxtRecord("Dejan", saturday, "8"));
+        collector.add(newTxtRecord("Lipis", saturday, "8"));
         collector.add(newImageRecord("Lipis", saturday, "ognjiste2", "image/png"));
         collector.add(newTxtRecord("Dejan", saturday, "9"));
         collector.add(newTxtRecord("Dejan", saturday, "10"));

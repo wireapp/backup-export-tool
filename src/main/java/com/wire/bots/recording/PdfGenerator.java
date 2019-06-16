@@ -4,10 +4,7 @@ import com.openhtmltopdf.extend.FSSupplier;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public class PdfGenerator {
     private static final String[] fonts = new String[]{
@@ -38,11 +35,13 @@ public class PdfGenerator {
         }
     }
 
-    static void save(String filename, String html) throws Exception {
+    static File save(String filename, String html) throws Exception {
+        File file = new File(filename);
         try (OutputStream out = new FileOutputStream(filename)) {
             builder.withHtmlContent(html, "")
                     .toStream(out)
                     .run();
         }
+        return file;
     }
 }

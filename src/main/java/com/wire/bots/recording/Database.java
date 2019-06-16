@@ -54,12 +54,12 @@ class Database {
     }
 
     boolean insertAssetRecord(String botId, String msgId, String sender, String mimeType, String assetKey, String token,
-                              byte[] sha256, byte[] otrKey, String filename, int size, int height, int width)
+                              byte[] sha256, byte[] otrKey, String filename, int size, int height, int width, int accent, String userId)
             throws SQLException {
         try (Connection c = newConnection()) {
             PreparedStatement stmt = c.prepareStatement("INSERT INTO History (botId, messageId, sender, mimeType," +
-                    " assetKey, assetToken, sha256, otrKey, timestamp, filename, size, height, width)" +
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    " assetKey, assetToken, sha256, otrKey, timestamp, filename, size, height, width, accent, senderId)" +
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             stmt.setObject(1, UUID.fromString(botId));
             stmt.setString(2, msgId);
             stmt.setString(3, sender);
@@ -73,6 +73,8 @@ class Database {
             stmt.setInt(11, size);
             stmt.setInt(12, height);
             stmt.setInt(13, width);
+            stmt.setInt(14, accent);
+            stmt.setObject(15, UUID.fromString(userId));
 
             return stmt.executeUpdate() == 1;
         }

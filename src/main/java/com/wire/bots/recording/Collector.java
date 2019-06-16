@@ -10,8 +10,8 @@ import com.wire.bots.recording.model.Sender;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.tools.Logger;
 
+import javax.annotation.Nullable;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,6 +25,9 @@ class Collector {
 
     void add(Database.Record record) {
         Message message = newMessage(record);
+        if (message.text == null && message.image == null)
+            return;
+
         Sender sender = newSender(record, message);
         Day day = newDay(record, sender);
 
@@ -47,6 +50,18 @@ class Collector {
         }
     }
 
+    private Message newMessage(Database.Record record) {
+        Message message = new Message();
+        message.text = record.text;
+        message.time = toTime(record.timestamp);
+        if (record.type.startsWith("image")) {
+            File file = UrlUtil.getFile(record.assetKey, record.type);
+            if (file.exists())
+                message.image = String.format("file://%s", file.getAbsolutePath());
+        }
+        return message;
+    }
+
     private Day newDay(Database.Record record, Sender sender) {
         Day day = new Day();
         day.date = toDate(record.timestamp);
@@ -57,12 +72,25 @@ class Collector {
     private Sender newSender(Database.Record record, Message message) {
         Sender sender = new Sender();
         sender.name = record.sender;
-        File file = new File(getImagePath(record.senderId));
-        sender.avatar = String.format("file://%s", file.getAbsolutePath());
-        sender.accent = toColor(record.accent);
         sender.senderId = record.senderId;
+        sender.avatar = toAvatar(record.senderId);
+        sender.accent = toColor(record.accent);
         sender.messages.add(message);
         return sender;
+    }
+
+    @Nullable
+    private String toAvatar(String senderId) {
+        if (senderId == null)
+            return null;
+
+        String filename = avatarPath(senderId);
+        File file = new File(filename);
+        return String.format("file://%s", file.getAbsolutePath());
+    }
+
+    private String avatarPath(String senderId) {
+        return String.format("avatars/%s.png", senderId);
     }
 
     private String toColor(int accent) {
@@ -80,22 +108,6 @@ class Collector {
             default:
                 return "purple";
         }
-    }
-
-    private String getImagePath(String senderId) {
-        return String.format("images/%s.png", senderId);
-    }
-
-    private Message newMessage(Database.Record record) {
-        Message message = new Message();
-        message.text = record.text;
-        message.time = toTime(record.timestamp);
-        if (record.type.startsWith("image")) {
-            File file = UrlUtil.getFile(record.assetKey, record.type);
-            if (file.exists())
-                message.image = String.format("file://%s", file.getAbsolutePath());
-        }
-        return message;
     }
 
     private String toTime(long timestamp) {
@@ -121,25 +133,22 @@ class Collector {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
-        String htmlFilename = String.format("%s.html", convName);
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(htmlFilename), StandardCharsets.UTF_8)) {
-            writer.write(html);
-        }
-        //client.sendDirectFile(new File(htmlFilename), "text/html", userId);
-
-        String pdfFilename = String.format("%s.pdf", convName);
-        PdfGenerator.save(pdfFilename, html);
-        client.sendDirectFile(new File(pdfFilename), "application/pdf", userId);
+        String pdfFilename = String.format("pdf/%s.pdf", convName);
+        File pdfFile = PdfGenerator.save(pdfFilename, html);
+        client.sendDirectFile(pdfFile, "application/pdf", userId);
     }
 
     private void downloadProfiles() {
         for (Day day : days) {
             for (Sender sender : day.senders) {
-                if (sender.senderId == null)
+                if (sender.senderId == null) {
+                    Logger.warning("downloadProfiles: senderId=null. Day: %s, sender: %s, accent: %s",
+                            day.date, sender.name, sender.accent);
                     continue;
-
+                }
                 try {
-                    File file = new File(getImagePath(sender.senderId));
+                    String filename = avatarPath(sender.senderId);
+                    File file = new File(filename);
                     if (!file.exists()) {
                         byte[] profile = Helper.getProfile(UUID.fromString(sender.senderId));
                         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {

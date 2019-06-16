@@ -140,6 +140,8 @@ public class MessageHandler extends MessageHandlerBase {
     public void onImage(WireClient client, ImageMessage msg) {
         String messageId = msg.getMessageId();
         String botId = client.getId();
+        String userId = msg.getUserId();
+
         Logger.debug("onImage: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                 botId,
                 msg.getMimeType(),
@@ -162,7 +164,9 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getName(),
                     (int) msg.getSize(),
                     msg.getHeight(),
-                    msg.getWidth());
+                    msg.getWidth(),
+                    user.accent,
+                    userId);
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
@@ -175,6 +179,8 @@ public class MessageHandler extends MessageHandlerBase {
     public void onAttachment(WireClient client, AttachmentMessage msg) {
         String botId = client.getId();
         String messageId = msg.getMessageId();
+        String userId = msg.getUserId();
+
         Logger.debug("onAttachment: %s, name: %s, type: %s, size: %,d KB",
                 botId,
                 msg.getName(),
@@ -195,7 +201,9 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getName(),
                     (int) msg.getSize(),
                     0,
-                    0);
+                    0,
+                    user.accent,
+                    userId);
 
             if (!insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
