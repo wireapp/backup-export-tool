@@ -1,6 +1,7 @@
 package com.wire.bots.recording;
 
-import com.wire.bots.recording.model.Config;
+import com.wire.bots.recording.DAO.HistoryDAO;
+import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.AttachmentMessage;
@@ -14,8 +15,9 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.UUID;
 
 import static com.wire.bots.recording.UrlUtil.getFile;
 
@@ -23,10 +25,10 @@ public class MessageHandler extends MessageHandlerBase {
     private static final String WELCOME_LABEL = "Recording was enabled.\nAvailable commands:\n" +
             "`/history` - receive previous messages\n" +
             "`/pdf` - receive previous messages in PDF format";
-    private final Database db;
+    private final HistoryDAO historyDAO;
 
-    MessageHandler(Config config) {
-        db = new Database(config.getStorage());
+    MessageHandler(HistoryDAO historyDAO) {
+        this.historyDAO = historyDAO;
     }
 
     @Override
@@ -46,17 +48,14 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onMemberJoin(WireClient client, ArrayList<String> userIds) {
-        String botId = client.getId();
+        UUID botId = UUID.fromString(client.getId());
         Logger.debug("onMemberJoin: %s users: %s", botId, userIds);
 
         try {
-            ArrayList<Database.Record> records = db.getRecords(botId);
-            Logger.info("Sending %d records", records.size());
-
             Collector collector = collect(client, botId);
 
             for (String userId : userIds) {
-                collector.send(client, userId);
+                collector.send(client, UUID.fromString(userId));
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
@@ -66,18 +65,14 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onBotRemoved(String botId) {
         Logger.debug("onBotRemoved: %s", botId);
-        try {
-            if (!db.unsubscribe(botId))
-                Logger.warning("Failed to unsubscribe. bot: %s", botId);
-        } catch (SQLException e) {
-            Logger.error("onBotRemoved: %s %s", botId, e);
-        }
+        if (0 == historyDAO.unsubscribe(UUID.fromString(botId)))
+            Logger.warning("Failed to unsubscribe. bot: %s", botId);
     }
 
     @Override
     public void onText(WireClient client, TextMessage msg) {
-        String userId = msg.getUserId();
-        String botId = client.getId();
+        UUID userId = UUID.fromString(msg.getUserId());
+        UUID botId = UUID.fromString(client.getId());
         String messageId = msg.getMessageId();
 
         Logger.debug("onText. bot: %s, msgId: %s", botId, messageId);
@@ -85,18 +80,18 @@ public class MessageHandler extends MessageHandlerBase {
             String cmd = msg.getText().toLowerCase().trim();
             if (cmd.equals("/history")) {
                 Formatter formatter = new Formatter();
-                for (Database.Record record : db.getRecords(botId)) {
+                for (DBRecord record : historyDAO.getRecords(botId)) {
                     if (!formatter.add(record)) {
-                        formatter.print(client, userId);
+                        formatter.print(client, userId.toString());
                         formatter.add(record);
                     }
                 }
-                formatter.print(client, userId);
+                formatter.print(client, userId.toString());
                 return;
             }
 
             if (cmd.equals("/pdf")) {
-                client.sendDirectText("Generating PDF...", userId);
+                client.sendDirectText("Generating PDF...", userId.toString());
                 Collector collector = collect(client, botId);
                 collector.send(client, userId);
                 return;
@@ -104,8 +99,9 @@ public class MessageHandler extends MessageHandlerBase {
 
             Logger.debug("Inserting text, bot: %s %s", botId, messageId);
 
-            User user = client.getUser(userId);
-            if (!db.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent, userId))
+            User user = client.getUser(userId.toString());
+            int timestamp = (int) (new Date().getTime() / 1000);
+            if (0 == historyDAO.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent, userId, timestamp))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,33 +111,25 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onEditText(WireClient client, TextMessage msg) {
-        String botId = client.getId();
+        UUID botId = UUID.fromString(client.getId());
         String messageId = msg.getMessageId();
-        try {
-            if (!db.updateTextRecord(botId, messageId, msg.getText()))
-                Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
-        } catch (SQLException e) {
-            Logger.error("onEditText: bot: %s message: %s, %s", botId, messageId, e);
-        }
+        if (0 == historyDAO.updateTextRecord(botId, messageId, msg.getText()))
+            Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
     }
 
     @Override
     public void onDelete(WireClient client, TextMessage msg) {
-        String botId = client.getId();
+        UUID botId = UUID.fromString(client.getId());
         String messageId = msg.getMessageId();
-        try {
-            if (!db.deleteRecord(botId, messageId))
-                Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
-        } catch (SQLException e) {
-            Logger.error("onDelete: %s, %s, %s", botId, messageId, e);
-        }
+        if (0 == historyDAO.remove(botId, messageId))
+            Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
     }
 
     @Override
     public void onImage(WireClient client, ImageMessage msg) {
         String messageId = msg.getMessageId();
-        String botId = client.getId();
-        String userId = msg.getUserId();
+        UUID botId = UUID.fromString(client.getId());
+        UUID userId = UUID.fromString(msg.getUserId());
 
         Logger.debug("onImage: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                 botId,
@@ -153,8 +141,10 @@ public class MessageHandler extends MessageHandlerBase {
         );
 
         try {
-            User user = client.getUser(msg.getUserId());
-            boolean insertRecord = db.insertAssetRecord(botId,
+            User user = client.getUser(userId.toString());
+            int timestamp = (int) (new Date().getTime() / 1000);
+
+            int insertRecord = historyDAO.insertAssetRecord(botId,
                     messageId,
                     user.name,
                     msg.getMimeType(),
@@ -167,9 +157,10 @@ public class MessageHandler extends MessageHandlerBase {
                     msg.getHeight(),
                     msg.getWidth(),
                     user.accent,
-                    userId);
+                    userId,
+                    timestamp);
 
-            if (!insertRecord)
+            if (0 == insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("onImage: %s %s %s", botId, messageId, e);
@@ -178,9 +169,9 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
-        String botId = client.getId();
+        UUID botId = UUID.fromString(client.getId());
         String messageId = msg.getMessageId();
-        String userId = msg.getUserId();
+        UUID userId = UUID.fromString(msg.getUserId());
 
         Logger.debug("onAttachment: %s, name: %s, type: %s, size: %,d KB",
                 botId,
@@ -190,8 +181,9 @@ public class MessageHandler extends MessageHandlerBase {
         );
 
         try {
-            User user = client.getUser(msg.getUserId());
-            boolean insertRecord = db.insertAssetRecord(botId,
+            User user = client.getUser(userId.toString());
+            int timestamp = (int) (new Date().getTime() / 1000);
+            int insertRecord = historyDAO.insertAssetRecord(botId,
                     messageId,
                     user.name,
                     msg.getMimeType(),
@@ -204,19 +196,20 @@ public class MessageHandler extends MessageHandlerBase {
                     0,
                     0,
                     user.accent,
-                    userId);
+                    userId,
+                    timestamp);
 
-            if (!insertRecord)
+            if (0 == insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
     }
 
-    private Collector collect(WireClient client, String botId) throws Exception {
+    private Collector collect(WireClient client, UUID botId) {
         Collector collector = new Collector();
-        for (Database.Record record : db.getRecords(botId)) {
-            if (record.type.startsWith("image")) {
+        for (DBRecord record : historyDAO.getRecords(botId)) {
+            if (record.mimeType.startsWith("image")) {
                 downloadImage(client, record);
             }
             collector.add(record);
@@ -224,10 +217,10 @@ public class MessageHandler extends MessageHandlerBase {
         return collector;
     }
 
-    private void downloadImage(WireClient client, Database.Record record) {
+    private void downloadImage(WireClient client, DBRecord record) {
         try {
             byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);
-            File file = saveImage(image, record.assetKey, record.type);
+            File file = saveImage(image, record.assetKey, record.mimeType);
             assert file.exists();
         } catch (Exception e) {
             e.printStackTrace();
