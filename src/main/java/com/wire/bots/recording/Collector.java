@@ -52,14 +52,35 @@ class Collector {
 
     private Message newMessage(Database.Record record) {
         Message message = new Message();
-        message.text = record.text;
+        if (record.type.equalsIgnoreCase("txt")) {
+            message.text = record.text;
+        }
+
         message.time = toTime(record.timestamp);
+
         if (record.type.startsWith("image")) {
             File file = UrlUtil.getFile(record.assetKey, record.type);
             if (file.exists())
                 message.image = String.format("file://%s", file.getAbsolutePath());
         }
         return message;
+    }
+
+    private String replaceUrls(String text) {
+        String ret = text;
+        int index = text.indexOf("http");
+        while (index != -1) {
+            int end = text.indexOf(" ", index);
+            if (end == -1)
+                end = text.length();
+
+            String url = text.substring(index, end);
+            // String href = String.format("<a href=\"%s\">%s</a>", url, url);
+            String href = String.format("[%s](%s)", url, url);
+            ret = ret.replace(url, href);
+            index = text.indexOf("http", index + 1);
+        }
+        return ret;
     }
 
     private Day newDay(Database.Record record, Sender sender) {
@@ -95,18 +116,20 @@ class Collector {
 
     private String toColor(int accent) {
         switch (accent) {
-            case 0:
-                return "blue";
             case 1:
-                return "green";
+                return "#2391d3";
             case 2:
-                return "red";
+                return "#00c800";
             case 3:
-                return "orange";
+                return "#febf02";
             case 4:
-                return "pink";
+                return "#fb0807";
+            case 5:
+                return "#ff8900";
+            case 6:
+                return "#fe5ebd";
             default:
-                return "purple";
+                return "#9c00fe";
         }
     }
 

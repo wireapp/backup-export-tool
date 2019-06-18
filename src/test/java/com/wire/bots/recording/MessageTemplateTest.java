@@ -51,6 +51,10 @@ public class MessageTemplateTest {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
         collector.add(newImageRecord("Dejan", saturday, "Praha", "image/jpeg"));
+        collector.add(newTxtRecord("Dejan", saturday, "This is some url https://google.com"));
+        collector.add(newTxtRecord("Dejan", saturday, "https://google.com"));
+        collector.add(newTxtRecord("Dejan", saturday, "This is some url https://google.com and some text"));
+        collector.add(newTxtRecord("Dejan", saturday, "These two urls https://google.com https://wire.com"));
 
         Conversation conversation = collector.getConversation("export");
         String html = execute(mustache, conversation);
@@ -93,7 +97,7 @@ public class MessageTemplateTest {
         record.timestamp = timestamp;
         record.text = text;
         record.type = "txt";
-        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 0;
+        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 1;
         return record;
     }
 
@@ -104,7 +108,7 @@ public class MessageTemplateTest {
         record.timestamp = timestamp;
         record.assetKey = key;
         record.type = type;
-        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 0;
+        record.accent = name.equalsIgnoreCase("Dejan") ? 3 : 1;
         return record;
     }
 }
