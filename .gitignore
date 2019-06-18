@@ -1,8 +1,9 @@
-target/
-data/
-images/
 .idea/
 *.iml
-*.log
 *.lck
+*.log
 *.pdf
+data/
+export.html
+images/
+target/
