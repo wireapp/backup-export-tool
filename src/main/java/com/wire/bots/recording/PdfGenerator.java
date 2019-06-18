@@ -8,8 +8,7 @@ import java.io.*;
 
 public class PdfGenerator {
     private static final String[] fonts = new String[]{
-            "OpenSansEmoji.ttf",
-            "NotoColorEmoji.ttf",
+            "NotoEmoji-Regular.ttf",
             "Arial-Unicode.ttf",
             "Arial-Bold.ttf"
     };
