@@ -96,6 +96,7 @@ public class MessageHandler extends MessageHandlerBase {
             }
 
             if (cmd.equals("/pdf")) {
+                client.sendDirectText("Generating PDF...", userId);
                 Collector collector = collect(client, botId);
                 collector.send(client, userId);
                 return;
