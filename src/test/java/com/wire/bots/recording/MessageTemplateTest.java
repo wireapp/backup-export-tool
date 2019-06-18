@@ -25,11 +25,15 @@ public class MessageTemplateTest {
         collector.add(newTxtRecord("Dejan", thursday, "3"));
         collector.add(newTxtRecord("Dejan", thursday, "4"));
         collector.add(newTxtRecord("Lipis", thursday, "5"));
-        collector.add(newTxtRecord("Lipis", thursday, "6"));
+        collector.add(newTxtRecord("Lipis", thursday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+                "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
+                " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum"));
         collector.add(newImageRecord("Dejan", friday, "SP", "image/jpeg"));
         collector.add(newTxtRecord("Dejan", friday, "7"));
         collector.add(newTxtRecord("Lipis", saturday, "8"));
         collector.add(newImageRecord("Lipis", saturday, "ognjiste2", "image/png"));
+        collector.add(newImageRecord("Lipis", saturday, "small", "image/png"));
         collector.add(newTxtRecord("Dejan", saturday, "9"));
         collector.add(newTxtRecord("Dejan", saturday, "10"));
         collector.add(newTxtRecord("Lipis", saturday, "11"));

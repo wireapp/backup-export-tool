@@ -51,8 +51,8 @@
         margin-bottom: 8px;
       }
       .image {
-        width: 550px;
-        height: 100%;
+        width: 90%;
+        max-width: 540px;
       }
       table {
         width: 100%;
@@ -61,15 +61,19 @@
         text-align: center;
         height: 34px;
       }
+      .sender-row {
+        page-break-inside: avoid;
+      }
       .avatar-td {
         width: 50px;
         vertical-align: top;
       }
       .time-td {
-        width: 64px;
         color: #bac8d1;
         text-align: right;
         vertical-align: top;
+        white-space: nowrap;
+        width: 64px;
       }
     </style>
   </head>
@@ -82,7 +86,7 @@
         <td class="date-td" colspan="3">{{ date }}</td>
       </tr>
       {{#senders}}
-      <tr>
+      <tr class="sender-row">
         <td class="avatar-td">
           <div
             class="avatar"
