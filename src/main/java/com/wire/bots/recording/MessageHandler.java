@@ -160,10 +160,52 @@ public class MessageHandler extends MessageHandlerBase {
                     userId,
                     timestamp);
 
-            if (0 == insertRecord)
-                Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
+            if (!insertRecord)
+                Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("onImage: %s %s %s", botId, messageId, e);
+        }
+    }
+
+    @Override
+    public void onVideoPreview(WireClient client, ImageMessage msg) {
+        String messageId = msg.getMessageId();
+        String botId = client.getId();
+        String userId = msg.getUserId();
+
+        Logger.debug("onVideoPreview: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
+                botId,
+                msg.getMimeType(),
+                msg.getSize() / 1024,
+                msg.getHeight(),
+                msg.getWidth(),
+                msg.getTag()
+        );
+
+        try {
+            User user = client.getUser(msg.getUserId());
+            int timestamp = (int) (new Date().getTime() / 1000);
+          
+            int insertRecord = historyDAO.insertAssetRecord(botId,
+                    messageId,
+                    user.name,
+                    msg.getMimeType(),
+                    msg.getAssetKey(),
+                    msg.getAssetToken(),
+                    msg.getSha256(),
+                    msg.getOtrKey(),
+                    msg.getName(),
+                    (int) msg.getSize(),
+                    msg.getHeight(),
+                    msg.getWidth(),
+                    user.accent,
+                    userId,
+                    timestamp);
+
+            if (0 == insertRecord)
+                Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
+        } catch (Exception e) {
+            Logger.error("onVideoPreview: %s %s %s", botId, messageId, e);
         }
     }
 
