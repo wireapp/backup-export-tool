@@ -3,10 +3,7 @@ package com.wire.bots.recording;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import com.wire.bots.recording.model.Conversation;
-import com.wire.bots.recording.model.Day;
-import com.wire.bots.recording.model.Message;
-import com.wire.bots.recording.model.Sender;
+import com.wire.bots.recording.model.*;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.tools.Logger;
 
@@ -23,7 +20,7 @@ class Collector {
 
     private LinkedList<Day> days = new LinkedList<>();
 
-    void add(Database.Record record) {
+    void add(DBRecord record) {
         Message message = newMessage(record);
         if (message.text == null && message.image == null)
             return;
@@ -50,16 +47,16 @@ class Collector {
         }
     }
 
-    private Message newMessage(Database.Record record) {
+    private Message newMessage(DBRecord record) {
         Message message = new Message();
-        if (record.type.equalsIgnoreCase("txt")) {
+        if (record.mimeType.equalsIgnoreCase("txt")) {
             message.text = record.text;
         }
 
         message.time = toTime(record.timestamp);
 
-        if (record.type.startsWith("image")) {
-            File file = UrlUtil.getFile(record.assetKey, record.type);
+        if (record.mimeType.startsWith("image")) {
+            File file = UrlUtil.getFile(record.assetKey, record.mimeType);
             if (file.exists())
                 message.image = String.format("file://%s", file.getAbsolutePath());
         }
@@ -83,14 +80,14 @@ class Collector {
         return ret;
     }
 
-    private Day newDay(Database.Record record, Sender sender) {
+    private Day newDay(DBRecord record, Sender sender) {
         Day day = new Day();
         day.date = toDate(record.timestamp);
         day.senders.add(sender);
         return day;
     }
 
-    private Sender newSender(Database.Record record, Message message) {
+    private Sender newSender(DBRecord record, Message message) {
         Sender sender = new Sender();
         sender.name = record.sender;
         sender.senderId = record.senderId;
@@ -101,7 +98,7 @@ class Collector {
     }
 
     @Nullable
-    private String toAvatar(String senderId) {
+    private String toAvatar(UUID senderId) {
         if (senderId == null)
             return null;
 
@@ -110,7 +107,7 @@ class Collector {
         return String.format("file://%s", file.getAbsolutePath());
     }
 
-    private String avatarPath(String senderId) {
+    private String avatarPath(UUID senderId) {
         return String.format("avatars/%s.png", senderId);
     }
 
@@ -150,7 +147,7 @@ class Collector {
         return ret;
     }
 
-    void send(WireClient client, String userId) throws Exception {
+    void send(WireClient client, UUID userId) throws Exception {
         downloadProfiles();
 
         String convName = client.getConversation().name;
@@ -158,7 +155,7 @@ class Collector {
         String html = execute(conversation);
         String pdfFilename = String.format("pdf/%s.pdf", convName);
         File pdfFile = PdfGenerator.save(pdfFilename, html);
-        client.sendDirectFile(pdfFile, "application/pdf", userId);
+        client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
     }
 
     private void downloadProfiles() {
@@ -173,7 +170,7 @@ class Collector {
                     String filename = avatarPath(sender.senderId);
                     File file = new File(filename);
                     if (!file.exists()) {
-                        byte[] profile = Helper.getProfile(UUID.fromString(sender.senderId));
+                        byte[] profile = Helper.getProfile(sender.senderId);
                         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
                             if (profile != null)
                                 os.write(profile);
