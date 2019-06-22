@@ -160,7 +160,7 @@ public class MessageHandler extends MessageHandlerBase {
                     userId,
                     timestamp);
 
-            if (0 != insertRecord)
+            if (0 == insertRecord)
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("onImage: %s %s %s", botId, messageId, e);

@@ -2,6 +2,7 @@ package com.wire.bots.recording.model;
 
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Sender {
@@ -12,6 +13,6 @@ public class Sender {
     public ArrayList<Message> messages = new ArrayList<>();
 
     public boolean equals(Sender s) {
-        return senderId.equals(s.senderId);
+        return Objects.equals(senderId, s.senderId);
     }
 }

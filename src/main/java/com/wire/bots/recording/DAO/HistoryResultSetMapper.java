@@ -27,7 +27,7 @@ public class HistoryResultSetMapper implements ResultSetMapper<DBRecord> {
         record.filename = rs.getString("filename");
 
         record.otrKey = rs.getBytes("otrKey");
-        record.sha256 = rs.getBytes("otrKey");
+        record.sha256 = rs.getBytes("sha256");
 
         record.timestamp = rs.getInt("timestamp");
         return record;
