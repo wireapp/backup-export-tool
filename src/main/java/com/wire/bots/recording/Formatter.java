@@ -1,5 +1,6 @@
 package com.wire.bots.recording;
 
+import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.assets.FileAsset;
 import com.wire.bots.sdk.assets.FileAssetPreview;
@@ -11,9 +12,9 @@ import java.util.UUID;
 
 class Formatter {
     private String sender = null;
-    private ArrayList<Database.Record> records = new ArrayList<>();
+    private ArrayList<DBRecord> records = new ArrayList<>();
 
-    boolean add(Database.Record record) {
+    boolean add(DBRecord record) {
         if (sender == null) {
             sender = record.sender;
             records.add(record);
@@ -33,7 +34,7 @@ class Formatter {
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(sender).append("**\n");
 
-        for (Database.Record record : records) {
+        for (DBRecord record : records) {
             String text = record.text;
             if (isTxt(record)) {
                 sb.append("- ").append(text).append("\n");
@@ -66,25 +67,25 @@ class Formatter {
         records.clear();
     }
 
-    private boolean isTxt(Database.Record record) {
-        return record.type.equals("txt") && !isHttp(record);
+    private boolean isTxt(DBRecord record) {
+        return record.mimeType.equals("txt") && !isHttp(record);
     }
 
-    private boolean isImage(Database.Record record) {
-        return record.type.startsWith("image");
+    private boolean isImage(DBRecord record) {
+        return record.mimeType.startsWith("image");
     }
 
-    private boolean isHttp(Database.Record record) {
-        return record.type.equals("txt") && record.text.startsWith("http");
+    private boolean isHttp(DBRecord record) {
+        return record.mimeType.equals("txt") && record.text.startsWith("http");
     }
 
-    private void sendPicture(WireClient client, String userId, Database.Record record) throws Exception {
+    private void sendPicture(WireClient client, String userId, DBRecord record) throws Exception {
         Picture picture = new Picture();
         picture.setAssetKey(record.assetKey);
         picture.setAssetToken(record.assetToken);
         picture.setSha256(record.sha256);
         picture.setOtrKey(record.otrKey);
-        picture.setMimeType(record.type);
+        picture.setMimeType(record.mimeType);
         picture.setSize(record.size);
         picture.setHeight(record.height);
         picture.setWidth(record.width);
@@ -104,9 +105,9 @@ class Formatter {
         client.sendDirectLinkPreview(url, title, preview, userId);
     }
 
-    private void sendAttachment(WireClient client, String userId, Database.Record record) throws Exception {
+    private void sendAttachment(WireClient client, String userId, DBRecord record) throws Exception {
         UUID messageId = UUID.randomUUID();
-        FileAssetPreview preview = new FileAssetPreview(record.filename, record.type, record.size, messageId);
+        FileAssetPreview preview = new FileAssetPreview(record.filename, record.mimeType, record.size, messageId);
         FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
         client.sendDirectFile(preview, asset, userId);
     }

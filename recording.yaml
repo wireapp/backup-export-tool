@@ -30,3 +30,19 @@ db:
   port: 6379 #redis
   user: admin
   password: ${REDIS_PASSWORD}
+
+
+database:
+  driverClass: org.postgresql.Driver
+  user: admin
+  password: ${POSTGRES_PASSWORD}
+  url: jdbc:postgresql://localhost/postgres
+  properties:
+    charSet: UTF-8
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyService Health Check */ SELECT 1"
+  minSize: 8
+  maxSize: 32
+  checkConnectionWhileIdle: false
+  evictionInterval: 10s
+  minIdleTime: 1 minute
