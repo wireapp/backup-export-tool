@@ -6,14 +6,17 @@ import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.*;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.tools.Logger;
+import org.commonmark.Extension;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 
 import javax.annotation.Nullable;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.UUID;
+import java.util.*;
 
 class Collector {
     private static MustacheFactory mf = new DefaultMustacheFactory();
@@ -50,7 +53,7 @@ class Collector {
     private Message newMessage(DBRecord record) {
         Message message = new Message();
         if (record.mimeType.equalsIgnoreCase("txt")) {
-            message.text = record.text;
+            message.text = render(record.text);
         }
 
         message.time = toTime(record.timestamp);
@@ -61,23 +64,6 @@ class Collector {
                 message.image = String.format("file://%s", file.getAbsolutePath());
         }
         return message;
-    }
-
-    private String replaceUrls(String text) {
-        String ret = text;
-        int index = text.indexOf("http");
-        while (index != -1) {
-            int end = text.indexOf(" ", index);
-            if (end == -1)
-                end = text.length();
-
-            String url = text.substring(index, end);
-            // String href = String.format("<a href=\"%s\">%s</a>", url, url);
-            String href = String.format("[%s](%s)", url, url);
-            ret = ret.replace(url, href);
-            index = text.indexOf("http", index + 1);
-        }
-        return ret;
     }
 
     private Day newDay(DBRecord record, Sender sender) {
@@ -194,5 +180,22 @@ class Collector {
             mustache.execute(new PrintWriter(sw), model).flush();
             return sw.toString();
         }
+    }
+
+    private String render(String text) {
+        List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
+
+        Parser parser = Parser
+                .builder()
+                .extensions(extensions)
+                .build();
+
+        Node document = parser.parse(text);
+        HtmlRenderer renderer = HtmlRenderer
+                .builder()
+                .escapeHtml(true)
+                .extensions(extensions)
+                .build();
+        return renderer.render(document);
     }
 }
