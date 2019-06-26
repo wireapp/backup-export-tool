@@ -73,13 +73,13 @@ public class MessageTemplateTest {
 
         Collector collector = new Collector();
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "1"));
-        collector.add(newTxtRecord(lipis, LIPIS, thursday, "2"));
+        collector.add(newTxtRecord(lipis, LIPIS, thursday, "<head>"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "3"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "4"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "5 👍"));
-        collector.add(newTxtRecord(lipis, LIPIS, thursday, "😃Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+        collector.add(newTxtRecord(lipis, LIPIS, thursday, "😃Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
-                " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                " quis nostrud exercitation ullamco _laboris_ nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum"));
         collector.add(newImageRecord(dejan, DEJAN, friday, "SP", "image/jpeg"));
         collector.add(newTxtRecord(dejan, DEJAN, friday, "7"));
@@ -88,17 +88,22 @@ public class MessageTemplateTest {
         collector.add(newImageRecord(lipis, LIPIS, saturday, "small", "image/png"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "9"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "10"));
-        collector.add(newTxtRecord(lipis, LIPIS, saturday, "11"));
+        collector.add(newTxtRecord(lipis, LIPIS, saturday, "```collector.add(newImageRecord(dejan, DEJAN, friday," +
+                " \"SP\", \"image/jpeg\"));\n" +
+                "        collector.add(newTxtRecord(dejan, DEJAN, friday, \"7\"));\n" +
+                "        collector.add(newTxtRecord(lipis, LIPIS, saturday, \"8\"));\n" +
+                "        collector.add(newImageRecord(lipis, LIPIS, saturday, \"ognjiste2\", \"image/png\"));\n" +
+                "        collector.add(newImageRecord(lipis, LIPIS, saturday, \"small\", \"image/png\")); ```"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "12"));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "13"));
         collector.add(newImageRecord(dejan, DEJAN, saturday, "ognjiste", "image/png"));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "14"));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "15"));
-        collector.add(newTxtRecord(dejan, DEJAN, saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+        collector.add(newTxtRecord(dejan, DEJAN, saturday, "Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
-                "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
+                "Excepteur sint occaecat cupidatat non _proident_, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
@@ -107,7 +112,7 @@ public class MessageTemplateTest {
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
         collector.add(newImageRecord(dejan, DEJAN, saturday, "Praha", "image/jpeg"));
-        collector.add(newTxtRecord(dejan, DEJAN, saturday, "This is some url https://google.com"));
+        collector.add(newTxtRecord(dejan, DEJAN, saturday, "This is some url [google](https://google.com)"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "https://google.com"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "This is some url https://google.com and some text"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "These two urls https://google.com https://wire.com"));
