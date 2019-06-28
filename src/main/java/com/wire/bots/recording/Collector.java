@@ -53,7 +53,7 @@ class Collector {
     private Message newMessage(DBRecord record) {
         Message message = new Message();
         if (record.mimeType.equalsIgnoreCase("txt")) {
-            message.text = render(record.text);
+            message.text = markdown2Html(record.text);
         }
 
         message.time = toTime(record.timestamp);
@@ -133,7 +133,7 @@ class Collector {
         return ret;
     }
 
-    void send(WireClient client, UUID userId) throws Exception {
+    void sendPDF(WireClient client, UUID userId) throws Exception {
         downloadProfiles();
 
         String convName = client.getConversation().name;
@@ -142,6 +142,17 @@ class Collector {
         String pdfFilename = String.format("pdf/%s.pdf", convName);
         File pdfFile = PdfGenerator.save(pdfFilename, html);
         client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
+    }
+
+    void sendHtml(WireClient client, UUID userId) throws Exception {
+        downloadProfiles();
+
+        String convName = client.getConversation().name;
+        Conversation conversation = getConversation(convName);
+        String filename = String.format("html/%s.html", convName);
+        executeFile(conversation, filename);
+        File file = new File(filename);
+        client.sendDirectFile(file, "application/html", userId.toString());
     }
 
     private void downloadProfiles() {
@@ -182,7 +193,14 @@ class Collector {
         }
     }
 
-    private String render(String text) {
+    private void executeFile(Object model, String filename) throws IOException {
+        Mustache mustache = compileTemplate();
+        try (FileWriter sw = new FileWriter(filename)) {
+            mustache.execute(new PrintWriter(sw), model).flush();
+        }
+    }
+
+    private String markdown2Html(String text) {
         List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
 
         Parser parser = Parser

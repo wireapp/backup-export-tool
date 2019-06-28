@@ -6,6 +6,7 @@ COPY recording.yaml         /etc/recording/recording.yaml
 RUN mkdir /opt/recording/images
 RUN mkdir /opt/recording/avatars
 RUN mkdir /opt/recording/pdf
+RUN mkdir /opt/recording/html
 
 WORKDIR /opt/recording
      

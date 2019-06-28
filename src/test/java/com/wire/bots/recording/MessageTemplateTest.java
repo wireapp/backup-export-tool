@@ -5,6 +5,11 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.Conversation;
 import com.wire.bots.recording.model.DBRecord;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -72,9 +77,9 @@ public class MessageTemplateTest {
 
 
         Collector collector = new Collector();
-        collector.add(newTxtRecord(dejan, DEJAN, thursday, "1"));
+        collector.add(newTxtRecord(dejan, DEJAN, thursday, "1😃👍"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "<head>"));
-        collector.add(newTxtRecord(dejan, DEJAN, thursday, "3"));
+        collector.add(newTxtRecord(dejan, DEJAN, thursday, "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "4"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "5 👍"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "😃Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
@@ -127,6 +132,33 @@ public class MessageTemplateTest {
         File file = new File(String.format("%s.html", conversation.title));
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
             os.write(html.getBytes());
+        }
+    }
+
+    //@Test
+    public void test() {
+        try (PDDocument doc = new PDDocument()) {
+            PDFont font = PDType0Font.load(doc, new File("src/main/resources/fonts/NotoEmoji-Regular.ttf"));
+            PDPage page = new PDPage();
+            doc.addPage(page);
+            PDPageContentStream cs = new PDPageContentStream(doc, page);
+            cs.beginText();
+            cs.newLineAtOffset(0, 700);
+            cs.setFont(font, 20);
+            String s = "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉";
+            for (int i = 0; i < s.length() - 1; ++i) {
+                String s1 = new String(new int[]{s.codePointAt(i)}, 0, 1);
+                try {
+                    cs.showText(s1);
+                } catch (IllegalArgumentException ex) {
+                    //cs.showText(" ");
+                }
+            }
+            cs.endText();
+            cs.close();
+            doc.save(new File("emojis.pdf"));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

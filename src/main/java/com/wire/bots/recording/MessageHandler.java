@@ -55,7 +55,7 @@ public class MessageHandler extends MessageHandlerBase {
             Collector collector = collect(client, botId);
 
             for (String userId : userIds) {
-                collector.send(client, UUID.fromString(userId));
+                collector.sendPDF(client, UUID.fromString(userId));
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
@@ -93,7 +93,14 @@ public class MessageHandler extends MessageHandlerBase {
             if (cmd.equals("/pdf")) {
                 client.sendDirectText("Generating PDF...", userId.toString());
                 Collector collector = collect(client, botId);
-                collector.send(client, userId);
+                collector.sendPDF(client, userId);
+                return;
+            }
+
+            if (cmd.equals("/html")) {
+                client.sendDirectText("Generating HTML...", userId.toString());
+                Collector collector = collect(client, botId);
+                collector.sendHtml(client, userId);
                 return;
             }
 
