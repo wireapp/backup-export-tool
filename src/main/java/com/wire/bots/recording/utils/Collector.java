@@ -1,13 +1,11 @@
-package com.wire.bots.recording;
+package com.wire.bots.recording.utils;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.*;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.tools.Logger;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.net.URLEncoder;
 import java.text.DateFormat;
@@ -16,12 +14,25 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.UUID;
 
-class Collector {
+public class Collector {
     private static MustacheFactory mf = new DefaultMustacheFactory();
+    private final WireClient client;
 
     private LinkedList<Day> days = new LinkedList<>();
 
-    void add(DBRecord record) {
+    public Collector(WireClient client) {
+
+        this.client = client;
+    }
+
+    private static String toUrl(File file) {
+        String url = null;
+        if (file != null && file.exists())
+            url = String.format("file://%s", file.getAbsolutePath());
+        return url;
+    }
+
+    public void add(DBRecord record) {
         Message message = newMessage(record);
         if (message.text == null && message.image == null)
             return;
@@ -50,17 +61,16 @@ class Collector {
 
     private Message newMessage(DBRecord record) {
         Message message = new Message();
-        if (record.mimeType.equalsIgnoreCase("txt")) {
+        message.time = toTime(record.timestamp);
+
+        if (record.mimeType.equals("txt")) {
             //message.text = markdown2Html(record.text, true);
             message.text = record.text;
         }
 
-        message.time = toTime(record.timestamp);
-
         if (record.mimeType.startsWith("image")) {
-            File file = UrlUtil.getFile(record.assetKey, record.mimeType);
-            if (file.exists())
-                message.image = String.format("file://%s", file.getAbsolutePath());
+            File file = Cache.downloadImage(client, record);
+            message.image = toUrl(file);
         }
         return message;
     }
@@ -76,24 +86,13 @@ class Collector {
         Sender sender = new Sender();
         sender.name = record.sender;
         sender.senderId = record.senderId;
-        sender.avatar = toAvatar(record.senderId);
         sender.accent = toColor(record.accent);
         sender.messages.add(message);
+
+        File profile = Cache.getProfile(client, record.senderId);
+        sender.avatar = toUrl(profile);
+
         return sender;
-    }
-
-    @Nullable
-    private String toAvatar(UUID senderId) {
-        if (senderId == null)
-            return null;
-
-        String filename = avatarPath(senderId);
-        File file = new File(filename);
-        return String.format("file://%s", file.getAbsolutePath());
-    }
-
-    private String avatarPath(UUID senderId) {
-        return String.format("avatars/%s.png", senderId);
     }
 
     private String toColor(int accent) {
@@ -125,16 +124,14 @@ class Collector {
         return df.format(new Date(timestamp * 1000L));
     }
 
-    Conversation getConversation(String convName) {
+    public Conversation getConversation(String convName) {
         Conversation ret = new Conversation();
         ret.days = days;
         ret.title = convName;
         return ret;
     }
 
-    void sendPDF(WireClient client, UUID userId) throws Exception {
-        downloadProfiles();
-
+    public void sendPDF(UUID userId) throws Exception {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
@@ -144,9 +141,7 @@ class Collector {
         client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
     }
 
-    void sendHtml(WireClient client, UUID userId) throws Exception {
-        downloadProfiles();
-
+    public void sendHtml(UUID userId) throws Exception {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String clean = URLEncoder.encode(convName);
@@ -154,31 +149,6 @@ class Collector {
         executeFile(conversation, filename);
         File file = new File(filename);
         client.sendDirectFile(file, "application/html", userId.toString());
-    }
-
-    private void downloadProfiles() {
-        for (Day day : days) {
-            for (Sender sender : day.senders) {
-                if (sender.senderId == null) {
-                    Logger.warning("downloadProfiles: senderId=null. Day: %s, sender: %s, accent: %s",
-                            day.date, sender.name, sender.accent);
-                    continue;
-                }
-                try {
-                    String filename = avatarPath(sender.senderId);
-                    File file = new File(filename);
-                    if (!file.exists()) {
-                        byte[] profile = Helper.getProfile(sender.senderId);
-                        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
-                            if (profile != null)
-                                os.write(profile);
-                        }
-                    }
-                } catch (Exception e) {
-                    Logger.warning("downloadProfiles: %s", e);
-                }
-            }
-        }
     }
 
     private Mustache compileTemplate() {

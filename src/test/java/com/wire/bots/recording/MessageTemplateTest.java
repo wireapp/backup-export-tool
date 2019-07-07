@@ -5,6 +5,8 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.Conversation;
 import com.wire.bots.recording.model.DBRecord;
+import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.PdfGenerator;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -57,8 +59,8 @@ public class MessageTemplateTest {
 
     private static DBRecord newImageRecord(UUID id, String name, int timestamp, String key, String type) {
         DBRecord record = new DBRecord();
-        record.sender = name;
         record.senderId = id;
+        record.sender = name;
         record.timestamp = timestamp;
         record.assetKey = key;
         record.mimeType = type;
@@ -75,8 +77,8 @@ public class MessageTemplateTest {
         final int friday = 1552683070;
         final int saturday = 1552769470;
 
-
-        Collector collector = new Collector();
+        TestWireClient client = new TestWireClient();
+        Collector collector = new Collector(client);
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "1😃👍"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "<head>"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉"));
@@ -86,7 +88,6 @@ public class MessageTemplateTest {
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco _laboris_ nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum"));
-        collector.add(newImageRecord(dejan, DEJAN, friday, "SP", "image/jpeg"));
         collector.add(newTxtRecord(dejan, DEJAN, friday, "7"));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "8"));
         collector.add(newImageRecord(lipis, LIPIS, saturday, "ognjiste2", "image/png"));
@@ -116,7 +117,6 @@ public class MessageTemplateTest {
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
                 "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est" +
                 " laborum."));
-        collector.add(newImageRecord(dejan, DEJAN, saturday, "Praha", "image/jpeg"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "This is some url [google](https://google.com)"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "https://google.com"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "This is some url https://google.com and some text"));

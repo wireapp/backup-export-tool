@@ -2,6 +2,7 @@ package com.wire.bots.recording;
 
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.model.Day;
+import com.wire.bots.recording.utils.Collector;
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -20,7 +21,8 @@ public class CollectorTest {
         int friday = 1552683070;
         int saturday = 1552769470;
 
-        Collector collector = new Collector();
+        TestWireClient client = new TestWireClient();
+        Collector collector = new Collector(client);
         collector.add(newRecord(dejan, DEJAN, thursday, "1"));
         collector.add(newRecord(lipis, LIPIS, thursday, "2"));
         collector.add(newRecord(dejan, DEJAN, thursday, "3"));

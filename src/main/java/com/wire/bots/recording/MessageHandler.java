@@ -2,6 +2,8 @@ package com.wire.bots.recording;
 
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.DBRecord;
+import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.Formatter;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.AttachmentMessage;
@@ -11,15 +13,9 @@ import com.wire.bots.sdk.server.model.NewBot;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
-
-import static com.wire.bots.recording.UrlUtil.getFile;
 
 public class MessageHandler extends MessageHandlerBase {
     private static final String WELCOME_LABEL = "Recording was enabled.\nAvailable commands:\n" +
@@ -55,7 +51,7 @@ public class MessageHandler extends MessageHandlerBase {
             Collector collector = collect(client, botId);
 
             for (String userId : userIds) {
-                collector.sendPDF(client, UUID.fromString(userId));
+                collector.sendPDF(UUID.fromString(userId));
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
@@ -93,14 +89,14 @@ public class MessageHandler extends MessageHandlerBase {
             if (cmd.equals("/pdf")) {
                 client.sendDirectText("Generating PDF...", userId.toString());
                 Collector collector = collect(client, botId);
-                collector.sendPDF(client, userId);
+                collector.sendPDF(userId);
                 return;
             }
 
             if (cmd.equals("/html")) {
                 client.sendDirectText("Generating HTML...", userId.toString());
                 Collector collector = collect(client, botId);
-                collector.sendHtml(client, userId);
+                collector.sendHtml(userId);
                 return;
             }
 
@@ -256,33 +252,14 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private Collector collect(WireClient client, UUID botId) {
-        Collector collector = new Collector();
+        Collector collector = new Collector(client);
         for (DBRecord record : historyDAO.getRecords(botId)) {
-            if (record.mimeType.startsWith("image")) {
-                downloadImage(client, record);
+            try {
+                collector.add(record);
+            } catch (Exception e) {
+                Logger.warning("collect: %s", e);
             }
-            collector.add(record);
         }
         return collector;
-    }
-
-    private void downloadImage(WireClient client, DBRecord record) {
-        try {
-            byte[] image = client.downloadAsset(record.assetKey, record.assetToken, record.sha256, record.otrKey);
-            File file = saveImage(image, record.assetKey, record.mimeType);
-            assert file.exists();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private File saveImage(byte[] image, String assetKey, String mimeType) throws IOException {
-        File file = getFile(assetKey, mimeType);
-        if (!file.exists()) {
-            try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
-                os.write(image);
-            }
-        }
-        return file;
     }
 }

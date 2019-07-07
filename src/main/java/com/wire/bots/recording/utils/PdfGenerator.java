@@ -1,4 +1,4 @@
-package com.wire.bots.recording;
+package com.wire.bots.recording.utils;
 
 import com.openhtmltopdf.extend.FSSupplier;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -36,7 +36,7 @@ public class PdfGenerator {
         }
     }
 
-    static File save(String filename, String html) throws Exception {
+    public static File save(String filename, String html) throws Exception {
         File file = new File(filename);
         try (OutputStream out = new FileOutputStream(filename)) {
             builder.withHtmlContent(html, "")
