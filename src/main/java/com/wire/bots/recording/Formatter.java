@@ -5,8 +5,8 @@ import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.assets.FileAsset;
 import com.wire.bots.sdk.assets.FileAssetPreview;
 import com.wire.bots.sdk.assets.Picture;
+import com.wire.bots.sdk.tools.Logger;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -79,36 +79,53 @@ class Formatter {
         return record.mimeType.equals("txt") && record.text.startsWith("http");
     }
 
-    private void sendPicture(WireClient client, String userId, DBRecord record) throws Exception {
-        Picture picture = new Picture();
-        picture.setAssetKey(record.assetKey);
-        picture.setAssetToken(record.assetToken);
-        picture.setSha256(record.sha256);
-        picture.setOtrKey(record.otrKey);
-        picture.setMimeType(record.mimeType);
-        picture.setSize(record.size);
-        picture.setHeight(record.height);
-        picture.setWidth(record.width);
-        client.sendDirectPicture(picture, userId);
+    private void sendPicture(WireClient client, String userId, DBRecord record) {
+        try {
+            Picture picture = new Picture();
+            picture.setAssetKey(record.assetKey);
+            picture.setAssetToken(record.assetToken);
+            picture.setSha256(record.sha256);
+            picture.setOtrKey(record.otrKey);
+            picture.setMimeType(record.mimeType);
+            picture.setSize(record.size);
+            picture.setHeight(record.height);
+            picture.setWidth(record.width);
+            client.sendDirectPicture(picture, userId);
+        } catch (Exception e) {
+            Logger.warning("sendPicture: %s", e);
+        }
     }
 
-    private Picture getPreview(WireClient client, String url) throws IOException {
-        String previewUrl = UrlUtil.extractPagePreview(url);
-        if (previewUrl == null || previewUrl.isEmpty())
+    private Picture getPreview(WireClient client, String url) {
+        try {
+            String previewUrl = UrlUtil.extractPagePreview(url);
+            if (previewUrl == null || previewUrl.isEmpty())
+                return null;
+
+            return Cache.getPictureUrl(client, previewUrl);
+        } catch (Exception e) {
+            Logger.warning("getPreview: %s", e);
             return null;
-
-        return Cache.getPictureUrl(client, previewUrl);
+        }
     }
 
-    private void sendLinkPreview(WireClient client, String userId, String url, Picture preview) throws Exception {
-        final String title = UrlUtil.extractPageTitle(url);
-        client.sendDirectLinkPreview(url, title, preview, userId);
+    private void sendLinkPreview(WireClient client, String userId, String url, Picture preview) {
+        try {
+            final String title = UrlUtil.extractPageTitle(url);
+            client.sendDirectLinkPreview(url, title, preview, userId);
+        } catch (Exception e) {
+            Logger.warning("sendLinkPreview: %s", e);
+        }
     }
 
-    private void sendAttachment(WireClient client, String userId, DBRecord record) throws Exception {
-        UUID messageId = UUID.randomUUID();
-        FileAssetPreview preview = new FileAssetPreview(record.filename, record.mimeType, record.size, messageId);
-        FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
-        client.sendDirectFile(preview, asset, userId);
+    private void sendAttachment(WireClient client, String userId, DBRecord record) {
+        try {
+            UUID messageId = UUID.randomUUID();
+            FileAssetPreview preview = new FileAssetPreview(record.filename, record.mimeType, record.size, messageId);
+            FileAsset asset = new FileAsset(record.assetKey, record.assetToken, record.sha256, messageId);
+            client.sendDirectFile(preview, asset, userId);
+        } catch (Exception e) {
+            Logger.warning("sendAttachment: %s", e);
+        }
     }
 }

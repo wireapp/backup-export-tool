@@ -6,17 +6,15 @@ import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.*;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.tools.Logger;
-import org.commonmark.Extension;
-import org.commonmark.ext.autolink.AutolinkExtension;
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.UUID;
 
 class Collector {
     private static MustacheFactory mf = new DefaultMustacheFactory();
@@ -53,7 +51,8 @@ class Collector {
     private Message newMessage(DBRecord record) {
         Message message = new Message();
         if (record.mimeType.equalsIgnoreCase("txt")) {
-            message.text = markdown2Html(record.text);
+            //message.text = markdown2Html(record.text, true);
+            message.text = record.text;
         }
 
         message.time = toTime(record.timestamp);
@@ -139,7 +138,8 @@ class Collector {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
-        String pdfFilename = String.format("pdf/%s.pdf", convName);
+        String filename = URLEncoder.encode(convName);
+        String pdfFilename = String.format("pdf/%s.pdf", filename);
         File pdfFile = PdfGenerator.save(pdfFilename, html);
         client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
     }
@@ -149,7 +149,8 @@ class Collector {
 
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
-        String filename = String.format("html/%s.html", convName);
+        String clean = URLEncoder.encode(convName);
+        String filename = String.format("html/%s.html", clean);
         executeFile(conversation, filename);
         File file = new File(filename);
         client.sendDirectFile(file, "application/html", userId.toString());
@@ -198,22 +199,5 @@ class Collector {
         try (FileWriter sw = new FileWriter(filename)) {
             mustache.execute(new PrintWriter(sw), model).flush();
         }
-    }
-
-    private String markdown2Html(String text) {
-        List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
-
-        Parser parser = Parser
-                .builder()
-                .extensions(extensions)
-                .build();
-
-        Node document = parser.parse(text);
-        HtmlRenderer renderer = HtmlRenderer
-                .builder()
-                .escapeHtml(true)
-                .extensions(extensions)
-                .build();
-        return renderer.render(document);
     }
 }

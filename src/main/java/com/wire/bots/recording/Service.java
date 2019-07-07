@@ -26,8 +26,10 @@ import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 
 public class Service extends Server<Config> {
+    public static Service instance;
     public static void main(String[] args) throws Exception {
-        new Service().run(args);
+        instance = new Service();
+        instance.run(args);
     }
 
     @Override
@@ -41,7 +43,6 @@ public class Service extends Server<Config> {
 
     @Override
     protected void onRun(Config config, Environment env) {
-        Helper.client = getClient();
         env.healthChecks().register("User login", new UserHealthCheck());
     }
 }
