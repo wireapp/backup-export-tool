@@ -26,7 +26,7 @@ import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 
 public class Service extends Server<Config> {
-    static Service instance;
+    public static Service instance;
     public static void main(String[] args) throws Exception {
         instance = new Service();
         instance.run(args);

@@ -89,7 +89,7 @@ public class Collector {
         sender.accent = toColor(record.accent);
         sender.messages.add(message);
 
-        File profile = Cache.getProfile(client, record.senderId);
+        File profile = Cache.getProfile(record.senderId);
         sender.avatar = toUrl(profile);
 
         return sender;
