@@ -21,7 +21,9 @@ import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
+import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 
@@ -30,6 +32,14 @@ public class Service extends Server<Config> {
     public static void main(String[] args) throws Exception {
         instance = new Service();
         instance.run(args);
+    }
+
+    @Override
+    public void initialize(Bootstrap<Config> bootstrap) {
+        super.initialize(bootstrap);
+
+        Application<Config> application = bootstrap.getApplication();
+        instance = (Service) application;
     }
 
     @Override

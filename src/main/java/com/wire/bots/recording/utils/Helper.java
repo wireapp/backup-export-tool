@@ -1,18 +1,25 @@
 package com.wire.bots.recording.utils;
 
+import com.wire.bots.recording.Service;
 import com.wire.bots.recording.model.DBRecord;
+import com.wire.bots.sdk.Configuration;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.assets.Picture;
+import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.AssetKey;
 import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
+import com.wire.bots.sdk.user.LoginClient;
+import com.wire.bots.sdk.user.model.User;
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
+import javax.naming.AuthenticationException;
+import javax.ws.rs.client.Client;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,24 +29,33 @@ import java.util.List;
 import java.util.UUID;
 
 public class Helper {
+    private static API api = null;
 
-    static File getProfile(API client, UUID userId) throws Exception {
+    static File getProfile(UUID userId) {
         File file = avatarFile(userId);
-        com.wire.bots.sdk.server.model.User user = client.getUser(userId);
-        if (user == null) {
-            Logger.warning("getProfile: missing user: %s", userId);
-            return file;
-        }
-
-        if (user.assets == null) {
-            Logger.warning("getProfile: missing assets. User: %s", userId);
-            return file;
-        }
-        for (Asset asset : user.assets) {
-            if (asset.size.equals("preview")) {
-                byte[] image = client.downloadAsset(asset.key, null);
-                saveImage(image, file);
+        try {
+            com.wire.bots.sdk.server.model.User user = getApi().getUser(userId);
+            if (user == null) {
+                Logger.warning("getProfile: missing user: %s", userId);
+                return file;
             }
+
+            if (user.assets == null) {
+                Logger.warning("getProfile: missing assets. User: %s", userId);
+                return file;
+            }
+
+            for (Asset asset : user.assets) {
+                if (asset.size.equals("preview")) {
+                    byte[] image = getApi().downloadAsset(asset.key, null);
+                    saveImage(image, file);
+                }
+            }
+        } catch (AuthenticationException e) {
+            Logger.warning("getProfile: %s %s", userId, e);
+            api = null;
+        } catch (Exception e) {
+            Logger.warning("getProfile: %s %s", userId, e);
         }
         return file;
     }
@@ -74,7 +90,7 @@ public class Helper {
         return renderer.render(document);
     }
 
-    private static File avatarFile(UUID userId) {
+    static File avatarFile(UUID userId) {
         return new File(String.format("avatars/%s.png", userId));
     }
 
@@ -92,5 +108,20 @@ public class Helper {
         AssetKey assetKey = client.uploadAsset(preview);
         preview.setAssetKey(assetKey.key);
         return preview;
+    }
+
+    private static API getApi() throws HttpException, AuthenticationException {
+        if (api != null)
+            return api;
+
+        String email = Configuration.propOrEnv("email", true);
+        String password = Configuration.propOrEnv("password", true);
+
+        Client client = Service.instance.getClient();
+        LoginClient loginClient = new LoginClient(client);
+        User robin = loginClient.login(email, password);
+        String token = robin.getToken();
+        api = new API(client, null, token);
+        return api;
     }
 }
