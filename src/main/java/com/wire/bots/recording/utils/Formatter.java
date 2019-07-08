@@ -1,4 +1,4 @@
-package com.wire.bots.recording;
+package com.wire.bots.recording.utils;
 
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.sdk.WireClient;
@@ -10,11 +10,11 @@ import com.wire.bots.sdk.tools.Logger;
 import java.util.ArrayList;
 import java.util.UUID;
 
-class Formatter {
+public class Formatter {
     private String sender = null;
     private ArrayList<DBRecord> records = new ArrayList<>();
 
-    boolean add(DBRecord record) {
+    public boolean add(DBRecord record) {
         if (sender == null) {
             sender = record.sender;
             records.add(record);
@@ -27,7 +27,7 @@ class Formatter {
         return false;
     }
 
-    void print(WireClient client, String userId) throws Exception {
+    public void print(WireClient client, String userId) throws Exception {
         if (sender == null)
             return;
 

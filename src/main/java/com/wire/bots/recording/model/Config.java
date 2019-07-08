@@ -28,14 +28,6 @@ import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Config extends Configuration {
-    @JsonProperty
-    @NotNull
-    public DB storage;
-
-    public DB getStorage() {
-        return storage;
-    }
-
     @Valid
     @NotNull
     @JsonProperty

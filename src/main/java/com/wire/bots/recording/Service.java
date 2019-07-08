@@ -40,9 +40,4 @@ public class Service extends Server<Config> {
 
         return new MessageHandler(historyDAO);
     }
-
-    @Override
-    protected void onRun(Config config, Environment env) {
-        env.healthChecks().register("User login", new UserHealthCheck());
-    }
 }
