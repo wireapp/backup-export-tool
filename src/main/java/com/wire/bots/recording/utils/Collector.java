@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.UUID;
 
+import static com.wire.bots.recording.utils.Helper.markdown2Html;
+
 public class Collector {
     private static MustacheFactory mf = new DefaultMustacheFactory();
     private final WireClient client;
@@ -64,8 +66,8 @@ public class Collector {
         message.time = toTime(record.timestamp);
 
         if (record.mimeType.equals("txt")) {
-            //message.text = markdown2Html(record.text, true);
-            message.text = record.text;
+            message.text = markdown2Html(record.text, true);
+            //message.text = record.text;
         }
 
         if (record.mimeType.startsWith("image")) {
