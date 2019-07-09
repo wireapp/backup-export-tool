@@ -99,7 +99,8 @@ public class MessageTemplateTest {
                 "        collector.add(newTxtRecord(dejan, DEJAN, friday, \"7\"));\n" +
                 "        collector.add(newTxtRecord(lipis, LIPIS, saturday, \"8\"));\n" +
                 "        collector.add(newImageRecord(lipis, LIPIS, saturday, \"ognjiste2\", \"image/png\"));\n" +
-                "        collector.add(newImageRecord(lipis, LIPIS, saturday, \"small\", \"image/png\")); ```"));
+                "        collector.add(newImageRecord(lipis, LIPIS, saturday, \"small\", \"image/png\"));\n" +
+                "```"));
         collector.add(newTxtRecord(dejan, DEJAN, saturday, "12"));
         collector.add(newTxtRecord(lipis, LIPIS, saturday, "13"));
         collector.add(newImageRecord(dejan, DEJAN, saturday, "ognjiste", "image/png"));

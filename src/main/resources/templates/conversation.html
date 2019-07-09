@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{ title }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       @media print {
         body {
@@ -76,48 +76,50 @@
         white-space: nowrap;
         width: 64px;
       }
-
+      pre {
+        white-space: pre-wrap;
+      }
     </style>
-</head>
-<body>
-<h1>{{ title }}</h1>
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
 
-<table>
-    {{#days}}
-    <tr>
+    <table>
+      {{#days}}
+      <tr>
         <td class="date-td" colspan="3">{{ date }}</td>
-    </tr>
-    {{#senders}}
-    <tr class="sender-row">
+      </tr>
+      {{#senders}}
+      <tr class="sender-row">
         <td class="avatar-td">
-            <div
-                    class="avatar"
-                    style="
+          <div
+            class="avatar"
+            style="
               background-image: url({{ avatar }});
               border-color: {{ accent }};"
-            ></div>
+          ></div>
         </td>
         <td>
-            <div class="name" style="color: {{ accent }}">{{ name }}</div>
-            <table>
-                {{#messages}}
-                <tr>
-                    <td class="message">
-                        {{#text}}
-                        {{{ text }}}
-                        {{/text}}
-                        {{#image}}
-                        <img class="image" src="{{ image }}"/>
-                        {{/image}}
-                    </td>
-                    <td class="time-td">{{ time }}</td>
-                </tr>
-                {{/messages}}
-            </table>
+          <div class="name" style="color: {{ accent }}">{{ name }}</div>
+          <table>
+            {{#messages}}
+            <tr>
+              <td class="message">
+                {{#text}}
+                {{{ text }}}
+                {{/text}}
+                {{#image}}
+                <img class="image" src="{{ image }}" />
+                {{/image}}
+              </td>
+              <td class="time-td">{{ time }}</td>
+            </tr>
+            {{/messages}}
+          </table>
         </td>
-    </tr>
-    {{/senders}}
-    {{/days}}
-</table>
-</body>
+      </tr>
+      {{/senders}}
+      {{/days}}
+    </table>
+  </body>
 </html>
