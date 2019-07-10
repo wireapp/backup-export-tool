@@ -73,7 +73,7 @@ public class Helper {
         return file;
     }
 
-    public static String markdown2Html(String text, Boolean escape) {
+    static String markdown2Html(String text, Boolean escape) {
         List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
 
         Parser parser = Parser
