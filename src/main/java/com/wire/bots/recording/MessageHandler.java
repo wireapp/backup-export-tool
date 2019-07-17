@@ -257,6 +257,7 @@ public class MessageHandler extends MessageHandlerBase {
             try {
                 collector.add(record);
             } catch (Exception e) {
+                e.printStackTrace();
                 Logger.warning("collect: %s", e);
             }
         }

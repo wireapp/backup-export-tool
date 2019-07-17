@@ -6,6 +6,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.*;
 import com.wire.bots.sdk.WireClient;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.net.URLEncoder;
 import java.text.DateFormat;
@@ -67,7 +68,6 @@ public class Collector {
 
         if (record.mimeType.equals("txt")) {
             message.text = markdown2Html(record.text, true);
-            //message.text = record.text;
         }
 
         if (record.mimeType.startsWith("image")) {
@@ -90,11 +90,17 @@ public class Collector {
         sender.senderId = record.senderId;
         sender.accent = toColor(record.accent);
         sender.messages.add(message);
-
-        File profile = Cache.getProfile(record.senderId);
-        sender.avatar = toUrl(profile);
-
+        sender.avatar = getAvatar(record.senderId);
         return sender;
+    }
+
+    @Nullable
+    private String getAvatar(@Nullable UUID senderId) {
+        if (senderId != null) {
+            File profile = Cache.getProfile(senderId);
+            return toUrl(profile);
+        }
+        return null;
     }
 
     private String toColor(int accent) {
