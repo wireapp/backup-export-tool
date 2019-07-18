@@ -146,7 +146,7 @@ public class Collector {
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
         String filename = URLEncoder.encode(convName);
-        String pdfFilename = String.format("pdf/%s.pdf", filename);
+        String pdfFilename = String.format("html/%s.pdf", filename);
         File pdfFile = PdfGenerator.save(pdfFilename, html, baseUrl);
         client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
     }

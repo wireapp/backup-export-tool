@@ -1,5 +1,6 @@
 package com.wire.bots.recording;
 
+import com.waz.model.Messages;
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Conversation;
 import com.wire.bots.recording.model.DBRecord;
@@ -21,7 +22,9 @@ import java.util.UUID;
 public class MessageHandler extends MessageHandlerBase {
     private static final String WELCOME_LABEL = "Recording was enabled.\nAvailable commands:\n" +
             "`/history` - receive previous messages\n" +
-            "`/pdf` - receive previous messages in PDF format";
+            "`/pdf`     - receive previous messages in PDF format" +
+            "`/channel` - publish this conversation";
+
     private final HistoryDAO historyDAO;
 
     MessageHandler(HistoryDAO historyDAO) {
@@ -50,7 +53,6 @@ public class MessageHandler extends MessageHandlerBase {
 
         try {
             Collector collector = collect(client, botId);
-
             for (String userId : userIds) {
                 collector.sendPDF(UUID.fromString(userId), "file:/opt");
             }
@@ -113,12 +115,6 @@ public class MessageHandler extends MessageHandlerBase {
             int timestamp = (int) (new Date().getTime() / 1000);
             if (0 == historyDAO.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent, userId, timestamp))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
-
-            Collector collector = collect(client, botId);
-            Conversation conversation = collector.getConversation("Name");
-            String filename = String.format("html/%s.html", convId);
-            Logger.info("Saving conv into: %s", filename);
-            collector.executeFile(conversation, filename);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -262,6 +258,23 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
+        }
+    }
+
+    @Override
+    public void onEvent(WireClient client, String userId, Messages.GenericMessage genericMessage) {
+        UUID botId = UUID.fromString(client.getId());
+        UUID convId = client.getConversationId();
+
+        Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
+
+        try {
+            Collector collector = collect(client, botId);
+            Conversation conversation = collector.getConversation(client.getConversation().name);
+            String filename = String.format("html/%s.html", convId);
+            collector.executeFile(conversation, filename);
+        } catch (Exception e) {
+            Logger.error("onEvent: %s %s", botId, e);
         }
     }
 

@@ -32,7 +32,10 @@ class Cache {
             File file = Helper.avatarFile(userId);
             if (file.exists())
                 return file;
-            return Helper.getProfile(userId);
+            File profile = Helper.getProfile(userId);
+            if (profile.exists())
+                return profile;
+            return null;
         });
     }
 
