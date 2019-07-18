@@ -28,10 +28,12 @@ public class Collector {
         this.client = client;
     }
 
-    private static String toUrl(File file) {
+    private static String toUrl(File file, String dir) {
         String url = null;
-        if (file != null && file.exists())
-            url = String.format("file://%s", file.getAbsolutePath());
+        if (file != null && file.exists()) {
+            //url = String.format("file://%s", file.getAbsolutePath());
+            url = String.format("/recording/%s/%s", dir, file.getName());
+        }
         return url;
     }
 
@@ -72,7 +74,7 @@ public class Collector {
 
         if (record.mimeType.startsWith("image")) {
             File file = Cache.downloadImage(client, record);
-            message.image = toUrl(file);
+            message.image = toUrl(file, "images");
         }
         return message;
     }
@@ -98,7 +100,7 @@ public class Collector {
     private String getAvatar(@Nullable UUID senderId) {
         if (senderId != null) {
             File profile = Cache.getProfile(senderId);
-            return toUrl(profile);
+            return toUrl(profile, "avatars");
         }
         return null;
     }
@@ -139,13 +141,13 @@ public class Collector {
         return ret;
     }
 
-    public void sendPDF(UUID userId) throws Exception {
+    public void sendPDF(UUID userId, String baseUrl) throws Exception {
         String convName = client.getConversation().name;
         Conversation conversation = getConversation(convName);
         String html = execute(conversation);
         String filename = URLEncoder.encode(convName);
         String pdfFilename = String.format("pdf/%s.pdf", filename);
-        File pdfFile = PdfGenerator.save(pdfFilename, html);
+        File pdfFile = PdfGenerator.save(pdfFilename, html, baseUrl);
         client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
     }
 
@@ -154,8 +156,7 @@ public class Collector {
         Conversation conversation = getConversation(convName);
         String clean = URLEncoder.encode(convName);
         String filename = String.format("html/%s.html", clean);
-        executeFile(conversation, filename);
-        File file = new File(filename);
+        File file = executeFile(conversation, filename);
         client.sendDirectFile(file, "application/html", userId.toString());
     }
 
@@ -172,10 +173,12 @@ public class Collector {
         }
     }
 
-    private void executeFile(Object model, String filename) throws IOException {
-        Mustache mustache = compileTemplate();
-        try (FileWriter sw = new FileWriter(filename)) {
+    public File executeFile(Object model, String filename) throws IOException {
+        File file = new File(filename);
+        try (FileWriter sw = new FileWriter(file)) {
+            Mustache mustache = compileTemplate();
             mustache.execute(new PrintWriter(sw), model).flush();
         }
+        return file;
     }
 }

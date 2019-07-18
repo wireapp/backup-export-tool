@@ -1,6 +1,7 @@
 package com.wire.bots.recording;
 
 import com.wire.bots.recording.DAO.HistoryDAO;
+import com.wire.bots.recording.model.Conversation;
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Formatter;
@@ -51,7 +52,7 @@ public class MessageHandler extends MessageHandlerBase {
             Collector collector = collect(client, botId);
 
             for (String userId : userIds) {
-                collector.sendPDF(UUID.fromString(userId));
+                collector.sendPDF(UUID.fromString(userId), "file:/opt");
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
@@ -70,6 +71,7 @@ public class MessageHandler extends MessageHandlerBase {
         UUID userId = UUID.fromString(msg.getUserId());
         UUID botId = UUID.fromString(client.getId());
         String messageId = msg.getMessageId();
+        UUID convId = client.getConversationId();
 
         Logger.debug("onText. bot: %s, msgId: %s", botId, messageId);
         try {
@@ -89,7 +91,7 @@ public class MessageHandler extends MessageHandlerBase {
             if (cmd.equals("/pdf")) {
                 client.sendDirectText("Generating PDF...", userId.toString());
                 Collector collector = collect(client, botId);
-                collector.sendPDF(userId);
+                collector.sendPDF(userId, "file:/opt");
                 return;
             }
 
@@ -100,12 +102,24 @@ public class MessageHandler extends MessageHandlerBase {
                 return;
             }
 
+            if (cmd.equals("/channel")) {
+                client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
+                return;
+            }
+
             Logger.debug("Inserting text, bot: %s %s", botId, messageId);
 
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
             if (0 == historyDAO.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent, userId, timestamp))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
+
+            Collector collector = collect(client, botId);
+            Conversation conversation = collector.getConversation("Name");
+            String filename = String.format("html/%s.html", convId);
+            Logger.info("Saving conv into: %s", filename);
+            collector.executeFile(conversation, filename);
+
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);

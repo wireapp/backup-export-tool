@@ -127,10 +127,10 @@ public class MessageTemplateTest {
         String html = execute(mustache, conversation);
         assert html != null;
 
-        String pdfFilename = String.format("%s.pdf", conversation.title);
-        PdfGenerator.save(pdfFilename, html);
+        String pdfFilename = String.format("src/test/out/%s.pdf", conversation.title);
+        PdfGenerator.save(pdfFilename, html, "file:src/test/resources");
 
-        File file = new File(String.format("%s.html", conversation.title));
+        File file = new File(String.format("src/test/out/%s.html", conversation.title));
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
             os.write(html.getBytes());
         }

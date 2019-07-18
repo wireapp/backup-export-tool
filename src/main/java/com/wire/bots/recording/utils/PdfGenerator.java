@@ -27,22 +27,30 @@ public class PdfGenerator {
         }
     }
 
-    public static byte[] convert(String html) throws Exception {
+    public static byte[] convert(String html, String baseUrl) throws Exception {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            builder.withHtmlContent(html, "")
-                    .toStream(out)
-                    .run();
+            build(html, baseUrl, out);
             return out.toByteArray();
         }
     }
 
-    public static File save(String filename, String html) throws Exception {
+    public static File save(String filename, String html, String baseUrl) throws Exception {
         File file = new File(filename);
         try (OutputStream out = new FileOutputStream(filename)) {
-            builder.withHtmlContent(html, "")
-                    .toStream(out)
-                    .run();
+            build(html, baseUrl, out);
         }
         return file;
+    }
+
+    private static void build(String html, String baseUrl, OutputStream out) throws Exception {
+        builder
+                .useUriResolver((bu, uri) -> {
+                    if (uri.contains(":"))
+                        return uri.contains(".") ? uri : null;
+                    return bu + uri;
+                })
+                .withHtmlContent(html, baseUrl)
+                .toStream(out)
+                .run();
     }
 }

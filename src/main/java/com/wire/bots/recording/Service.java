@@ -19,9 +19,11 @@ package com.wire.bots.recording;
 
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Config;
+import com.wire.bots.recording.utils.ImagesBundle;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -37,6 +39,11 @@ public class Service extends Server<Config> {
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
         super.initialize(bootstrap);
+
+        bootstrap.addBundle(new AssetsBundle("/recording/assets/"));
+        bootstrap.addBundle(new ImagesBundle("/opt/recording/images", "/recording/images", "images"));
+        bootstrap.addBundle(new ImagesBundle("/opt/recording/avatars", "/recording/avatars", "avatars"));
+        bootstrap.addBundle(new ImagesBundle("/opt/recording/html", "/recording/channel", "channels"));
 
         Application<Config> application = bootstrap.getApplication();
         instance = (Service) application;
