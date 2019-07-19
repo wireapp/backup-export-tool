@@ -8,14 +8,12 @@ import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Formatter;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.models.AttachmentMessage;
-import com.wire.bots.sdk.models.ImageMessage;
-import com.wire.bots.sdk.models.TextMessage;
+import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.NewBot;
+import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -38,7 +36,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onNewConversation(WireClient client) {
+    public void onNewConversation(WireClient client, SystemMessage message) {
         try {
             client.sendText(WELCOME_LABEL);
         } catch (Exception e) {
@@ -47,14 +45,14 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onMemberJoin(WireClient client, ArrayList<String> userIds) {
+    public void onMemberJoin(WireClient client, SystemMessage message) {
         UUID botId = UUID.fromString(client.getId());
-        Logger.debug("onMemberJoin: %s users: %s", botId, userIds);
+        Logger.debug("onMemberJoin: %s users: %s", botId, message.users);
 
         try {
             Collector collector = collect(client, botId);
-            for (String userId : userIds) {
-                collector.sendPDF(UUID.fromString(userId), "file:/opt");
+            for (UUID userId : message.users) {
+                collector.sendPDF(userId, "file:/opt");
             }
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
@@ -62,17 +60,17 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onBotRemoved(String botId) {
+    public void onBotRemoved(UUID botId) {
         Logger.debug("onBotRemoved: %s", botId);
-        if (0 == historyDAO.unsubscribe(UUID.fromString(botId)))
+        if (0 == historyDAO.unsubscribe(botId))
             Logger.warning("Failed to unsubscribe. bot: %s", botId);
     }
 
     @Override
     public void onText(WireClient client, TextMessage msg) {
-        UUID userId = UUID.fromString(msg.getUserId());
+        UUID userId = msg.getUserId();
         UUID botId = UUID.fromString(client.getId());
-        String messageId = msg.getMessageId();
+        UUID messageId = msg.getMessageId();
         UUID convId = client.getConversationId();
 
         Logger.debug("onText. bot: %s, msgId: %s", botId, messageId);
@@ -113,7 +111,7 @@ public class MessageHandler extends MessageHandlerBase {
 
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
-            if (0 == historyDAO.insertTextRecord(botId, messageId, user.name, msg.getText(), user.accent, userId, timestamp))
+            if (0 == historyDAO.insertTextRecord(botId, messageId.toString(), user.name, msg.getText(), user.accent, userId, timestamp))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
 
         } catch (Exception e) {
@@ -123,26 +121,26 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onEditText(WireClient client, TextMessage msg) {
+    public void onEditText(WireClient client, EditedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        String messageId = msg.getMessageId();
-        if (0 == historyDAO.updateTextRecord(botId, messageId, msg.getText()))
+        UUID messageId = msg.getReplacingMessageId();
+        if (0 == historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText()))
             Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
     }
 
     @Override
-    public void onDelete(WireClient client, TextMessage msg) {
+    public void onDelete(WireClient client, DeletedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        String messageId = msg.getMessageId();
-        if (0 == historyDAO.remove(botId, messageId))
+        UUID messageId = msg.getDeletedMessageId();
+        if (0 == historyDAO.remove(botId, messageId.toString()))
             Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
     }
 
     @Override
     public void onImage(WireClient client, ImageMessage msg) {
-        String messageId = msg.getMessageId();
+        UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
-        UUID userId = UUID.fromString(msg.getUserId());
+        UUID userId = msg.getUserId();
 
         Logger.debug("onImage: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                 botId,
@@ -158,7 +156,7 @@ public class MessageHandler extends MessageHandlerBase {
             int timestamp = (int) (new Date().getTime() / 1000);
 
             int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId,
+                    messageId.toString(),
                     user.name,
                     msg.getMimeType(),
                     msg.getAssetKey(),
@@ -182,9 +180,9 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onVideoPreview(WireClient client, ImageMessage msg) {
-        String messageId = msg.getMessageId();
+        UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
-        UUID userId = UUID.fromString(msg.getUserId());
+        UUID userId = msg.getUserId();
 
         Logger.debug("onVideoPreview: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                 botId,
@@ -196,11 +194,11 @@ public class MessageHandler extends MessageHandlerBase {
         );
 
         try {
-            User user = client.getUser(msg.getUserId());
+            User user = client.getUser(msg.getUserId().toString());
             int timestamp = (int) (new Date().getTime() / 1000);
 
             int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId,
+                    messageId.toString(),
                     user.name,
                     msg.getMimeType(),
                     msg.getAssetKey(),
@@ -225,8 +223,8 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        String messageId = msg.getMessageId();
-        UUID userId = UUID.fromString(msg.getUserId());
+        UUID messageId = msg.getMessageId();
+        UUID userId = msg.getUserId();
 
         Logger.debug("onAttachment: %s, name: %s, type: %s, size: %,d KB",
                 botId,
@@ -239,7 +237,7 @@ public class MessageHandler extends MessageHandlerBase {
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
             int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId,
+                    messageId.toString(),
                     user.name,
                     msg.getMimeType(),
                     msg.getAssetKey(),
@@ -262,7 +260,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onEvent(WireClient client, String userId, Messages.GenericMessage genericMessage) {
+    public void onEvent(WireClient client, UUID userId, Messages.GenericMessage genericMessage) {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
 

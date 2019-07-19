@@ -6,7 +6,7 @@
 
     <artifactId>recording-bot</artifactId>
     <groupId>com.wire.bots</groupId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 
     <repositories>
         <repository>
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.wire.bots</groupId>
             <artifactId>lithium</artifactId>
-            <version>2.25.4</version>
+            <version>2.28.3</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>

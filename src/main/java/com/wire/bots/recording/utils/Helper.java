@@ -30,6 +30,7 @@ import java.util.UUID;
 
 public class Helper {
     private static API api = null;
+    public static String baseDir = "";
 
     static File getProfile(UUID userId) {
         File file = avatarFile(userId);
@@ -91,13 +92,13 @@ public class Helper {
     }
 
     static File avatarFile(UUID userId) {
-        return new File(String.format("avatars/%s.png", userId));
+        return new File(String.format("%savatars/%s.png", baseDir, userId));
     }
 
     private static File imageFile(String assetKey, String mimeType) {
         String[] split = mimeType.split("/");
         String extension = split.length == 1 ? split[0] : split[1];
-        String filename = String.format("images/%s.%s", assetKey, extension);
+        String filename = String.format("%simages/%s.%s", baseDir, assetKey, extension);
         return new File(filename);
     }
 

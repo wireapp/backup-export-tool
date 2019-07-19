@@ -6,6 +6,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.model.Conversation;
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.PdfGenerator;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -77,8 +78,11 @@ public class MessageTemplateTest {
         final int friday = 1552683070;
         final int saturday = 1552769470;
 
+        Helper.baseDir = "src/test/resources/recording/";
+        
         TestWireClient client = new TestWireClient();
         Collector collector = new Collector(client);
+        collector.add(newImageRecord(lipis, LIPIS, thursday, "ognjiste2", "image/png"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "1😃👍"));
         collector.add(newTxtRecord(lipis, LIPIS, thursday, "<head>"));
         collector.add(newTxtRecord(dejan, DEJAN, thursday, "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉"));
