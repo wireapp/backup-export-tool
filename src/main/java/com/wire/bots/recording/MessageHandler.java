@@ -167,8 +167,20 @@ public class MessageHandler extends MessageHandlerBase {
     public void onEditText(WireClient client, EditedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.getReplacingMessageId();
-        if (0 == historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText()))
-            Logger.warning("Failed to update a text record. %s, %s", botId, messageId);
+
+        try {
+            historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText());
+        } catch (Exception e) {
+            Logger.warning("Failed to update a text record. %s, %s %s", botId, messageId, e);
+        }
+
+        try {
+            String type = "conversation.otr-message-add.edit-text";
+            String payload = mapper.writeValueAsString(msg);
+            eventsDAO.update(messageId, type, payload);
+        } catch (Exception e) {
+            Logger.error(e.getMessage());
+        }
     }
 
     @Override
@@ -179,11 +191,11 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
 
         UUID convId = client.getConversationId();
-        UUID userId = UUID.fromString(client.getId());
         UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.delete-text";
 
-        persist(convId, senderId, userId, msg.getMessageId(), type, msg);
+        persist(convId, senderId, botId, msg.getMessageId(), type, msg);
+        eventsDAO.delete(msg.getDeletedMessageId());
     }
 
     @Override
@@ -235,9 +247,12 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onVideoPreview(WireClient client, ImageMessage msg) {
+        UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
         UUID userId = msg.getUserId();
+        UUID senderId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-image";
 
         Logger.debug("onVideoPreview: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
                 botId,
@@ -270,6 +285,8 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (0 == insertRecord)
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
+
+            persist(convId, senderId, userId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onVideoPreview: %s %s %s", botId, messageId, e);
         }
@@ -421,6 +438,12 @@ public class MessageHandler extends MessageHandlerBase {
                                 collector.getUserName(userId));
                         collector.addSystem(format, msg.time, event.type);
                     }
+                }
+                break;
+                case "conversation.otr-message-add.edit-text": {
+                    EditedTextMessage message = mapper.readValue(event.payload, EditedTextMessage.class);
+                    message.setText("_edit:_ " + message.getText());
+                    collector.add(message);
                 }
                 break;
                 case "conversation.otr-message-add.delete-text": {

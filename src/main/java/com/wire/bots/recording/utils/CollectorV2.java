@@ -70,12 +70,11 @@ public class CollectorV2 {
         message.text = HelperV2.markdown2Html(event.getText(), true);
         message.time = toTime(event.getTime());
 
-        UUID senderId = event.getUserId();
-        String dateTime = event.getTime();
+        User user = cache.getUser(event.getUserId());
+        Sender sender = sender(user);
+        sender.messages.add(message);
 
-        User user = cache.getUser(senderId);
-        Sender sender = sender(user, message);
-        append(sender, message, dateTime);
+        append(sender, message, event.getTime());
     }
 
     public void add(MessageAssetBase event) throws ParseException {
@@ -96,10 +95,10 @@ public class CollectorV2 {
                 message.text = Helper.markdown2Html(url, false);
             }
 
-            UUID senderId = event.getUserId();
-            User user = cache.getUser(senderId);
+            User user = cache.getUser(event.getUserId());
 
-            Sender sender = sender(user, message);
+            Sender sender = sender(user);
+            sender.messages.add(message);
             append(sender, message, event.getTime());
         }
     }
@@ -109,26 +108,26 @@ public class CollectorV2 {
         message.text = HelperV2.markdown2Html(text, true);
         message.time = toTime(dateTime);
 
-        Sender sender = system(message, type);
+        Sender sender = system(type);
+        sender.messages.add(message);
+
         append(sender, message, dateTime);
     }
 
-    private Sender sender(User user, Message message) {
+    private Sender sender(User user) {
         Sender sender = new Sender();
         sender.senderId = user.id;
         sender.name = user.name;
         sender.accent = toColor(user.accent);
         sender.avatar = getAvatar(user);
-        sender.messages.add(message);
         return sender;
     }
 
-    private Sender system(Message message, String type) {
+    private Sender system(String type) {
         Sender sender = new Sender();
         sender.system = "system";
         sender.senderId = UUID.randomUUID();
         sender.avatar = systemIcon(type);
-        sender.messages.add(message);
         return sender;
     }
 

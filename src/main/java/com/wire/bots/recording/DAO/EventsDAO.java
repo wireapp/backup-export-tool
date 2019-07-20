@@ -21,9 +21,8 @@ public interface EventsDAO {
     @RegisterMapper(EventsResultSetMapper.class)
     Event get(@Bind("messageId") UUID messageId);
 
-    @SqlQuery("SELECT * FROM Recording_Events WHERE conversationId = :conversationId ORDER BY time DESC")
-    @RegisterMapper(EventsResultSetMapper.class)
-    List<Event> listAll(@Bind("conversationId") UUID conversationId);
+    @SqlUpdate("UPDATE Recording_Events SET payload = :payload, type = :type WHERE messageId = :messageId")
+    int update(@Bind("messageId") UUID messageId, @Bind("type") String type, @Bind("payload") String payload);
 
     @SqlQuery("SELECT * FROM Recording_Events WHERE conversationId = :conversationId ORDER BY time ASC")
     @RegisterMapper(EventsResultSetMapper.class)
@@ -32,4 +31,7 @@ public interface EventsDAO {
     @SqlQuery("SELECT DISTINCT conversationId, MAX(time) AS time FROM Recording_Events GROUP BY conversationId ORDER BY MAX(time) DESC, conversationId")
     @RegisterMapper(EventsResultSetMapper.class)
     List<Event> listConversations();
+
+    @SqlUpdate("DELETE FROM Recording_Events WHERE messageId = :messageId")
+    int delete(@Bind("messageId") UUID messageId);
 }
