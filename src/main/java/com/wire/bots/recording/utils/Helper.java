@@ -111,7 +111,7 @@ public class Helper {
         return preview;
     }
 
-    private static API getApi() throws HttpException, AuthenticationException {
+    public static API getApi() throws HttpException, AuthenticationException {
         if (api != null)
             return api;
 

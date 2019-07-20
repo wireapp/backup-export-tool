@@ -1,17 +1,24 @@
 package com.wire.bots.recording.utils;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.models.TextMessage;
 import com.wire.bots.sdk.server.model.User;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CollectorV2 {
+    private static MustacheFactory mf = new DefaultMustacheFactory();
     private final CacheV2 cache;
     private LinkedList<Day> days = new LinkedList<>();
     private String convName;
@@ -60,7 +67,7 @@ public class CollectorV2 {
 
     public void add(TextMessage event) throws ParseException {
         Message message = new Message();
-        message.text = Helper.markdown2Html(event.getText(), true);
+        message.text = HelperV2.markdown2Html(event.getText(), true);
         message.time = toTime(event.getTime());
 
         UUID senderId = event.getUserId();
@@ -99,7 +106,7 @@ public class CollectorV2 {
 
     public void addSystem(String text, String dateTime, String type) throws ParseException {
         Message message = new Message();
-        message.text = Helper.markdown2Html(text, true);
+        message.text = HelperV2.markdown2Html(text, true);
         message.time = toTime(dateTime);
 
         Sender sender = system(message, type);
@@ -127,7 +134,7 @@ public class CollectorV2 {
 
     @Nullable
     private String systemIcon(String type) {
-        final String base = "/legalhold/assets/";
+        final String base = "/recording/assets/";
         switch (type) {
             case "conversation.create":
             case "conversation.member-join":
@@ -170,12 +177,12 @@ public class CollectorV2 {
     }
 
     private String getFilename(File file, String dir) {
-        return String.format("/legalhold/%s/%s", dir, file.getName());
+        return String.format("/recording/%s/%s", dir, file.getName());
     }
 
     private String getAvatar(User user) {
         File file = cache.getProfileImage(user);
-        String ret = String.format("/legalhold/%s/%s", "avatars", file.getName());
+        String ret = String.format("/recording/%s/%s", "avatars", file.getName());
         return file.exists() ? ret : null;
     }
 
@@ -190,6 +197,14 @@ public class CollectorV2 {
         this.convName = convName;
     }
 
+    public String getUserName(UUID userId) {
+        return cache.getUser(userId).name;
+    }
+
+    public CacheV2 getCache() {
+        return cache;
+    }
+
     public static class Conversation {
         LinkedList<Day> days = new LinkedList<>();
         String title;
@@ -199,6 +214,20 @@ public class CollectorV2 {
         }
     }
 
+    private Mustache compileTemplate() {
+        String path = "templates/conversation.html";
+        return mf.compile(path);
+    }
+
+
+    public File executeFile(Object model, String filename) throws IOException {
+        File file = new File(filename);
+        try (FileWriter sw = new FileWriter(file)) {
+            Mustache mustache = compileTemplate();
+            mustache.execute(new PrintWriter(sw), model).flush();
+        }
+        return file;
+    }
     public static class Day {
         String date;
         LinkedList<Sender> senders = new LinkedList<>();
