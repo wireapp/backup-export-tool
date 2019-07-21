@@ -9,16 +9,14 @@ import com.wire.bots.recording.model.Event;
 import com.wire.bots.recording.utils.*;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.Member;
 import com.wire.bots.sdk.server.model.NewBot;
 import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
-import com.wire.bots.sdk.user.API;
 
-import javax.naming.AuthenticationException;
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -32,16 +30,12 @@ public class MessageHandler extends MessageHandlerBase {
 
     private final HistoryDAO historyDAO;
     private final ObjectMapper mapper = new ObjectMapper();
-    private API api;
+    private final CacheV2 cache;
 
     MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO) {
         this.historyDAO = historyDAO;
         this.eventsDAO = eventsDAO;
-        try {
-            this.api = Helper.getApi();
-        } catch (HttpException | AuthenticationException e) {
-            e.printStackTrace();
-        }
+        this.cache = new CacheV2();
     }
 
     @Override
@@ -57,7 +51,7 @@ public class MessageHandler extends MessageHandlerBase {
 
             UUID convId = client.getConversationId();
             UUID userId = UUID.fromString(client.getId());
-            UUID messageId = msg.id;
+            UUID messageId = UUID.randomUUID();
             String type = msg.type;
 
             persist(convId, null, userId, messageId, type, msg);
@@ -71,7 +65,7 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
         UUID userId = UUID.fromString(client.getId());
-        UUID messageId = msg.id != null ? msg.id : UUID.randomUUID();
+        UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
         Logger.debug("onMemberJoin: %s users: %s", botId, msg.users);
@@ -81,21 +75,22 @@ public class MessageHandler extends MessageHandlerBase {
             for (UUID memberId : msg.users) {
                 collector.sendPDF(memberId, "file:/opt");
             }
-
-            //v2
-            persist(convId, null, userId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onMemberJoin: %s %s", botId, e);
         }
+
+        //v2
+        persist(convId, null, userId, messageId, type, msg);
     }
 
     @Override
     public void onMemberLeave(WireClient client, SystemMessage msg) {
         UUID convId = client.getConversationId();
         UUID userId = UUID.fromString(client.getId());
-        UUID messageId = msg.id != null ? msg.id : UUID.randomUUID();
+        UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
+        //v2
         persist(convId, null, userId, messageId, type, msg);
     }
 
@@ -137,10 +132,13 @@ public class MessageHandler extends MessageHandlerBase {
                 return;
             }
 
-            if (cmd.equals("/html")) {
-                client.sendDirectText("Generating HTML...", userId.toString());
-                Collector collector = collect(client, botId);
-                collector.sendHtml(userId);
+            if (cmd.equals("/pdf2")) {
+                client.sendDirectText("Generating PDF...", userId.toString());
+                CollectorV2 collector = collect(convId);
+                String html = collector.execute();
+                String pdfFilename = String.format("html/%s.pdf", convId);
+                File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
+                client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
                 return;
             }
 
@@ -341,9 +339,9 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             CollectorV2 collector = collect(convId);
             collector.setConvName(client.getConversation().name);
-            CollectorV2.Conversation conversation = collector.getConversation();
             String filename = String.format("html/%s.html", convId);
-            collector.executeFile(conversation, filename);
+            File file = collector.executeFile(filename);
+            assert file.exists();
         } catch (Exception e) {
             Logger.error("onEvent: %s %s", botId, e);
         }
@@ -388,7 +386,6 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private CollectorV2 collect(UUID convId) {
-        CacheV2 cache = new CacheV2(api);
         CollectorV2 collector = new CollectorV2(cache);
         List<Event> events = eventsDAO.listAllAsc(convId);
         for (Event event : events) {
@@ -404,7 +401,7 @@ public class MessageHandler extends MessageHandlerBase {
                     SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
                     collector.setConvName(msg.conversation.name);
 
-                    String text = formatConversation(msg.conversation, collector.getCache());
+                    String text = formatConversation(msg, collector.getCache());
                     collector.addSystem(text, msg.time, event.type);
                 }
                 break;
@@ -449,7 +446,7 @@ public class MessageHandler extends MessageHandlerBase {
                 case "conversation.otr-message-add.delete-text": {
                     DeletedTextMessage message = mapper.readValue(event.payload, DeletedTextMessage.class);
                     String userName = collector.getUserName(message.getUserId());
-                    String text = String.format("**%s** deleted some text", userName);
+                    String text = String.format("**%s** deleted something", userName);
                     collector.addSystem(text, message.getTime(), event.type);
                 }
                 break;
@@ -460,12 +457,12 @@ public class MessageHandler extends MessageHandlerBase {
         }
     }
 
-    private String formatConversation(com.wire.bots.sdk.server.model.Conversation conversation, CacheV2 cache) {
+    private String formatConversation(SystemMessage msg, CacheV2 cache) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("**%s** created conversation **%s** with: \n",
-                cache.getUser(conversation.creator).name,
-                conversation.name));
-        for (Member member : conversation.members) {
+        sb.append(String.format("**%s** started recording in **%s** with: \n",
+                cache.getUser(msg.from).name,
+                msg.conversation.name));
+        for (Member member : msg.conversation.members) {
             sb.append(String.format("- **%s** \n", cache.getUser(member.id).name));
         }
         return sb.toString();

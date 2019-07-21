@@ -8,10 +8,7 @@ import com.wire.bots.sdk.models.TextMessage;
 import com.wire.bots.sdk.server.model.User;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -219,14 +216,25 @@ public class CollectorV2 {
     }
 
 
-    public File executeFile(Object model, String filename) throws IOException {
+    public File executeFile(String filename) throws IOException {
         File file = new File(filename);
         try (FileWriter sw = new FileWriter(file)) {
             Mustache mustache = compileTemplate();
-            mustache.execute(new PrintWriter(sw), model).flush();
+            Conversation conversation = getConversation();
+            mustache.execute(new PrintWriter(sw), conversation).flush();
         }
         return file;
     }
+
+    public String execute() throws IOException {
+        Mustache mustache = compileTemplate();
+        try (StringWriter sw = new StringWriter()) {
+            Conversation conversation = getConversation();
+            mustache.execute(new PrintWriter(sw), conversation).flush();
+            return sw.toString();
+        }
+    }
+
     public static class Day {
         String date;
         LinkedList<Sender> senders = new LinkedList<>();
