@@ -1,12 +1,10 @@
 package com.wire.bots.recording.utils;
 
-import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
 
-import javax.naming.AuthenticationException;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,8 +21,8 @@ public class CacheV2 {
 
     public CacheV2() {
         try {
-            this.api = HelperV2.getApi();
-        } catch (HttpException | AuthenticationException e) {
+            api = HelperV2.getApi();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -35,8 +33,13 @@ public class CacheV2 {
                 return HelperV2.downloadAsset(api, message);
             } catch (Exception e) {
                 Logger.warning("Cache.getAssetFile: %s", e);
-                api = getApi();
-                return null;
+                try {
+                    api = HelperV2.getApi();
+                    return HelperV2.downloadAsset(api, message);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getAssetFile: %s", e1);
+                    return null;
+                }
             }
         });
 
@@ -45,23 +48,19 @@ public class CacheV2 {
         return file;
     }
 
-    private API getApi() {
-        try {
-            return HelperV2.getApi();
-        } catch (HttpException | AuthenticationException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     File getProfileImage(User user) {
         File file = profiles.computeIfAbsent(user.id, k -> {
             try {
                 return HelperV2.getProfile(api, user);
             } catch (Exception e) {
                 Logger.warning("Cache.getProfileImage: userId: %s, ex: %s", user.id, e);
-                api = getApi();
-                return null;
+                try {
+                    api = HelperV2.getApi();
+                    return HelperV2.getProfile(api, user);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getProfileImage: userId: %s, ex: %s", user.id, e1);
+                    return null;
+                }
             }
         });
 
@@ -76,8 +75,13 @@ public class CacheV2 {
                 return api.getUser(userId);
             } catch (Exception e) {
                 Logger.warning("Cache.getUser: userId: %s, ex: %s", userId, e);
-                api = getApi();
-                return null;
+                try {
+                    api = HelperV2.getApi();
+                    return api.getUser(userId);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getUser: userId: %s, ex: %s", userId, e1);
+                    return null;
+                }
             }
         });
 

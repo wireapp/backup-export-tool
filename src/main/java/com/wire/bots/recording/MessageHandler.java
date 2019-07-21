@@ -14,6 +14,7 @@ import com.wire.bots.sdk.server.model.Member;
 import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
+import org.apache.http.annotation.Obsolete;
 
 import java.io.File;
 import java.util.Date;
@@ -119,49 +120,17 @@ public class MessageHandler extends MessageHandlerBase {
         UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-text";
 
-        Logger.debug("onText. bot: %s, msgId: %s", botId, messageId);
         try {
             String cmd = msg.getText().toLowerCase().trim();
-            if (cmd.equals("/history")) {
-                Formatter formatter = new Formatter();
-                for (DBRecord record : historyDAO.getRecords(botId)) {
-                    if (!formatter.add(record)) {
-                        formatter.print(client, userId.toString());
-                        formatter.add(record);
-                    }
-                }
-                formatter.print(client, userId.toString());
+            if (command(client, userId, botId, convId, cmd))
                 return;
-            }
 
-            if (cmd.equals("/pdf")) {
-                client.sendDirectText("Generating PDF...", userId.toString());
-                Collector collector = collect(client, botId);
-                collector.sendPDF(userId, "file:/opt");
-                return;
-            }
-
-            if (cmd.equals("/pdf2")) {
-                client.sendDirectText("Generating PDF...", userId.toString());
-                CollectorV2 collector = collect(convId);
-                String html = collector.execute();
-                String pdfFilename = String.format("html/%s.pdf", convId);
-                File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
-                client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
-                return;
-            }
-
-            if (cmd.equals("/channel")) {
-                client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
-                return;
-            }
-
-            Logger.debug("Inserting text, bot: %s %s", botId, messageId);
-
+            // obsolete
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
             if (0 == historyDAO.insertTextRecord(botId, messageId.toString(), user.name, msg.getText(), user.accent, userId, timestamp))
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
+            // obsolete
 
             persist(convId, senderId, userId, messageId, type, msg);
         } catch (Exception e) {
@@ -176,7 +145,9 @@ public class MessageHandler extends MessageHandlerBase {
         UUID messageId = msg.getReplacingMessageId();
 
         try {
+            // obsolete
             historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText());
+            // obsolete
 
             String type = "conversation.otr-message-add.edit-text";
             String payload = mapper.writeValueAsString(msg);
@@ -190,8 +161,11 @@ public class MessageHandler extends MessageHandlerBase {
     public void onDelete(WireClient client, DeletedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.getDeletedMessageId();
+
+        // obsolete
         if (0 == historyDAO.remove(botId, messageId.toString()))
             Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
+        // obsolete
 
         UUID convId = client.getConversationId();
         UUID senderId = msg.getUserId();
@@ -210,16 +184,8 @@ public class MessageHandler extends MessageHandlerBase {
         UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
-        Logger.debug("onImage: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
-                botId,
-                msg.getMimeType(),
-                msg.getSize() / 1024,
-                msg.getHeight(),
-                msg.getWidth(),
-                msg.getTag()
-        );
-
         try {
+            // obsolete
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
 
@@ -241,6 +207,7 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (0 == insertRecord)
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
+            // obsolete
 
             persist(convId, senderId, userId, messageId, type, msg);
         } catch (Exception e) {
@@ -257,16 +224,8 @@ public class MessageHandler extends MessageHandlerBase {
         UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
-        Logger.debug("onVideoPreview: %s type: %s, size: %,d KB, h: %d, w: %d, tag: %s",
-                botId,
-                msg.getMimeType(),
-                msg.getSize() / 1024,
-                msg.getHeight(),
-                msg.getWidth(),
-                msg.getTag()
-        );
-
         try {
+            // obsolete
             User user = client.getUser(msg.getUserId().toString());
             int timestamp = (int) (new Date().getTime() / 1000);
 
@@ -288,6 +247,7 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (0 == insertRecord)
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
+            // obsolete
 
             persist(convId, senderId, userId, messageId, type, msg);
         } catch (Exception e) {
@@ -297,18 +257,15 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
+        UUID convId = client.getConversationId();
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.getMessageId();
         UUID userId = msg.getUserId();
-
-        Logger.debug("onAttachment: %s, name: %s, type: %s, size: %,d KB",
-                botId,
-                msg.getName(),
-                msg.getMimeType(),
-                msg.getSize() / 1024
-        );
+        UUID senderId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-attachment";
 
         try {
+            // obsolete
             User user = client.getUser(userId.toString());
             int timestamp = (int) (new Date().getTime() / 1000);
             int insertRecord = historyDAO.insertAssetRecord(botId,
@@ -329,6 +286,9 @@ public class MessageHandler extends MessageHandlerBase {
 
             if (0 == insertRecord)
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
+            // obsolete
+
+            persist(convId, senderId, userId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
@@ -349,6 +309,43 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             Logger.error("onEvent: %s %s", botId, e);
         }
+    }
+
+    private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
+        switch (cmd) {
+            case "/history": {
+                Formatter formatter = new Formatter();
+                for (DBRecord record : historyDAO.getRecords(botId)) {
+                    if (!formatter.add(record)) {
+                        formatter.print(client, userId.toString());
+                        formatter.add(record);
+                    }
+                }
+                formatter.print(client, userId.toString());
+                return true;
+            }
+            case "/pdf": {
+                client.sendDirectText("Generating PDF...", userId.toString());
+                Collector collector = collect(client, botId);
+                collector.sendPDF(userId, "file:/opt");
+                return true;
+            }
+            case "/pdf2": {
+                client.sendDirectText("Generating PDF...", userId.toString());
+                CollectorV2 collector = collect(convId);
+                String html = collector.execute();
+                String pdfFilename = String.format("html/%s.pdf", convId);
+                File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
+                client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
+                return true;
+            }
+            case "/channel": {
+                client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
+                return true;
+            }
+
+        }
+        return false;
     }
 
     private void persist(UUID convId, UUID senderId, UUID userId, UUID msgId, String type, Object msg)
@@ -376,6 +373,7 @@ public class MessageHandler extends MessageHandlerBase {
         }
     }
 
+    @Obsolete
     private Collector collect(WireClient client, UUID botId) {
         Collector collector = new Collector(client);
         for (DBRecord record : historyDAO.getRecords(botId)) {
