@@ -17,6 +17,7 @@
 
 package com.wire.bots.recording;
 
+import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.recording.utils.ImagesBundle;
@@ -31,6 +32,7 @@ import org.skife.jdbi.v2.DBI;
 
 public class Service extends Server<Config> {
     public static Service instance;
+
     public static void main(String[] args) throws Exception {
         instance = new Service();
         instance.run(args);
@@ -51,10 +53,10 @@ public class Service extends Server<Config> {
 
     @Override
     protected MessageHandlerBase createHandler(Config config, Environment env) {
-        final DBIFactory factory = new DBIFactory();
-        final DBI jdbi = factory.build(environment, config.database, "postgresql");
+        final DBI jdbi = new DBIFactory().build(environment, config.database, "postgresql");
         final HistoryDAO historyDAO = jdbi.onDemand(HistoryDAO.class);
+        final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
 
-        return new MessageHandler(historyDAO);
+        return new MessageHandler(historyDAO, eventsDAO);
     }
 }
