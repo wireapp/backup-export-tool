@@ -11,7 +11,6 @@ import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.Member;
-import com.wire.bots.sdk.server.model.NewBot;
 import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
@@ -23,9 +22,10 @@ import java.util.UUID;
 
 public class MessageHandler extends MessageHandlerBase {
     private final EventsDAO eventsDAO;
-    private static final String WELCOME_LABEL = "Recording was enabled.\nAvailable commands:\n" +
+    private static final String WELCOME_LABEL = "Recording was enabled.\n" +
+            "Available commands:\n" +
             "`/history` - receive previous messages\n" +
-            "`/pdf`     - receive previous messages in PDF format" +
+            "`/pdf`     - receive previous messages in PDF format\n" +
             "`/channel` - publish this conversation";
 
     private final HistoryDAO historyDAO;
@@ -38,10 +38,19 @@ public class MessageHandler extends MessageHandlerBase {
         this.cache = new CacheV2();
     }
 
-    @Override
-    public boolean onNewBot(NewBot newBot) {
-        Logger.debug("onNewBot: bot: %s, user: %s", newBot.id, newBot.origin.id);
-        return true;
+    void warmup() {
+        Logger.info("Warming up...");
+        List<UUID> conversations = eventsDAO.listConversations();
+        for (UUID convId : conversations) {
+            try {
+                String filename = String.format("html/%s.html", convId);
+                CollectorV2 collect = collect(convId);
+                File file = collect.executeFile(filename);
+                Logger.info("warmed up: %s", file.getName());
+            } catch (Exception e) {
+                Logger.error("warmup: %s %s", convId, e);
+            }
+        }
     }
 
     @Override
@@ -168,11 +177,7 @@ public class MessageHandler extends MessageHandlerBase {
 
         try {
             historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText());
-        } catch (Exception e) {
-            Logger.warning("Failed to update a text record. %s, %s %s", botId, messageId, e);
-        }
 
-        try {
             String type = "conversation.otr-message-add.edit-text";
             String payload = mapper.writeValueAsString(msg);
             eventsDAO.update(messageId, type, payload);
@@ -338,7 +343,6 @@ public class MessageHandler extends MessageHandlerBase {
 
         try {
             CollectorV2 collector = collect(convId);
-            collector.setConvName(client.getConversation().name);
             String filename = String.format("html/%s.html", convId);
             File file = collector.executeFile(filename);
             assert file.exists();

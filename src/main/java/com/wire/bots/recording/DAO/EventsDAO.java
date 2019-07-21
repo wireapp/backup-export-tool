@@ -28,9 +28,9 @@ public interface EventsDAO {
     @RegisterMapper(EventsResultSetMapper.class)
     List<Event> listAllAsc(@Bind("conversationId") UUID conversationId);
 
-    @SqlQuery("SELECT DISTINCT conversationId, MAX(time) AS time FROM Recording_Events GROUP BY conversationId ORDER BY MAX(time) DESC, conversationId")
-    @RegisterMapper(EventsResultSetMapper.class)
-    List<Event> listConversations();
+    @SqlQuery("SELECT DISTINCT conversationId FROM recording_events")
+    @RegisterMapper(ConversationIdResultSetMapper.class)
+    List<UUID> listConversations();
 
     @SqlUpdate("DELETE FROM Recording_Events WHERE messageId = :messageId")
     int delete(@Bind("messageId") UUID messageId);

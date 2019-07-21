@@ -33,6 +33,8 @@ import org.skife.jdbi.v2.DBI;
 public class Service extends Server<Config> {
     public static Service instance;
 
+    private MessageHandler messageHandler;
+
     public static void main(String[] args) throws Exception {
         instance = new Service();
         instance.run(args);
@@ -57,6 +59,11 @@ public class Service extends Server<Config> {
         final HistoryDAO historyDAO = jdbi.onDemand(HistoryDAO.class);
         final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
 
-        return new MessageHandler(historyDAO, eventsDAO);
+        messageHandler = new MessageHandler(historyDAO, eventsDAO);
+        return messageHandler;
+    }
+
+    protected void onRun(Config config, Environment env) {
+        messageHandler.warmup();
     }
 }
