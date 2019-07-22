@@ -1,4 +1,4 @@
-package com.wire.bots.recording;
+package com.wire.bots.recording.utils;
 
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.assets.IAsset;

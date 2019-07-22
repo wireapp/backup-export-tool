@@ -2,7 +2,6 @@
 *.iml
 *.lck
 *.log
-*.pdf
 data/
-export.html
+src/test/out
 target/

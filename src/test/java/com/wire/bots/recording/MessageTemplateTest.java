@@ -8,11 +8,7 @@ import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.PdfGenerator;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import com.wire.bots.recording.utils.TestWireClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -137,33 +133,6 @@ public class MessageTemplateTest {
         File file = new File(String.format("src/test/out/%s.html", conversation.title));
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
             os.write(html.getBytes());
-        }
-    }
-
-    //@Test
-    public void test() {
-        try (PDDocument doc = new PDDocument()) {
-            PDFont font = PDType0Font.load(doc, new File("src/main/resources/fonts/NotoEmoji-Regular.ttf"));
-            PDPage page = new PDPage();
-            doc.addPage(page);
-            PDPageContentStream cs = new PDPageContentStream(doc, page);
-            cs.beginText();
-            cs.newLineAtOffset(0, 700);
-            cs.setFont(font, 20);
-            String s = "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉";
-            for (int i = 0; i < s.length() - 1; ++i) {
-                String s1 = new String(new int[]{s.codePointAt(i)}, 0, 1);
-                try {
-                    cs.showText(s1);
-                } catch (IllegalArgumentException ex) {
-                    //cs.showText(" ");
-                }
-            }
-            cs.endText();
-            cs.close();
-            doc.save(new File("emojis.pdf"));
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

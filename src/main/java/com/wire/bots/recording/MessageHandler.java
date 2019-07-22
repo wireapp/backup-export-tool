@@ -441,7 +441,7 @@ public class MessageHandler extends MessageHandlerBase {
                 break;
                 case "conversation.otr-message-add.edit-text": {
                     EditedTextMessage message = mapper.readValue(event.payload, EditedTextMessage.class);
-                    message.setText("_edit:_ " + message.getText());
+                    message.setText(message.getText() + "*");
                     collector.add(message);
                 }
                 break;

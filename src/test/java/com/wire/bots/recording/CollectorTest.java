@@ -3,6 +3,7 @@ package com.wire.bots.recording;
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.model.Day;
 import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.TestWireClient;
 import org.junit.Test;
 
 import java.util.LinkedList;
