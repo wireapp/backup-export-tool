@@ -7,6 +7,7 @@ import com.wire.bots.recording.utils.CollectorV2;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.recording.utils.TestCacheV2;
 import com.wire.bots.sdk.models.MessageAssetBase;
+import com.wire.bots.sdk.models.ReactionMessage;
 import com.wire.bots.sdk.models.TextMessage;
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,6 +22,14 @@ public class ConversationTemplateTest {
     private static TextMessage txt(UUID userId, String time, String text) {
         TextMessage ret = new TextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setText(text);
+        ret.setTime(time);
+        return ret;
+    }
+
+    private static ReactionMessage like(UUID userId, String time, UUID msgId) {
+        ReactionMessage ret = new ReactionMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+        ret.setReactionMessageId(msgId);
+        ret.setEmoji("❤️");
         ret.setTime(time);
         return ret;
     }
@@ -66,7 +75,9 @@ public class ConversationTemplateTest {
         collector.addSystem("**Dejo** started recording in **Recording test** with:\n- **Lipis**", thursday, "conversation.create");
         collector.addSystem("**Dejo** added **Lipis**", thursday, "conversation.member-join");
         collector.add(txt(dejan, thursday, "Privet! Kak dela? 😃👍"));
-        collector.add(txt(lipis, thursday, "Normalna"));
+        TextMessage normalna = txt(lipis, thursday, "Normalna");
+        collector.add(normalna);
+        collector.add(like(dejan, thursday, normalna.getMessageId()));
         collector.add(txt(lipis, thursday, "<head>"));
         collector.add(txt(dejan, thursday, "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉"));
         collector.add(txt(dejan, thursday, "4"));

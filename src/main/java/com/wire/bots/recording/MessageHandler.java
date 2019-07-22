@@ -295,6 +295,17 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
+    public void onReaction(WireClient client, ReactionMessage msg) {
+        UUID convId = client.getConversationId();
+        UUID messageId = msg.getMessageId();
+        UUID userId = msg.getUserId();
+        UUID senderId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-reaction";
+
+        persist(convId, senderId, userId, messageId, type, msg);
+    }
+
+    @Override
     public void onEvent(WireClient client, UUID userId, Messages.GenericMessage genericMessage) {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
@@ -450,6 +461,11 @@ public class MessageHandler extends MessageHandlerBase {
                     String userName = collector.getUserName(message.getUserId());
                     String text = String.format("**%s** deleted something", userName);
                     collector.addSystem(text, message.getTime(), event.type);
+                }
+                break;
+                case "conversation.otr-message-add.new-reaction": {
+                    ReactionMessage message = mapper.readValue(event.payload, ReactionMessage.class);
+                    collector.add(message);
                 }
                 break;
             }

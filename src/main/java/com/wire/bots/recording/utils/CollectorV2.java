@@ -4,6 +4,7 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.sdk.models.MessageAssetBase;
+import com.wire.bots.sdk.models.ReactionMessage;
 import com.wire.bots.sdk.models.TextMessage;
 import com.wire.bots.sdk.server.model.User;
 
@@ -64,6 +65,7 @@ public class CollectorV2 {
 
     public void add(TextMessage event) throws ParseException {
         Message message = new Message();
+        message.id = event.getMessageId();
         message.text = HelperV2.markdown2Html(event.getText(), true);
         message.time = toTime(event.getTime());
 
@@ -78,6 +80,7 @@ public class CollectorV2 {
         File file = cache.getAssetFile(event);
         if (file.exists()) {
             Message message = new Message();
+            message.id = event.getMessageId();
             message.time = toTime(event.getTime());
 
             String assetFilename = getFilename(file, "images");
@@ -97,6 +100,23 @@ public class CollectorV2 {
             Sender sender = sender(user);
             sender.messages.add(message);
             append(sender, message, event.getTime());
+        }
+    }
+
+    public void add(ReactionMessage event) {
+        String userName = getUserName(event.getUserId());
+        UUID reactionMessageId = event.getReactionMessageId();
+        String emoji = event.getEmoji();
+        for (Day day : days) {
+            for (Sender sender : day.senders) {
+                for (Message msg : sender.messages) {
+                    if (Objects.equals(msg.id, reactionMessageId)) {
+                        if (msg.likes == null)
+                            msg.likes = emoji;
+                        msg.likes = String.format("%s %s ", msg.likes, userName);
+                    }
+                }
+            }
         }
     }
 
@@ -144,7 +164,6 @@ public class CollectorV2 {
                 return base + "icons8-end-call-30.png";
             case "conversation.otr-message-add.delete-text":
                 return base + "icons8-delete.png";
-
             default:
                 return null;
         }
@@ -245,9 +264,11 @@ public class CollectorV2 {
     }
 
     public static class Message {
+        UUID id;
         String text;
         String image;
         String time;
+        String likes;
     }
 
     public static class Sender {
