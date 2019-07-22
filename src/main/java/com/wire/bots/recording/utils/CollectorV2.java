@@ -105,16 +105,24 @@ public class CollectorV2 {
     }
 
     public void add(ReactionMessage event) {
-        String userName = getUserName(event.getUserId());
+        UUID userId = event.getUserId();
         UUID reactionMessageId = event.getReactionMessageId();
         String emoji = event.getEmoji();
         for (Day day : days) {
             for (Sender sender : day.senders) {
                 for (Message msg : sender.messages) {
                     if (Objects.equals(msg.id, reactionMessageId)) {
-                        if (msg.likes == null)
-                            msg.likes = "";
-                        msg.likes = String.format("%s %s ", msg.likes, userName);
+                        if (emoji.isEmpty())
+                            msg.likers.remove(userId);
+                        else
+                            msg.likers.add(userId);
+
+                        ArrayList<String> names = new ArrayList<>();
+                        for (UUID id : msg.likers)
+                            names.add(getUserName(id));
+
+                        msg.likes = String.join(", ", names);
+                        return;
                     }
                 }
             }
@@ -270,6 +278,7 @@ public class CollectorV2 {
         String image;
         String time;
         String likes;
+        HashSet<UUID> likers = new HashSet<>();
     }
 
     public static class Sender {

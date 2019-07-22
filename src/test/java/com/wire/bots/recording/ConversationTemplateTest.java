@@ -26,10 +26,10 @@ public class ConversationTemplateTest {
         return ret;
     }
 
-    private static ReactionMessage like(UUID userId, String time, UUID msgId) {
+    private static ReactionMessage like(UUID userId, String emoji, String time, UUID msgId) {
         ReactionMessage ret = new ReactionMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setReactionMessageId(msgId);
-        ret.setEmoji("❤️");
+        ret.setEmoji(emoji);
         ret.setTime(time);
         return ret;
     }
@@ -77,11 +77,17 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, thursday, "Privet! Kak dela? 😃👍"));
         TextMessage normalna = txt(lipis, thursday, "Normalna");
         collector.add(normalna);
-        collector.add(like(dejan, thursday, normalna.getMessageId()));
+        collector.add(like(dejan, "❤️", thursday, normalna.getMessageId()));
+        collector.add(like(lipis, "❤️", thursday, normalna.getMessageId()));
+
         collector.add(txt(lipis, thursday, "<head>"));
         collector.add(txt(dejan, thursday, "😃🐠😴🤧✍️👉👨‍🚒👨‍🏫👩‍👦👨‍👧‍👦🐥🐧🐾🐁🐕🎋🐲🐉"));
         collector.add(txt(dejan, thursday, "4"));
-        collector.add(txt(lipis, thursday, "5 👍"));
+        TextMessage five = txt(lipis, thursday, "5 👍");
+        collector.add(five);
+        collector.add(like(dejan, "❤️", thursday, five.getMessageId()));
+        collector.add(like(dejan, "", thursday, five.getMessageId()));
+
         collector.add(txt(lipis, thursday, "😃Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco _laboris_ nisi ut aliquip ex ea commodo consequat. " +
