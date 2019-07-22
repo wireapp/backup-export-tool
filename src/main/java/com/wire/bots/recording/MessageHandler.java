@@ -142,16 +142,15 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onEditText(WireClient client, EditedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        UUID messageId = msg.getReplacingMessageId();
 
         try {
             // obsolete
-            historyDAO.updateTextRecord(botId, messageId.toString(), msg.getText());
+            historyDAO.updateTextRecord(botId, msg.getReplacingMessageId().toString(), msg.getText());
             // obsolete
 
             String type = "conversation.otr-message-add.edit-text";
             String payload = mapper.writeValueAsString(msg);
-            eventsDAO.update(messageId, type, payload);
+            eventsDAO.update(msg.getReplacingMessageId(), type, payload);
         } catch (Exception e) {
             Logger.error(e.getMessage());
         }
@@ -452,8 +451,8 @@ public class MessageHandler extends MessageHandlerBase {
                 break;
                 case "conversation.otr-message-add.edit-text": {
                     EditedTextMessage message = mapper.readValue(event.payload, EditedTextMessage.class);
-                    message.setText(message.getText() + "*");
-                    collector.add(message);
+                    message.setText(message.getText());
+                    collector.addEdit(message);
                 }
                 break;
                 case "conversation.otr-message-add.delete-text": {

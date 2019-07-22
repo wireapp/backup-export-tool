@@ -6,6 +6,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.recording.utils.CollectorV2;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.recording.utils.TestCacheV2;
+import com.wire.bots.sdk.models.EditedTextMessage;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.models.ReactionMessage;
 import com.wire.bots.sdk.models.TextMessage;
@@ -30,6 +31,13 @@ public class ConversationTemplateTest {
         ReactionMessage ret = new ReactionMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setReactionMessageId(msgId);
         ret.setEmoji(emoji);
+        ret.setTime(time);
+        return ret;
+    }
+
+    private static EditedTextMessage edit(UUID userId, String edit, String time) {
+        EditedTextMessage ret = new EditedTextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+        ret.setText(edit);
         ret.setTime(time);
         return ret;
     }
@@ -87,6 +95,7 @@ public class ConversationTemplateTest {
         collector.add(five);
         collector.add(like(dejan, "❤️", thursday, five.getMessageId()));
         collector.add(like(dejan, "", thursday, five.getMessageId()));
+        collector.addEdit(edit(dejan, "This was an edit", thursday));
 
         collector.add(txt(lipis, thursday, "😃Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +

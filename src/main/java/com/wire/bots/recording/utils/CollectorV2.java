@@ -3,6 +3,7 @@ package com.wire.bots.recording.utils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.wire.bots.sdk.models.EditedTextMessage;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.models.ReactionMessage;
 import com.wire.bots.sdk.models.TextMessage;
@@ -52,19 +53,19 @@ public class CollectorV2 {
         }
     }
 
-    static String toTime(String timestamp) throws ParseException {
+    private static String toTime(String timestamp) throws ParseException {
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp);
         DateFormat df = new SimpleDateFormat("HH:mm");
         return df.format(date);
     }
 
-    static String toDate(String timestamp) throws ParseException {
+    private static String toDate(String timestamp) throws ParseException {
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp);
         DateFormat df = new SimpleDateFormat("dd MMM, yyyy");
         return df.format(date);
     }
 
-    public void add(TextMessage event) throws ParseException {
+    public Sender add(TextMessage event) throws ParseException {
         Message message = new Message();
         message.id = event.getMessageId();
         message.text = HelperV2.markdown2Html(event.getText(), true);
@@ -74,34 +75,39 @@ public class CollectorV2 {
         Sender sender = sender(user);
         sender.messages.add(message);
 
-        append(sender, message, event.getTime());
+        return append(sender, message, event.getTime());
     }
 
-    public void add(MessageAssetBase event) throws ParseException {
+    public Sender addEdit(EditedTextMessage event) throws ParseException {
+        Sender sender = add(event);
+        sender.name += " ✎️";
+        return sender;
+    }
+
+    public Sender add(MessageAssetBase event) throws ParseException {
         File file = cache.getAssetFile(event);
-        if (file.exists()) {
-            Message message = new Message();
-            message.id = event.getMessageId();
-            message.time = toTime(event.getTime());
+        Message message = new Message();
+        message.id = event.getMessageId();
+        message.time = toTime(event.getTime());
 
-            String assetFilename = getFilename(file, "images");
+        String assetFilename = getFilename(file);
 
-            String mimeType = event.getMimeType();
-            if (mimeType.startsWith("image")) {
-                message.image = assetFilename;
-            } else {
-                String url = String.format("<a href=\"%s\">%s</a>",
-                        assetFilename,
-                        event.getName());
-                message.text = Helper.markdown2Html(url, false);
-            }
-
-            User user = cache.getUser(event.getUserId());
-
-            Sender sender = sender(user);
-            sender.messages.add(message);
-            append(sender, message, event.getTime());
+        String mimeType = event.getMimeType();
+        if (mimeType.startsWith("image")) {
+            message.image = assetFilename;
+        } else {
+            String url = String.format("<a href=\"%s\">%s</a>",
+                    assetFilename,
+                    event.getName());
+            message.text = Helper.markdown2Html(url, false);
         }
+
+        User user = cache.getUser(event.getUserId());
+
+        Sender sender = sender(user);
+        sender.messages.add(message);
+
+        return append(sender, message, event.getTime());
     }
 
     public void add(ReactionMessage event) {
@@ -178,30 +184,33 @@ public class CollectorV2 {
         }
     }
 
-    private void append(Sender sender, Message message, String dateTime) throws ParseException {
+    private Sender append(Sender sender, Message message, String dateTime) throws ParseException {
         Day day = newDay(sender, dateTime);
 
         if (days.isEmpty()) {
             days.add(day);
-            return;
+            return days.getLast().senders.getLast();
         }
 
         Day lastDay = days.getLast();
+        Sender lastSender = lastDay.senders.getLast();
+
         if (!lastDay.equals(day)) {
             days.add(day);
-            return;
+            return days.getLast().senders.getLast();
         }
 
-        Sender lastSender = lastDay.senders.getLast();
         if (lastSender.equals(sender)) {
             lastSender.messages.add(message);
         } else {
             lastDay.senders.add(sender);
         }
+
+        return days.getLast().senders.getLast();
     }
 
-    private String getFilename(File file, String dir) {
-        return String.format("/recording/%s/%s", dir, file.getName());
+    private String getFilename(File file) {
+        return String.format("/recording/%s/%s", "images", file.getName());
     }
 
     private String getAvatar(User user) {
