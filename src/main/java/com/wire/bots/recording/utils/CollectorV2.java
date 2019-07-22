@@ -112,7 +112,7 @@ public class CollectorV2 {
                 for (Message msg : sender.messages) {
                     if (Objects.equals(msg.id, reactionMessageId)) {
                         if (msg.likes == null)
-                            msg.likes = emoji;
+                            msg.likes = "";
                         msg.likes = String.format("%s %s ", msg.likes, userName);
                     }
                 }
