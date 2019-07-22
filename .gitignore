@@ -1,4 +1,7 @@
+.classpath
 .idea/
+.project
+.settings/
 *.iml
 *.lck
 *.log
