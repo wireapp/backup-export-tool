@@ -17,6 +17,7 @@
 
 package com.wire.bots.recording;
 
+import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Config;
@@ -58,8 +59,9 @@ public class Service extends Server<Config> {
         final DBI jdbi = new DBIFactory().build(environment, config.database, "postgresql");
         final HistoryDAO historyDAO = jdbi.onDemand(HistoryDAO.class);
         final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
+        final ChannelsDAO channelsDAO = jdbi.onDemand(ChannelsDAO.class);
 
-        messageHandler = new MessageHandler(historyDAO, eventsDAO);
+        messageHandler = new MessageHandler(historyDAO, eventsDAO, channelsDAO);
         return messageHandler;
     }
 

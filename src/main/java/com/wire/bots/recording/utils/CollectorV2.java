@@ -80,7 +80,7 @@ public class CollectorV2 {
 
     public Sender addEdit(EditedTextMessage event) throws ParseException {
         Sender sender = add(event);
-        sender.name += " ✎️";
+        sender.name += " ✏️";
         return sender;
     }
 

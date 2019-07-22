@@ -2,6 +2,7 @@ package com.wire.bots.recording;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.waz.model.Messages;
+import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.DBRecord;
@@ -27,21 +28,25 @@ public class MessageHandler extends MessageHandlerBase {
             "Available commands:\n" +
             "`/history` - receive previous messages\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
-            "`/channel` - publish this conversation";
+            "`/pdf2`    - receive previous messages in PDF format\n" +
+            "`/channel` - publish this conversation\n" +
+            "`/private` - stop publishing this conversation";
+    private final ChannelsDAO channelsDAO;
 
     private final HistoryDAO historyDAO;
     private final ObjectMapper mapper = new ObjectMapper();
     private final CacheV2 cache;
 
-    MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO) {
+    MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO, ChannelsDAO channelsDAO) {
         this.historyDAO = historyDAO;
         this.eventsDAO = eventsDAO;
+        this.channelsDAO = channelsDAO;
         this.cache = new CacheV2();
     }
 
     void warmup() {
         Logger.info("Warming up...");
-        List<UUID> conversations = eventsDAO.listConversations();
+        List<UUID> conversations = channelsDAO.listConversations();
         for (UUID convId : conversations) {
             try {
                 String filename = String.format("html/%s.html", convId);
@@ -309,13 +314,15 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
 
-        Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
-
         try {
-            CollectorV2 collector = collect(convId);
-            String filename = String.format("html/%s.html", convId);
-            File file = collector.executeFile(filename);
-            assert file.exists();
+            if (null != channelsDAO.get(convId)) {
+                Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
+
+                CollectorV2 collector = collect(convId);
+                String filename = String.format("html/%s.html", convId);
+                File file = collector.executeFile(filename);
+                assert file.exists();
+            }
         } catch (Exception e) {
             Logger.error("onEvent: %s %s", botId, e);
         }
@@ -350,7 +357,15 @@ public class MessageHandler extends MessageHandlerBase {
                 return true;
             }
             case "/channel": {
+                channelsDAO.insert(convId);
                 client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
+                return true;
+            }
+            case "/private": {
+                channelsDAO.delete(convId);
+                String filename = String.format("html/%s.html", convId);
+                boolean delete = new File(filename).delete();
+                client.sendText(String.format("%s deleted: %s", filename, delete));
                 return true;
             }
 

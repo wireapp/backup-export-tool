@@ -18,8 +18,8 @@ public class TestCacheV2 extends CacheV2 {
         ret.id = userId;
 
         if (userId.equals(ConversationTemplateTest.dejan)) {
-            ret.name = "Dejo";
-            ret.accent = 3;
+            ret.name = "Dejan";
+            ret.accent = 7;
         } else {
             ret.name = "Lipis";
             ret.accent = 1;

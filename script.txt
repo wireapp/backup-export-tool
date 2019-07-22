@@ -27,3 +27,7 @@ CREATE TABLE Recording_Events (
  payload VARCHAR NOT NULL,
  time TIMESTAMP NOT NULL
 );
+
+CREATE TABLE Recording_Channels (
+ conversationId UUID PRIMARY KEY
+);
