@@ -100,7 +100,14 @@
         vertical-align: middle;
       }
 
+      .likes {
+        color: #FB0807;
+      }
 
+      .likes::before {
+        content: '♥';
+        margin-right: 4px;
+      }
     </style>
 </head>
 <body>
@@ -131,7 +138,7 @@
                         {{#image}}
                         <img class="image" src="{{ image }}"/>
                         {{/image}}
-                        <div class="likes" style="color: red;font-size: 12px">{{ likes }}</div>
+                        <div class="likes">{{ likes }}</div>
                     </td>
                     <td class="time-td">{{ time }}</td>
                 </tr>
