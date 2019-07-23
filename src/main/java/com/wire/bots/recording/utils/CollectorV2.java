@@ -168,6 +168,7 @@ public class CollectorV2 {
         final String base = "/recording/assets/";
         switch (type) {
             case "conversation.create":
+                return base + "icons8-record-48.png";
             case "conversation.member-join":
                 return base + "icons8-plus-24.png";
             case "conversation.member-leave":
@@ -179,6 +180,8 @@ public class CollectorV2 {
                 return base + "icons8-end-call-30.png";
             case "conversation.otr-message-add.delete-text":
                 return base + "icons8-delete.png";
+            case "conversation.member-leave.bot-removed":
+                return base + "icons8-stop-squared-48.png";
             default:
                 return null;
         }
