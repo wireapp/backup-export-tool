@@ -64,21 +64,53 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             client.sendText(WELCOME_LABEL);
 
-            UUID convId = client.getConversationId();
+            UUID convId = msg.convId;
             UUID botId = UUID.fromString(client.getId());
             UUID messageId = UUID.randomUUID();
             String type = msg.type;
 
             persist(convId, null, botId, messageId, type, msg);
+
+            generateHtml(botId, convId);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
     }
 
     @Override
+    public void onConversationRename(WireClient client, SystemMessage msg) {
+        UUID convId = msg.convId;
+        UUID botId = UUID.fromString(client.getId());
+        UUID messageId = UUID.randomUUID();
+        String type = msg.type;
+
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
+    }
+
+    @Override
+    public void onBotRemoved(UUID botId, SystemMessage msg) {
+        // obsolete
+        Logger.debug("onBotRemoved: %s", botId);
+        if (0 == historyDAO.unsubscribe(botId))
+            Logger.warning("Failed to unsubscribe. bot: %s", botId);
+        // obsolete
+
+        UUID convId = msg.convId;
+        UUID messageId = UUID.randomUUID();
+        String type = "conversation.member-leave.bot-removed";
+
+        //v2
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
+    }
+
+    @Override
     public void onMemberJoin(WireClient client, SystemMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        UUID convId = client.getConversationId();
+        UUID convId = msg.convId;
         UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
@@ -99,31 +131,13 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onMemberLeave(WireClient client, SystemMessage msg) {
-        UUID convId = client.getConversationId();
+        UUID convId = msg.convId;
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
         //v2
         persist(convId, null, botId, messageId, type, msg);
-    }
-
-    @Override
-    public void onBotRemoved(UUID botId, SystemMessage msg) {
-        // obsolete
-        Logger.debug("onBotRemoved: %s", botId);
-        if (0 == historyDAO.unsubscribe(botId))
-            Logger.warning("Failed to unsubscribe. bot: %s", botId);
-        // obsolete
-
-        UUID convId = msg.convId;
-        UUID messageId = UUID.randomUUID();
-        String type = "conversation.member-leave.bot-removed";
-
-        //v2
-        persist(convId, null, botId, messageId, type, msg);
-
-        generateHtml(botId, convId);
     }
 
     @Override
@@ -439,6 +453,18 @@ public class MessageHandler extends MessageHandlerBase {
                     collector.setConvName(msg.conversation.name);
 
                     String text = formatConversation(msg, collector.getCache());
+                    collector.addSystem(text, msg.time, event.type);
+                }
+                break;
+                case "conversation.rename": {
+                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
+                    String convName = msg.conversation.name;
+                    collector.setConvName(convName);
+
+                    String text = String.format("**%s** %s **%s**",
+                            collector.getUserName(msg.from),
+                            "renamed conversation",
+                            convName);
                     collector.addSystem(text, msg.time, event.type);
                 }
                 break;
