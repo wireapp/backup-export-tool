@@ -7,41 +7,44 @@ import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.model.Event;
-import com.wire.bots.recording.utils.*;
+import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.Formatter;
+import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
-import com.wire.bots.sdk.server.model.Member;
 import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
+import com.wire.bots.sdk.tools.Util;
 import org.apache.http.annotation.Obsolete;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public class MessageHandler extends MessageHandlerBase {
-    private final EventsDAO eventsDAO;
+    private final ObjectMapper mapper = new ObjectMapper();
+
     private static final String WELCOME_LABEL = "Recording was enabled.\n" +
             "Available commands:\n" +
             "`/history` - receive previous messages\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
-            "`/pdf2`    - receive previous messages in PDF format\n" +
             "`/channel` - publish this conversation\n" +
             "`/private` - stop publishing this conversation";
-    private final ChannelsDAO channelsDAO;
 
+    private final ChannelsDAO channelsDAO;
+    private final EventsDAO eventsDAO;
     private final HistoryDAO historyDAO;
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final CacheV2 cache;
+
+    private final EventProcessor eventProcessor = new EventProcessor();
 
     MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO, ChannelsDAO channelsDAO) {
         this.historyDAO = historyDAO;
         this.eventsDAO = eventsDAO;
         this.channelsDAO = channelsDAO;
-        this.cache = new CacheV2();
     }
 
     void warmup() {
@@ -50,8 +53,10 @@ public class MessageHandler extends MessageHandlerBase {
         for (UUID convId : conversations) {
             try {
                 String filename = String.format("html/%s.html", convId);
-                CollectorV2 collect = collect(convId);
-                File file = collect.executeFile(filename);
+                List<Event> events = eventsDAO.listAllAsc(convId);
+
+                File file = eventProcessor.saveHtml(events, filename);
+
                 Logger.info("warmed up: %s", file.getName());
             } catch (Exception e) {
                 Logger.error("warmup: %s %s", convId, e);
@@ -342,9 +347,10 @@ public class MessageHandler extends MessageHandlerBase {
     private void generateHtml(UUID botId, UUID convId) {
         try {
             if (null != channelsDAO.get(convId)) {
-                CollectorV2 collector = collect(convId);
+                List<Event> events = eventsDAO.listAllAsc(convId);
                 String filename = String.format("html/%s.html", convId);
-                File file = collector.executeFile(filename);
+
+                File file = eventProcessor.saveHtml(events, filename);
                 assert file.exists();
             }
         } catch (Exception e) {
@@ -365,17 +371,22 @@ public class MessageHandler extends MessageHandlerBase {
                 formatter.print(client, userId.toString());
                 return true;
             }
-            case "/pdf": {
+            case "/pdf2": {
                 client.sendDirectText("Generating PDF...", userId.toString());
                 Collector collector = collect(client, botId);
                 collector.sendPDF(userId, "file:/opt");
                 return true;
             }
-            case "/pdf2": {
+            case "/pdf": {
                 client.sendDirectText("Generating PDF...", userId.toString());
-                CollectorV2 collector = collect(convId);
-                String html = collector.execute();
-                String pdfFilename = String.format("html/%s.pdf", convId);
+                String filename = String.format("html/%s.html", convId);
+                List<Event> events = eventsDAO.listAllAsc(convId);
+
+                File file = eventProcessor.saveHtml(events, filename);
+                String html = Util.readFile(file);
+
+                String convName = client.getConversation().name;
+                String pdfFilename = String.format("html/%s.pdf", URLEncoder.encode(convName, "UTF-8"));
                 File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
                 client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
                 return true;
@@ -434,113 +445,5 @@ public class MessageHandler extends MessageHandlerBase {
             }
         }
         return collector;
-    }
-
-    private CollectorV2 collect(UUID convId) {
-        CollectorV2 collector = new CollectorV2(cache);
-        List<Event> events = eventsDAO.listAllAsc(convId);
-        for (Event event : events) {
-            add(collector, event);
-        }
-        return collector;
-    }
-
-    private void add(CollectorV2 collector, Event event) {
-        try {
-            switch (event.type) {
-                case "conversation.create": {
-                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
-                    collector.setConvName(msg.conversation.name);
-
-                    String text = formatConversation(msg, collector.getCache());
-                    collector.addSystem(text, msg.time, event.type);
-                }
-                break;
-                case "conversation.rename": {
-                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
-                    String convName = msg.conversation.name;
-                    collector.setConvName(convName);
-
-                    String text = String.format("**%s** %s **%s**",
-                            collector.getUserName(msg.from),
-                            "renamed conversation",
-                            convName);
-                    collector.addSystem(text, msg.time, event.type);
-                }
-                break;
-                case "conversation.otr-message-add.new-text": {
-                    TextMessage message = mapper.readValue(event.payload, TextMessage.class);
-                    collector.add(message);
-                }
-                break;
-                case "conversation.otr-message-add.new-image": {
-                    ImageMessage message = mapper.readValue(event.payload, ImageMessage.class);
-                    collector.add(message);
-                }
-                break;
-                case "conversation.member-join": {
-                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
-                    for (UUID userId : msg.users) {
-                        String format = String.format("**%s** %s **%s**",
-                                collector.getUserName(msg.from),
-                                "added",
-                                collector.getUserName(userId));
-                        collector.addSystem(format, msg.time, event.type);
-                    }
-                }
-                break;
-                case "conversation.member-leave": {
-                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
-                    for (UUID userId : msg.users) {
-                        String format = String.format("**%s** %s **%s**",
-                                collector.getUserName(msg.from),
-                                "removed",
-                                collector.getUserName(userId));
-                        collector.addSystem(format, msg.time, event.type);
-                    }
-                }
-                break;
-                case "conversation.member-leave.bot-removed": {
-                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
-                    String format = String.format("**%s** %s",
-                            collector.getUserName(msg.from),
-                            "stopped recording");
-                    collector.addSystem(format, msg.time, event.type);
-                }
-                break;
-                case "conversation.otr-message-add.edit-text": {
-                    EditedTextMessage message = mapper.readValue(event.payload, EditedTextMessage.class);
-                    message.setText(message.getText());
-                    collector.addEdit(message);
-                }
-                break;
-                case "conversation.otr-message-add.delete-text": {
-                    DeletedTextMessage message = mapper.readValue(event.payload, DeletedTextMessage.class);
-                    String userName = collector.getUserName(message.getUserId());
-                    String text = String.format("**%s** deleted something", userName);
-                    collector.addSystem(text, message.getTime(), event.type);
-                }
-                break;
-                case "conversation.otr-message-add.new-reaction": {
-                    ReactionMessage message = mapper.readValue(event.payload, ReactionMessage.class);
-                    collector.add(message);
-                }
-                break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error("MessageHandler.add: %s %s %s", event.conversationId, event.type, e);
-        }
-    }
-
-    private String formatConversation(SystemMessage msg, CacheV2 cache) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("**%s** started recording in **%s** with: \n",
-                cache.getUser(msg.from).name,
-                msg.conversation.name));
-        for (Member member : msg.conversation.members) {
-            sb.append(String.format("- **%s** \n", cache.getUser(member.id).name));
-        }
-        return sb.toString();
     }
 }
