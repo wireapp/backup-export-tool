@@ -32,7 +32,7 @@ public class MessageHandler extends MessageHandlerBase {
             "Available commands:\n" +
             "`/history` - receive previous messages\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
-            "`/channel` - publish this conversation\n" +
+            "`/public` - publish this conversation\n" +
             "`/private` - stop publishing this conversation";
 
     private final ChannelsDAO channelsDAO;
@@ -360,6 +360,10 @@ public class MessageHandler extends MessageHandlerBase {
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
         switch (cmd) {
+            case "/help": {
+                client.sendText(WELCOME_LABEL);
+                return true;
+            }
             case "/history": {
                 Formatter formatter = new Formatter();
                 for (DBRecord record : historyDAO.getRecords(botId)) {
@@ -391,7 +395,7 @@ public class MessageHandler extends MessageHandlerBase {
                 client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
                 return true;
             }
-            case "/channel": {
+            case "/public": {
                 channelsDAO.insert(convId);
                 client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
                 return true;
