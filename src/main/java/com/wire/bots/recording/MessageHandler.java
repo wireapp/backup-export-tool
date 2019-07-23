@@ -65,11 +65,11 @@ public class MessageHandler extends MessageHandlerBase {
             client.sendText(WELCOME_LABEL);
 
             UUID convId = client.getConversationId();
-            UUID userId = UUID.fromString(client.getId());
+            UUID botId = UUID.fromString(client.getId());
             UUID messageId = UUID.randomUUID();
             String type = msg.type;
 
-            persist(convId, null, userId, messageId, type, msg);
+            persist(convId, null, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
@@ -79,7 +79,6 @@ public class MessageHandler extends MessageHandlerBase {
     public void onMemberJoin(WireClient client, SystemMessage msg) {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
-        UUID userId = UUID.fromString(client.getId());
         UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
@@ -95,25 +94,36 @@ public class MessageHandler extends MessageHandlerBase {
         }
 
         //v2
-        persist(convId, null, userId, messageId, type, msg);
+        persist(convId, null, botId, messageId, type, msg);
     }
 
     @Override
     public void onMemberLeave(WireClient client, SystemMessage msg) {
         UUID convId = client.getConversationId();
-        UUID userId = UUID.fromString(client.getId());
+        UUID botId = UUID.fromString(client.getId());
         UUID messageId = UUID.randomUUID();
         String type = msg.type;
 
         //v2
-        persist(convId, null, userId, messageId, type, msg);
+        persist(convId, null, botId, messageId, type, msg);
     }
 
     @Override
-    public void onBotRemoved(UUID botId) {
+    public void onBotRemoved(UUID botId, SystemMessage msg) {
+        // obsolete
         Logger.debug("onBotRemoved: %s", botId);
         if (0 == historyDAO.unsubscribe(botId))
             Logger.warning("Failed to unsubscribe. bot: %s", botId);
+        // obsolete
+
+        UUID convId = msg.convId;
+        UUID messageId = UUID.randomUUID();
+        String type = "conversation.member-leave.bot-removed";
+
+        //v2
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
     }
 
     @Override
@@ -122,7 +132,6 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.getMessageId();
         UUID convId = client.getConversationId();
-        UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-text";
 
         try {
@@ -137,7 +146,7 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
             // obsolete
 
-            persist(convId, senderId, userId, messageId, type, msg);
+            persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
@@ -172,10 +181,10 @@ public class MessageHandler extends MessageHandlerBase {
         // obsolete
 
         UUID convId = client.getConversationId();
-        UUID senderId = msg.getUserId();
+        UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.delete-text";
 
-        persist(convId, senderId, botId, msg.getMessageId(), type, msg);
+        persist(convId, userId, botId, msg.getMessageId(), type, msg);
         eventsDAO.delete(msg.getDeletedMessageId());
     }
 
@@ -185,7 +194,6 @@ public class MessageHandler extends MessageHandlerBase {
         UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
         UUID userId = msg.getUserId();
-        UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
         try {
@@ -213,7 +221,7 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
             // obsolete
 
-            persist(convId, senderId, userId, messageId, type, msg);
+            persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onImage: %s %s %s", botId, messageId, e);
         }
@@ -225,7 +233,6 @@ public class MessageHandler extends MessageHandlerBase {
         UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
         UUID userId = msg.getUserId();
-        UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
         try {
@@ -253,7 +260,7 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
             // obsolete
 
-            persist(convId, senderId, userId, messageId, type, msg);
+            persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onVideoPreview: %s %s %s", botId, messageId, e);
         }
@@ -265,7 +272,6 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.getMessageId();
         UUID userId = msg.getUserId();
-        UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-attachment";
 
         try {
@@ -292,7 +298,7 @@ public class MessageHandler extends MessageHandlerBase {
                 Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
             // obsolete
 
-            persist(convId, senderId, userId, messageId, type, msg);
+            persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
         }
@@ -302,11 +308,11 @@ public class MessageHandler extends MessageHandlerBase {
     public void onReaction(WireClient client, ReactionMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
+        UUID botId = UUID.fromString(client.getId());
         UUID userId = msg.getUserId();
-        UUID senderId = msg.getUserId();
         String type = "conversation.otr-message-add.new-reaction";
 
-        persist(convId, senderId, userId, messageId, type, msg);
+        persist(convId, userId, botId, messageId, type, msg);
     }
 
     @Override
@@ -314,17 +320,21 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
 
+        Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
+
+        generateHtml(botId, convId);
+    }
+
+    private void generateHtml(UUID botId, UUID convId) {
         try {
             if (null != channelsDAO.get(convId)) {
-                Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
-
                 CollectorV2 collector = collect(convId);
                 String filename = String.format("html/%s.html", convId);
                 File file = collector.executeFile(filename);
                 assert file.exists();
             }
         } catch (Exception e) {
-            Logger.error("onEvent: %s %s", botId, e);
+            Logger.error("generateHtml: %s %s", botId, e);
         }
     }
 
@@ -462,6 +472,14 @@ public class MessageHandler extends MessageHandlerBase {
                                 collector.getUserName(userId));
                         collector.addSystem(format, msg.time, event.type);
                     }
+                }
+                break;
+                case "conversation.member-leave.bot-removed": {
+                    SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
+                    String format = String.format("**%s** %s",
+                            collector.getUserName(msg.from),
+                            "stopped recording");
+                    collector.addSystem(format, msg.time, event.type);
                 }
                 break;
                 case "conversation.otr-message-add.edit-text": {
