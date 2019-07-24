@@ -45,7 +45,8 @@ public class Service extends Server<Config> {
     public void initialize(Bootstrap<Config> bootstrap) {
         super.initialize(bootstrap);
 
-        bootstrap.addBundle(new AssetsBundle("/recording/assets/"));
+        bootstrap.addBundle(new AssetsBundle("/recording/assets"));
+        bootstrap.addBundle(new AssetsBundle("/recording/scripts", "/recording/scripts", "index.htm", "scripts"));
         bootstrap.addBundle(new ImagesBundle("/opt/recording/images", "/recording/images", "images"));
         bootstrap.addBundle(new ImagesBundle("/opt/recording/avatars", "/recording/avatars", "avatars"));
         bootstrap.addBundle(new ImagesBundle("/opt/recording/html", "/recording/channel", "channels"));
