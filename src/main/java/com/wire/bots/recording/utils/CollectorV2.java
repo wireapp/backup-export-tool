@@ -70,6 +70,7 @@ public class CollectorV2 {
         message.id = event.getMessageId();
         message.text = HelperV2.markdown2Html(event.getText(), true);
         message.time = toTime(event.getTime());
+        message.timeStamp = event.getTime();
 
         User user = cache.getUser(event.getUserId());
         Sender sender = sender(user);
@@ -89,7 +90,7 @@ public class CollectorV2 {
         Message message = new Message();
         message.id = event.getMessageId();
         message.time = toTime(event.getTime());
-
+        message.timeStamp = event.getTime();
         String assetFilename = getFilename(file);
 
         String mimeType = event.getMimeType();
@@ -139,6 +140,7 @@ public class CollectorV2 {
         Message message = new Message();
         message.text = HelperV2.markdown2Html(text, true);
         message.time = toTime(dateTime);
+        message.timeStamp = dateTime;
 
         Sender sender = system(type);
         sender.messages.add(message);
@@ -289,6 +291,7 @@ public class CollectorV2 {
         String text;
         String image;
         String time;
+        String timeStamp;
         String likes;
         HashSet<UUID> likers = new HashSet<>();
     }

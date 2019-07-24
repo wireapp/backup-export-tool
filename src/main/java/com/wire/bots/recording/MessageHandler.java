@@ -12,9 +12,11 @@ import com.wire.bots.recording.utils.Formatter;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
+import com.wire.bots.sdk.factories.StorageFactory;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.SystemMessage;
 import com.wire.bots.sdk.server.model.User;
+import com.wire.bots.sdk.state.State;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;
 import org.apache.http.annotation.Obsolete;
@@ -28,23 +30,25 @@ import java.util.UUID;
 public class MessageHandler extends MessageHandlerBase {
     private final ObjectMapper mapper = new ObjectMapper();
 
-    private static final String WELCOME_LABEL = "Recording was enabled.\n" +
-            "Available commands:\n" +
+    private static final String WELCOME_LABEL = "Recording is now enabled";
+    private static final String HELP = "Available commands:\n" +
             "`/history` - receive previous messages\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
-            "`/public` - publish this conversation\n" +
+            "`/public`  - publish this conversation\n" +
             "`/private` - stop publishing this conversation";
 
     private final ChannelsDAO channelsDAO;
+    private final StorageFactory storageF;
     private final EventsDAO eventsDAO;
     private final HistoryDAO historyDAO;
 
     private final EventProcessor eventProcessor = new EventProcessor();
 
-    MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO, ChannelsDAO channelsDAO) {
+    MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO, ChannelsDAO channelsDAO, StorageFactory storageF) {
         this.historyDAO = historyDAO;
         this.eventsDAO = eventsDAO;
         this.channelsDAO = channelsDAO;
+        this.storageF = storageF;
     }
 
     void warmup() {
@@ -77,6 +81,8 @@ public class MessageHandler extends MessageHandlerBase {
             persist(convId, null, botId, messageId, type, msg);
 
             generateHtml(botId, convId);
+
+            client.sendDirectText(HELP, msg.from.toString());
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
@@ -132,6 +138,8 @@ public class MessageHandler extends MessageHandlerBase {
 
         //v2
         persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
     }
 
     @Override
@@ -143,6 +151,8 @@ public class MessageHandler extends MessageHandlerBase {
 
         //v2
         persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
     }
 
     @Override
@@ -359,9 +369,13 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
+        State state = storageF.create(botId.toString());
+        if (!state.getState().origin.id.equals(userId))
+            return false;
+
         switch (cmd) {
             case "/help": {
-                client.sendText(WELCOME_LABEL);
+                client.sendDirectText(HELP, userId.toString());
                 return true;
             }
             case "/history": {
@@ -397,17 +411,18 @@ public class MessageHandler extends MessageHandlerBase {
             }
             case "/public": {
                 channelsDAO.insert(convId);
-                client.sendText(String.format("https://services.wire.com/recording/channel/%s.html", convId));
+                String text = String.format("https://services.wire.com/recording/channel/%s.html", convId);
+                client.sendDirectText(text, userId.toString());
                 return true;
             }
             case "/private": {
                 channelsDAO.delete(convId);
                 String filename = String.format("html/%s.html", convId);
                 boolean delete = new File(filename).delete();
-                client.sendText(String.format("%s deleted: %s", filename, delete));
+                String txt = String.format("%s deleted: %s", filename, delete);
+                client.sendDirectText(txt, userId.toString());
                 return true;
             }
-
         }
         return false;
     }
