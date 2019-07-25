@@ -21,6 +21,8 @@ public class CollectorV2 {
     private static MustacheFactory mf = new DefaultMustacheFactory();
     private final CacheV2 cache;
     private LinkedList<Day> days = new LinkedList<>();
+    private HashMap<UUID, Message> messagesHashMap = new HashMap<>();
+
     private String convName;
 
     public CollectorV2(CacheV2 cache) {
@@ -68,13 +70,12 @@ public class CollectorV2 {
     public Sender add(TextMessage event) throws ParseException {
         Message message = new Message();
         message.id = event.getMessageId();
-        message.text = HelperV2.markdown2Html(event.getText(), true);
-        message.time = toTime(event.getTime());
+        message.text = getText(event);
         message.timeStamp = event.getTime();
-
+        message.quotedMessage = toQuotedMessage(event);
         User user = cache.getUser(event.getUserId());
         Sender sender = sender(user);
-        sender.messages.add(message);
+        sender.add(message);
 
         return append(sender, message, event.getTime());
     }
@@ -89,7 +90,6 @@ public class CollectorV2 {
         File file = cache.getAssetFile(event);
         Message message = new Message();
         message.id = event.getMessageId();
-        message.time = toTime(event.getTime());
         message.timeStamp = event.getTime();
         String assetFilename = getFilename(file);
 
@@ -106,7 +106,7 @@ public class CollectorV2 {
         User user = cache.getUser(event.getUserId());
 
         Sender sender = sender(user);
-        sender.messages.add(message);
+        sender.add(message);
 
         return append(sender, message, event.getTime());
     }
@@ -114,38 +114,40 @@ public class CollectorV2 {
     public void add(ReactionMessage event) {
         UUID userId = event.getUserId();
         UUID reactionMessageId = event.getReactionMessageId();
-        String emoji = event.getEmoji();
-        for (Day day : days) {
-            for (Sender sender : day.senders) {
-                for (Message msg : sender.messages) {
-                    if (Objects.equals(msg.id, reactionMessageId)) {
-                        if (emoji.isEmpty())
-                            msg.likers.remove(userId);
-                        else
-                            msg.likers.add(userId);
+        Message message = messagesHashMap.get(reactionMessageId);
+        if (message != null) {
+            if (event.getEmoji().isEmpty())
+                message.likers.remove(userId);
+            else
+                message.likers.add(userId);
 
-                        ArrayList<String> names = new ArrayList<>();
-                        for (UUID id : msg.likers)
-                            names.add(getUserName(id));
+            ArrayList<String> names = new ArrayList<>();
+            for (UUID id : message.likers)
+                names.add(getUserName(id));
 
-                        msg.likes = String.join(", ", names);
-                        return;
-                    }
-                }
-            }
+            message.likes = String.join(", ", names);
         }
     }
 
     public void addSystem(String text, String dateTime, String type) throws ParseException {
         Message message = new Message();
         message.text = HelperV2.markdown2Html(text, true);
-        message.time = toTime(dateTime);
         message.timeStamp = dateTime;
 
         Sender sender = system(type);
-        sender.messages.add(message);
+        sender.add(message);
 
         append(sender, message, dateTime);
+    }
+
+    private String getText(TextMessage event) {
+        String text = event.getText();
+        return HelperV2.markdown2Html(text, true);
+    }
+
+    private Message toQuotedMessage(TextMessage event) {
+        UUID id = event.getQuotedMessageId();
+        return id != null ? messagesHashMap.get(id) : null;
     }
 
     private Sender sender(User user) {
@@ -190,6 +192,8 @@ public class CollectorV2 {
     }
 
     private Sender append(Sender sender, Message message, String dateTime) throws ParseException {
+        messagesHashMap.put(message.id, message);
+
         Day day = newDay(sender, dateTime);
 
         if (days.isEmpty()) {
@@ -287,13 +291,22 @@ public class CollectorV2 {
     }
 
     public static class Message {
+        String name;
         UUID id;
         String text;
         String image;
-        String time;
         String timeStamp;
         String likes;
+        Message quotedMessage;
         HashSet<UUID> likers = new HashSet<>();
+
+        String getTime() throws ParseException {
+            return toTime(timeStamp);
+        }
+
+        String getDate() throws ParseException {
+            return toDate(timeStamp);
+        }
     }
 
     public static class Sender {
@@ -302,10 +315,19 @@ public class CollectorV2 {
         String name;
         String accent;
         String system;
-        ArrayList<Message> messages = new ArrayList<>();
+        private ArrayList<Message> messages = new ArrayList<>();
 
         boolean equals(Sender s) {
             return Objects.equals(senderId, s.senderId);
+        }
+
+        public void add(Message message) {
+            message.name = name;
+            getMessages().add(message);
+        }
+
+        List<Message> getMessages() {
+            return messages;
         }
     }
 }

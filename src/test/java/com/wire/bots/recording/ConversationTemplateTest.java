@@ -35,6 +35,14 @@ public class ConversationTemplateTest {
         return ret;
     }
 
+    private static TextMessage quote(UUID userId, String text, String time, UUID msgId) {
+        TextMessage ret = new TextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+        ret.setQuotedMessageId(msgId);
+        ret.setText(text);
+        ret.setTime(time);
+        return ret;
+    }
+
     private static EditedTextMessage edit(UUID userId, String edit, String time) {
         EditedTextMessage ret = new EditedTextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setText(edit);
@@ -101,9 +109,11 @@ public class ConversationTemplateTest {
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco _laboris_ nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum"));
-        collector.add(txt(dejan, friday, "7"));
+        TextMessage seven = txt(lipis, friday, "7");
+        collector.add(seven);
         collector.addSystem("**Dejo** deleted something", friday, "conversation.otr-message-add.delete-text");
         collector.add(txt(lipis, saturday, "8"));
+        collector.add(quote(dejan, "This was a quote", saturday, seven.getMessageId()));
         collector.add(img(lipis, saturday, "ognjiste2", "image/png"));
         collector.add(img(lipis, saturday, "small", "image/png"));
         collector.add(txt(dejan, saturday, "9"));
