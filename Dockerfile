@@ -13,3 +13,5 @@ COPY src/main/resources/recording/assets/*         /opt/recording/assets/
 WORKDIR /opt/recording
      
 EXPOSE  8080 8081 8082
+
+CMD ["sh", "-c","/usr/bin/java -Djava.library.path=/opt/wire/lib -jar recording.jar server /etc/recording/recording.yaml"]

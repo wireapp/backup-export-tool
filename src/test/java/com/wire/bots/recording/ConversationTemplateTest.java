@@ -11,6 +11,7 @@ import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.models.ReactionMessage;
 import com.wire.bots.sdk.models.TextMessage;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class ConversationTemplateTest {
     public static final UUID dejan = UUID.fromString("40b96378-951d-11e9-bc42-526af7764f64");
     private static final UUID lipis = UUID.fromString("40b96896-951d-11e9-bc42-526af7764f64");
+    private static final String CONV_NAME = "Recording Test";
+    private static final String SRC_TEST_OUT = "src/test/out";
 
     private static TextMessage txt(UUID userId, String time, String text) {
         TextMessage ret = new TextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
@@ -76,6 +79,15 @@ public class ConversationTemplateTest {
         }
     }
 
+    @Before
+    public void clean() {
+        String pdf = getFilename(CONV_NAME, "pdf");
+        String html = getFilename(CONV_NAME, "html");
+
+        new File(pdf).delete();
+        new File(html).delete();
+    }
+
     @Test
     public void templateTest() throws Exception {
         Mustache mustache = compileTemplate("conversation.html");
@@ -86,7 +98,7 @@ public class ConversationTemplateTest {
 
         TestCacheV2 cache = new TestCacheV2();
         CollectorV2 collector = new CollectorV2(cache);
-        collector.setConvName("Recording Test");
+        collector.setConvName(CONV_NAME);
 
         collector.addSystem("**Dejo** started recording in **Recording test** with:\n- **Lipis**", thursday, "conversation.create");
         collector.addSystem("**Dejo** added **Lipis**", thursday, "conversation.member-join");
@@ -146,12 +158,16 @@ public class ConversationTemplateTest {
         String html = execute(mustache, conversation);
         assert html != null;
 
-        String pdfFilename = String.format("src/test/out/%s.pdf", conversation.getTitle());
+        String pdfFilename = getFilename(conversation.getTitle(), "pdf");
         PdfGenerator.save(pdfFilename, html, "file:src/test/resources");
 
-        File file = new File(String.format("src/test/out/%s.html", conversation.getTitle()));
+        File file = new File(getFilename(conversation.getTitle(), "html"));
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
             os.write(html.getBytes());
         }
+    }
+
+    private String getFilename(String name, String extension) {
+        return String.format("%s/%s.%s", SRC_TEST_OUT, name, extension);
     }
 }
