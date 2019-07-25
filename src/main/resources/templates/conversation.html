@@ -122,6 +122,14 @@
         margin-right: 4px;
       }
 
+    blockquote {
+      background: #f9f9f9;
+      border-left: 10px solid #ccc;
+      margin: 1.5em 10px;
+      padding: 0.5em 10px;
+      quotes: "\201C""\201D""\2018""\2019";
+    }
+    
     </style>
 </head>
 <body>
@@ -148,7 +156,7 @@
                 {{#messages}}
                 <tr>
                     <td class="message">
-                        <a name="{{ id }}"></a>
+                        <a id="{{ id }}"></a>
                         {{#quotedMessage}}
                         <blockquote>
                             <strong>{{ name }}</strong>
