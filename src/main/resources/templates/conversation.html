@@ -91,6 +91,11 @@
         color: #555;
       }
 
+      .link {
+        font-size: 12px;
+        color: #555;
+      }
+
       .system .avatar {
         width: 22px;
         height: 22px;
@@ -148,7 +153,7 @@
                         <blockquote>
                             <strong>{{ name }}</strong>
                             {{{ text }}}
-                            <a href="#{{ id }}">Original message from {{ date }}</a>
+                            <a class="link" href="#{{ id }}">Original message from {{ date }}</a>
                         </blockquote>
                         {{/quotedMessage}}
                         {{{ text }}}
@@ -175,8 +180,6 @@
       times.forEach(time => {
         time.textContent = moment(time.getAttribute('data-timestamp')).format('HH:mm');
       });
-
-
 </script>
 </body>
 </html>
