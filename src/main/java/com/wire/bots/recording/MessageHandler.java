@@ -272,7 +272,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     public void onLinkPreview(WireClient client, LinkPreviewMessage msg) {
         UUID convId = client.getConversationId();
-        UUID messageId = UUID.randomUUID();
+        UUID messageId = msg.getMessageId();
         UUID botId = UUID.fromString(client.getId());
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-link";

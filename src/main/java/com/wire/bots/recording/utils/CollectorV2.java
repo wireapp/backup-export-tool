@@ -5,7 +5,6 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
-import com.wire.bots.sdk.tools.Logger;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -130,9 +129,13 @@ public class CollectorV2 {
 
     public void addLink(LinkPreviewMessage event) throws ParseException {
         Message message = new Message();
-        message.link = new Link();
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
+
+        if (event.getText() != null)
+            message.text = HelperV2.markdown2Html(event.getText(), true);
+
+        message.link = new Link();
         message.link.title = event.getTitle();
         message.link.summary = event.getSummary();
         message.link.url = event.getUrl();
@@ -140,12 +143,6 @@ public class CollectorV2 {
         File file = cache.getAssetFile(event);
         if (file.exists())
             message.link.preview = getFilename(file);
-
-        Logger.info("Collector.addLink: %s %s %s %s",
-                event.getTitle(),
-                event.getSummary(),
-                event.getUrl(),
-                event.getAssetKey());
 
         User user = cache.getUser(event.getUserId());
 

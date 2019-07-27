@@ -122,14 +122,18 @@
         margin-right: 4px;
       }
 
-    blockquote {
-       background: #f9f9f9;
-       border-left: 4px solid #ccc;
-       margin: 1.5em 0;
-       padding: 0.5em 10px;
-       quotes: "\201C""\201D""\2018""\2019";
-    }
+      blockquote {
+        background: #f9f9f9;
+        border-left: 4px solid #ccc;
+        margin: 1.5em 0;
+        padding: 0.5em 10px;
+        quotes: "\201C""\201D""\2018""\2019";
+      }
 
+      .preview {
+         height: 64px;
+         width: 64px;
+      }
     </style>
 </head>
 <body>
@@ -171,11 +175,10 @@
                         {{#link}}
                         <blockquote>
                             <p>{{ title }}</p>
-                            <p>{{ summary }}</p>
-                            <p>{{ url }}</p>
                             {{#preview}}
                             <img class="preview" src="{{ preview }}"/>
                             {{/preview}}
+                            <a href="{{ url }}">{{ url }}</a>
                         </blockquote>
                         {{/link}}
                         {{#likes}}

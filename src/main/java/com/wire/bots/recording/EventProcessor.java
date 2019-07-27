@@ -65,7 +65,7 @@ class EventProcessor {
                 break;
                 case "conversation.otr-message-add.new-link": {
                     LinkPreviewMessage message = mapper.readValue(event.payload, LinkPreviewMessage.class);
-                    //collector.addLink(message);
+                    collector.addLink(message);
                 }
                 break;
                 case "conversation.member-join": {

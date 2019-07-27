@@ -11,7 +11,8 @@ import java.util.UUID;
 
 public interface EventsDAO {
     @SqlUpdate("INSERT INTO Recording_Events (messageId, conversationId, type, payload, time) " +
-            "VALUES (:messageId, :conversationId, :type, :payload, CURRENT_TIMESTAMP) ON CONFLICT (messageId) DO NOTHING")
+            "VALUES (:messageId, :conversationId, :type, :payload, CURRENT_TIMESTAMP) ON CONFLICT (messageId) DO " +
+            "UPDATE SET type = EXCLUDED.type, payload = EXCLUDED.payload")
     int insert(@Bind("messageId") UUID messageId,
                @Bind("conversationId") UUID conversationId,
                @Bind("type") String type,
