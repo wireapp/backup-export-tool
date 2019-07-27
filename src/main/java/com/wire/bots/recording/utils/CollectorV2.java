@@ -3,11 +3,9 @@ package com.wire.bots.recording.utils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import com.wire.bots.sdk.models.EditedTextMessage;
-import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.models.ReactionMessage;
-import com.wire.bots.sdk.models.TextMessage;
+import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
+import com.wire.bots.sdk.tools.Logger;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -129,8 +127,37 @@ public class CollectorV2 {
         }
     }
 
-    public void addSystem(String text, String dateTime, String type) throws ParseException {
+
+    public void addLink(LinkPreviewMessage event) throws ParseException {
         Message message = new Message();
+        message.link = new Link();
+        message.id = event.getMessageId();
+        message.timeStamp = event.getTime();
+        message.link.title = event.getTitle();
+        message.link.summary = event.getSummary();
+        message.link.url = event.getUrl();
+
+        File file = cache.getAssetFile(event);
+        if (file.exists())
+            message.link.preview = getFilename(file);
+
+        Logger.info("Collector.addLink: %s %s %s %s",
+                event.getTitle(),
+                event.getSummary(),
+                event.getUrl(),
+                event.getAssetKey());
+
+        User user = cache.getUser(event.getUserId());
+
+        Sender sender = sender(user);
+        sender.add(message);
+
+        append(sender, message, event.getTime());
+    }
+
+    public void addSystem(String text, String dateTime, String type, UUID msgId) throws ParseException {
+        Message message = new Message();
+        message.id = msgId;
         message.text = HelperV2.markdown2Html(text, true);
         message.timeStamp = dateTime;
 
@@ -291,14 +318,15 @@ public class CollectorV2 {
     }
 
     public static class Message {
-        String name;
         UUID id;
+        String name;
         String text;
         String image;
+        Link link;
         String timeStamp;
         String likes;
         Message quotedMessage;
-        HashSet<UUID> likers = new HashSet<>();
+        private HashSet<UUID> likers = new HashSet<>();
 
         String getTime() throws ParseException {
             return toTime(timeStamp);
@@ -307,6 +335,13 @@ public class CollectorV2 {
         String getDate() throws ParseException {
             return toDate(timeStamp);
         }
+    }
+
+    public static class Link {
+        String title;
+        String summary;
+        String url;
+        String preview;
     }
 
     public static class Sender {

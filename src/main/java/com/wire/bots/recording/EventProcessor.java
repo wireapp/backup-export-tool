@@ -38,7 +38,7 @@ class EventProcessor {
                     collector.setConvName(msg.conversation.name);
 
                     String text = formatConversation(msg, collector.getCache());
-                    collector.addSystem(text, msg.time, event.type);
+                    collector.addSystem(text, msg.time, event.type, msg.id);
                 }
                 break;
                 case "conversation.rename": {
@@ -50,7 +50,7 @@ class EventProcessor {
                             collector.getUserName(msg.from),
                             "renamed conversation",
                             convName);
-                    collector.addSystem(text, msg.time, event.type);
+                    collector.addSystem(text, msg.time, event.type, msg.id);
                 }
                 break;
                 case "conversation.otr-message-add.new-text": {
@@ -63,6 +63,11 @@ class EventProcessor {
                     collector.add(message);
                 }
                 break;
+                case "conversation.otr-message-add.new-link": {
+                    LinkPreviewMessage message = mapper.readValue(event.payload, LinkPreviewMessage.class);
+                    //collector.addLink(message);
+                }
+                break;
                 case "conversation.member-join": {
                     SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
                     for (UUID userId : msg.users) {
@@ -70,7 +75,7 @@ class EventProcessor {
                                 collector.getUserName(msg.from),
                                 "added",
                                 collector.getUserName(userId));
-                        collector.addSystem(format, msg.time, event.type);
+                        collector.addSystem(format, msg.time, event.type, msg.id);
                     }
                 }
                 break;
@@ -81,7 +86,7 @@ class EventProcessor {
                                 collector.getUserName(msg.from),
                                 "removed",
                                 collector.getUserName(userId));
-                        collector.addSystem(format, msg.time, event.type);
+                        collector.addSystem(format, msg.time, event.type, msg.id);
                     }
                 }
                 break;
@@ -90,7 +95,7 @@ class EventProcessor {
                     String format = String.format("**%s** %s",
                             collector.getUserName(msg.from),
                             "stopped recording");
-                    collector.addSystem(format, msg.time, event.type);
+                    collector.addSystem(format, msg.time, event.type, msg.id);
                 }
                 break;
                 case "conversation.otr-message-add.edit-text": {
@@ -100,10 +105,10 @@ class EventProcessor {
                 }
                 break;
                 case "conversation.otr-message-add.delete-text": {
-                    DeletedTextMessage message = mapper.readValue(event.payload, DeletedTextMessage.class);
-                    String userName = collector.getUserName(message.getUserId());
+                    DeletedTextMessage msg = mapper.readValue(event.payload, DeletedTextMessage.class);
+                    String userName = collector.getUserName(msg.getUserId());
                     String text = String.format("**%s** deleted something", userName);
-                    collector.addSystem(text, message.getTime(), event.type);
+                    collector.addSystem(text, msg.getTime(), event.type, msg.getMessageId());
                 }
                 break;
                 case "conversation.otr-message-add.new-reaction": {

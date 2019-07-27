@@ -168,6 +168,16 @@
                         {{#image}}
                         <img class="image" src="{{ image }}"/>
                         {{/image}}
+                        {{#link}}
+                        <blockquote>
+                            <p>{{ title }}</p>
+                            <p>{{ summary }}</p>
+                            <p>{{ url }}</p>
+                            {{#preview}}
+                            <img class="preview" src="{{ preview }}"/>
+                            {{/preview}}
+                        </blockquote>
+                        {{/link}}
                         {{#likes}}
                         <div class="likes">{{ likes }}</div>
                         {{/likes}}

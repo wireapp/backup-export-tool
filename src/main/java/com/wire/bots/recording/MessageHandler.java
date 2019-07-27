@@ -32,7 +32,6 @@ public class MessageHandler extends MessageHandlerBase {
 
     private static final String WELCOME_LABEL = "Recording is now enabled";
     private static final String HELP = "Available commands:\n" +
-            "`/history` - receive previous messages\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
             "`/public`  - publish this conversation\n" +
             "`/private` - stop publishing this conversation";
@@ -75,7 +74,7 @@ public class MessageHandler extends MessageHandlerBase {
 
             UUID convId = msg.convId;
             UUID botId = UUID.fromString(client.getId());
-            UUID messageId = UUID.randomUUID();
+            UUID messageId = msg.id;
             String type = msg.type;
 
             persist(convId, null, botId, messageId, type, msg);
@@ -92,7 +91,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onConversationRename(WireClient client, SystemMessage msg) {
         UUID convId = msg.convId;
         UUID botId = UUID.fromString(client.getId());
-        UUID messageId = UUID.randomUUID();
+        UUID messageId = msg.id;
         String type = msg.type;
 
         persist(convId, null, botId, messageId, type, msg);
@@ -109,7 +108,7 @@ public class MessageHandler extends MessageHandlerBase {
         // obsolete
 
         UUID convId = msg.convId;
-        UUID messageId = UUID.randomUUID();
+        UUID messageId = msg.id;
         String type = "conversation.member-leave.bot-removed";
 
         //v2
@@ -122,7 +121,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onMemberJoin(WireClient client, SystemMessage msg) {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = msg.convId;
-        UUID messageId = UUID.randomUUID();
+        UUID messageId = msg.id;
         String type = msg.type;
 
         Logger.debug("onMemberJoin: %s users: %s", botId, msg.users);
@@ -146,7 +145,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onMemberLeave(WireClient client, SystemMessage msg) {
         UUID convId = msg.convId;
         UUID botId = UUID.fromString(client.getId());
-        UUID messageId = UUID.randomUUID();
+        UUID messageId = msg.id;
         String type = msg.type;
 
         //v2
@@ -265,33 +264,23 @@ public class MessageHandler extends MessageHandlerBase {
         String type = "conversation.otr-message-add.new-image";
 
         try {
-            // obsolete
-            User user = client.getUser(msg.getUserId().toString());
-            int timestamp = (int) (new Date().getTime() / 1000);
-
-            int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId.toString(),
-                    user.name,
-                    msg.getMimeType(),
-                    msg.getAssetKey(),
-                    msg.getAssetToken(),
-                    msg.getSha256(),
-                    msg.getOtrKey(),
-                    msg.getName(),
-                    (int) msg.getSize(),
-                    msg.getHeight(),
-                    msg.getWidth(),
-                    user.accent,
-                    userId,
-                    timestamp);
-
-            if (0 == insertRecord)
-                Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
-            // obsolete
-
             persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onVideoPreview: %s %s %s", botId, messageId, e);
+        }
+    }
+
+    public void onLinkPreview(WireClient client, LinkPreviewMessage msg) {
+        UUID convId = client.getConversationId();
+        UUID messageId = UUID.randomUUID();
+        UUID botId = UUID.fromString(client.getId());
+        UUID userId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-link";
+
+        try {
+            persist(convId, userId, botId, messageId, type, msg);
+        } catch (Exception e) {
+            Logger.error("onLinkPreview: %s %s %s", botId, messageId, e);
         }
     }
 
@@ -304,29 +293,6 @@ public class MessageHandler extends MessageHandlerBase {
         String type = "conversation.otr-message-add.new-attachment";
 
         try {
-            // obsolete
-            User user = client.getUser(userId.toString());
-            int timestamp = (int) (new Date().getTime() / 1000);
-            int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId.toString(),
-                    user.name,
-                    msg.getMimeType(),
-                    msg.getAssetKey(),
-                    msg.getAssetToken(),
-                    msg.getSha256(),
-                    msg.getOtrKey(),
-                    msg.getName(),
-                    (int) msg.getSize(),
-                    0,
-                    0,
-                    user.accent,
-                    userId,
-                    timestamp);
-
-            if (0 == insertRecord)
-                Logger.warning("Failed to insert attachment record. %s, %s", botId, messageId);
-            // obsolete
-
             persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onAttachment: %s %s %s", botId, messageId, e);
