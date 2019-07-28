@@ -83,22 +83,33 @@ public class CollectorV2 {
         return sender;
     }
 
-    public Sender add(MessageAssetBase event) throws ParseException {
-        File file = cache.getAssetFile(event);
+    public Sender add(ImageMessage event) throws ParseException {
         Message message = new Message();
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
+
+        File file = cache.getAssetFile(event);
+        message.image = getFilename(file);
+
+        User user = cache.getUser(event.getUserId());
+
+        Sender sender = sender(user);
+        sender.add(message);
+
+        return append(sender, message, event.getTime());
+    }
+
+    public Sender add(AttachmentMessage event) throws ParseException {
+        Message message = new Message();
+        message.id = event.getMessageId();
+        message.timeStamp = event.getTime();
+
+        File file = cache.getAssetFile(event);
         String assetFilename = getFilename(file);
 
-        String mimeType = event.getMimeType();
-        if (mimeType.startsWith("image")) {
-            message.image = assetFilename;
-        } else {
-            String url = String.format("<a href=\"%s\">%s</a>",
-                    assetFilename,
-                    event.getName());
-            message.text = Helper.markdown2Html(url, false);
-        }
+        message.attachment = new Attachment();
+        message.attachment.name = event.getName();
+        message.attachment.url = assetFilename;
 
         User user = cache.getUser(event.getUserId());
 
@@ -335,6 +346,7 @@ public class CollectorV2 {
         String text;
         String image;
         Link link;
+        Attachment attachment;
         String timeStamp;
         String likes;
         Message quotedMessage;
@@ -354,6 +366,11 @@ public class CollectorV2 {
         String summary;
         String url;
         String preview;
+    }
+
+    public static class Attachment {
+        String name;
+        String url;
     }
 
     public static class Sender {

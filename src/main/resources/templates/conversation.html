@@ -172,12 +172,13 @@
                         {{#image}}
                         <img class="image" src="{{ image }}"/>
                         {{/image}}
+                        {{#attachment}}
+                        <a class="attachment" href="{{ url }}">{{ name }}</a>
+                        {{/attachment}}
                         {{#link}}
                         <blockquote>
                             <p>{{ title }}</p>
-                            {{#preview}}
                             <img class="preview" src="{{ preview }}"/>
-                            {{/preview}}
                             <a href="{{ url }}">{{ url }}</a>
                         </blockquote>
                         {{/link}}

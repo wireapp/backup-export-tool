@@ -34,6 +34,9 @@ public class TestCacheV2 extends CacheV2 {
 
     @Override
     File getAssetFile(MessageAssetBase message) {
-        return new File(String.format("src/test/resources/recording/images/%s.png", message.getAssetKey()));
+        String extension = HelperV2.getExtension(message.getMimeType());
+        return new File(String.format("src/test/resources/recording/images/%s.%s",
+                message.getAssetKey(),
+                extension));
     }
 }

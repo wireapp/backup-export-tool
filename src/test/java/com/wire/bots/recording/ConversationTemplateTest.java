@@ -47,11 +47,20 @@ public class ConversationTemplateTest {
         return ret;
     }
 
-    private static MessageAssetBase img(UUID userId, String time, String key, String mimeType) {
-        MessageAssetBase ret = new MessageAssetBase(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+    private static ImageMessage img(UUID userId, String time, String key, String mimeType) {
+        ImageMessage ret = new ImageMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setAssetKey(key);
         ret.setMimeType(mimeType);
         ret.setTime(time);
+        return ret;
+    }
+
+    private static AttachmentMessage attachment(UUID userId, String time, String key, String name, String mimeType) {
+        AttachmentMessage ret = new AttachmentMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+        ret.setAssetKey(key);
+        ret.setMimeType(mimeType);
+        ret.setTime(time);
+        ret.setName(name);
         return ret;
     }
 
@@ -123,7 +132,7 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, saturday, "12"));
         collector.add(txt(lipis, saturday, "13"));
         collector.add(img(dejan, saturday, "ognjiste", "image/png"));
-        collector.add(txt(lipis, saturday, "14"));
+        collector.add(attachment(lipis, saturday, "Wire+Security+Whitepaper", "Wire Security Paper.pdf", "application/pdf"));
         collector.add(txt(lipis, saturday, "15"));
         collector.add(txt(dejan, saturday, "Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
