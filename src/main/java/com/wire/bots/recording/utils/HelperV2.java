@@ -15,6 +15,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
+import javax.annotation.Nullable;
 import javax.naming.AuthenticationException;
 import javax.ws.rs.client.Client;
 import java.io.DataOutputStream;
@@ -28,6 +29,11 @@ import java.util.List;
 import java.util.UUID;
 
 class HelperV2 {
+    private static final List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
+    private static final Parser parser = Parser
+            .builder()
+            .extensions(extensions)
+            .build();
 
     static File getProfile(API api, User user) throws IOException, HttpException {
         String filename = avatarFile(user.id);
@@ -79,21 +85,17 @@ class HelperV2 {
         return String.format("avatars/%s.png", senderId);
     }
 
-    static String markdown2Html(String text, Boolean escape) {
-        List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
-
-        Parser parser = Parser
-                .builder()
-                .extensions(extensions)
-                .build();
-
+    @Nullable
+    static String markdown2Html(@Nullable String text) {
+        if (text == null)
+            return null;
         Node document = parser.parse(text);
-        HtmlRenderer renderer = HtmlRenderer
+        return HtmlRenderer
                 .builder()
-                .escapeHtml(escape)
+                .escapeHtml(true)
                 .extensions(extensions)
-                .build();
-        return renderer.render(document);
+                .build()
+                .render(document);
     }
 
     static API getApi() throws HttpException, AuthenticationException {

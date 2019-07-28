@@ -15,11 +15,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CollectorV2 {
-    private static MustacheFactory mf = new DefaultMustacheFactory();
+    private static final MustacheFactory mf = new DefaultMustacheFactory();
     private final CacheV2 cache;
-    private LinkedList<Day> days = new LinkedList<>();
-    private HashMap<UUID, Message> messagesHashMap = new HashMap<>();
-
+    private final LinkedList<Day> days = new LinkedList<>();
+    private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
+    private Message lastMessage = null;
     private String convName;
 
     public CollectorV2(CacheV2 cache) {
@@ -131,9 +131,7 @@ public class CollectorV2 {
         Message message = new Message();
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
-
-        if (event.getText() != null)
-            message.text = HelperV2.markdown2Html(event.getText(), true);
+        message.text = HelperV2.markdown2Html(event.getText());
 
         message.link = new Link();
         message.link.title = event.getTitle();
@@ -152,23 +150,39 @@ public class CollectorV2 {
         append(sender, message, event.getTime());
     }
 
-    public void addSystem(String text, String dateTime, String type, UUID msgId) throws ParseException {
+    /**
+     * Adds new message with _name_ `system` and avatar based on _type_. If the last message has the same timestamp as
+     * this one then this message will not be added and FALSE is returned
+     *
+     * @param text
+     * @param dateTime
+     * @param type
+     * @param msgId
+     * @return true if the message was added
+     * @throws ParseException
+     */
+    public boolean addSystem(String text, String dateTime, String type, UUID msgId) throws ParseException {
+        if (lastMessage != null && lastMessage.timeStamp.equals(dateTime))
+            return false;
+
         Message message = new Message();
         message.id = msgId;
-        message.text = HelperV2.markdown2Html(text, true);
+        message.text = HelperV2.markdown2Html(text);
         message.timeStamp = dateTime;
 
         Sender sender = system(type);
         sender.add(message);
 
         append(sender, message, dateTime);
+        return true;
     }
 
     private String getText(TextMessage event) {
         String text = event.getText();
-        return HelperV2.markdown2Html(text, true);
+        return HelperV2.markdown2Html(text);
     }
 
+    @Nullable
     private Message toQuotedMessage(TextMessage event) {
         UUID id = event.getQuotedMessageId();
         return id != null ? messagesHashMap.get(id) : null;
@@ -217,6 +231,7 @@ public class CollectorV2 {
 
     private Sender append(Sender sender, Message message, String dateTime) throws ParseException {
         messagesHashMap.put(message.id, message);
+        lastMessage = message;
 
         Day day = newDay(sender, dateTime);
 
@@ -297,8 +312,8 @@ public class CollectorV2 {
     }
 
     public String execute() throws IOException {
-        Mustache mustache = compileTemplate();
         try (StringWriter sw = new StringWriter()) {
+            Mustache mustache = compileTemplate();
             Conversation conversation = getConversation();
             mustache.execute(new PrintWriter(sw), conversation).flush();
             return sw.toString();

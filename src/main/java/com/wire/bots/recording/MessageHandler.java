@@ -71,20 +71,19 @@ public class MessageHandler extends MessageHandlerBase {
     public void onNewConversation(WireClient client, SystemMessage msg) {
         try {
             client.sendText(WELCOME_LABEL);
-
-            UUID convId = msg.convId;
-            UUID botId = UUID.fromString(client.getId());
-            UUID messageId = msg.id;
-            String type = msg.type;
-
-            persist(convId, null, botId, messageId, type, msg);
-
-            generateHtml(botId, convId);
-
             client.sendDirectText(HELP, msg.from.toString());
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
+
+        UUID convId = msg.convId;
+        UUID botId = UUID.fromString(client.getId());
+        UUID messageId = msg.id;
+        String type = msg.type;
+
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
     }
 
     @Override
@@ -101,12 +100,6 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onBotRemoved(UUID botId, SystemMessage msg) {
-        // obsolete
-        Logger.debug("onBotRemoved: %s", botId);
-        if (0 == historyDAO.unsubscribe(botId))
-            Logger.warning("Failed to unsubscribe. bot: %s", botId);
-        // obsolete
-
         UUID convId = msg.convId;
         UUID messageId = msg.id;
         String type = "conversation.member-leave.bot-removed";
@@ -120,20 +113,21 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onMemberJoin(WireClient client, SystemMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        UUID convId = msg.convId;
-        UUID messageId = msg.id;
-        String type = msg.type;
 
         Logger.debug("onMemberJoin: %s users: %s", botId, msg.users);
 
-        try {
-            Collector collector = collect(client, botId);
-            for (UUID memberId : msg.users) {
+        Collector collector = collect(client, botId);
+        for (UUID memberId : msg.users) {
+            try {
                 collector.sendPDF(memberId, "file:/opt");
+            } catch (Exception e) {
+                Logger.error("onMemberJoin: %s %s", botId, e);
             }
-        } catch (Exception e) {
-            Logger.error("onMemberJoin: %s %s", botId, e);
         }
+
+        UUID convId = msg.convId;
+        UUID messageId = msg.id;
+        String type = msg.type;
 
         //v2
         persist(convId, null, botId, messageId, type, msg);
@@ -184,35 +178,37 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onEditText(WireClient client, EditedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
+        UUID convId = client.getConversationId();
+        UUID userId = msg.getUserId();
+        UUID messageId = msg.getMessageId();
+        UUID replacingMessageId = msg.getReplacingMessageId();
+        String type = "conversation.otr-message-add.edit-text";
 
         try {
-            // obsolete
-            historyDAO.updateTextRecord(botId, msg.getReplacingMessageId().toString(), msg.getText());
-            // obsolete
-
-            String type = "conversation.otr-message-add.edit-text";
             String payload = mapper.writeValueAsString(msg);
-            eventsDAO.update(msg.getReplacingMessageId(), type, payload);
+            int update = eventsDAO.update(replacingMessageId, type, payload);
+            Logger.info("%s: conv: %s, %s -> %s, msg: %s, replacingMsgId: %s, update: %d",
+                    type,
+                    convId,
+                    userId,
+                    botId,
+                    messageId,
+                    replacingMessageId,
+                    update);
         } catch (Exception e) {
-            Logger.error(e.getMessage());
+            Logger.error("onEditText: %s msg: %s, replacingMsgId: %s, %s", botId, messageId, replacingMessageId, e);
         }
     }
 
     @Override
     public void onDelete(WireClient client, DeletedTextMessage msg) {
         UUID botId = UUID.fromString(client.getId());
-        UUID messageId = msg.getDeletedMessageId();
-
-        // obsolete
-        if (0 == historyDAO.remove(botId, messageId.toString()))
-            Logger.warning("Failed to delete a record: %s, %s", botId, messageId);
-        // obsolete
-
+        UUID messageId = msg.getMessageId();
         UUID convId = client.getConversationId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.delete-text";
 
-        persist(convId, userId, botId, msg.getMessageId(), type, msg);
+        persist(convId, userId, botId, messageId, type, msg);
         eventsDAO.delete(msg.getDeletedMessageId());
     }
 
