@@ -58,6 +58,11 @@ class EventProcessor {
                     collector.add(message);
                 }
                 break;
+                case "conversation.otr-message-add.new-attachment": {
+                    AttachmentMessage message = mapper.readValue(event.payload, AttachmentMessage.class);
+                    collector.add(message);
+                }
+                break;
                 case "conversation.otr-message-add.new-image": {
                     ImageMessage message = mapper.readValue(event.payload, ImageMessage.class);
                     collector.add(message);
