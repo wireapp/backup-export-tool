@@ -5,7 +5,6 @@ import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.recording.utils.TestCacheV2;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.tools.Util;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -75,7 +74,7 @@ public class ConversationTemplateTest {
         return ret;
     }
 
-    @Before
+    //@Before
     public void clean() {
         String pdf = getFilename(CONV_NAME, "pdf");
         String html = getFilename(CONV_NAME, "html");

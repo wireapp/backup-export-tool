@@ -121,6 +121,13 @@ class EventProcessor {
                     collector.add(message);
                 }
                 break;
+                case "conversation.otr-message-add.new-ping": {
+                    PingMessage msg = mapper.readValue(event.payload, PingMessage.class);
+                    String userName = collector.getUserName(msg.getUserId());
+                    String text = String.format("**%s** pinged", userName);
+                    collector.addSystem(text, msg.getTime(), event.type, msg.getMessageId());
+                }
+                break;
             }
         } catch (Exception e) {
             e.printStackTrace();

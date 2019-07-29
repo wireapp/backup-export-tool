@@ -131,8 +131,10 @@
       }
 
       .preview {
-         height: 64px;
-         width: 64px;
+         text-align: left;
+         horizontal-align: left;
+         height: 74px;
+         width: 74px;
       }
     </style>
 </head>
@@ -177,7 +179,7 @@
                         {{/attachment}}
                         {{#link}}
                         <blockquote>
-                            <p><strong>{{ title }}</strong></p>
+                            <p style="text-align: center;"><strong>{{ title }}</strong></p>
                             <img class="preview" src="{{ preview }}"/>
                             <a class="link" href="{{ url }}">{{ url }}</a>
                         </blockquote>

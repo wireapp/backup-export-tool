@@ -235,6 +235,8 @@ public class CollectorV2 {
                 return base + "icons8-delete.png";
             case "conversation.member-leave.bot-removed":
                 return base + "icons8-stop-squared-48.png";
+            case "conversation.otr-message-add.new-ping":
+                return base + "icons8-sun-50.png";
             default:
                 return null;
         }

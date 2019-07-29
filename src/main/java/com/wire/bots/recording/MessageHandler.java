@@ -310,6 +310,17 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
+    public void onPing(WireClient client, PingMessage msg) {
+        UUID botId = UUID.fromString(client.getId());
+        UUID convId = client.getConversationId();
+        UUID messageId = msg.getMessageId();
+        UUID userId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-ping";
+
+        persist(convId, userId, botId, messageId, type, msg);
+    }
+
+    @Override
     public void onEvent(WireClient client, UUID userId, Messages.GenericMessage genericMessage) {
         UUID botId = UUID.fromString(client.getId());
         UUID convId = client.getConversationId();
