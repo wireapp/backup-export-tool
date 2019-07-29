@@ -76,7 +76,7 @@ class HelperV2 {
         return new File(filename);
     }
 
-    public static String getExtension(String mimeType) {
+    static String getExtension(String mimeType) {
         String[] split = mimeType.split("/");
         return split.length == 1 ? split[0] : split[1];
     }

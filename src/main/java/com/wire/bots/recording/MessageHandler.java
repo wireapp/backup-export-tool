@@ -30,7 +30,7 @@ import java.util.UUID;
 public class MessageHandler extends MessageHandlerBase {
     private final ObjectMapper mapper = new ObjectMapper();
 
-    private static final String WELCOME_LABEL = "Recording is now enabled";
+    private static final String WELCOME_LABEL = "This conversation has _recording_ enabled";
     private static final String HELP = "Available commands:\n" +
             "`/pdf`     - receive previous messages in PDF format\n" +
             "`/public`  - publish this conversation\n" +
@@ -87,39 +87,18 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
-    public void onConversationRename(WireClient client, SystemMessage msg) {
-        UUID convId = msg.convId;
-        UUID botId = UUID.fromString(client.getId());
-        UUID messageId = msg.id;
-        String type = msg.type;
-
-        persist(convId, null, botId, messageId, type, msg);
-
-        generateHtml(botId, convId);
-    }
-
-    @Override
-    public void onBotRemoved(UUID botId, SystemMessage msg) {
-        UUID convId = msg.convId;
-        UUID messageId = msg.id;
-        String type = "conversation.member-leave.bot-removed";
-
-        //v2
-        persist(convId, null, botId, messageId, type, msg);
-
-        generateHtml(botId, convId);
-    }
-
-    @Override
     public void onMemberJoin(WireClient client, SystemMessage msg) {
         UUID botId = UUID.fromString(client.getId());
 
         Logger.debug("onMemberJoin: %s users: %s", botId, msg.users);
 
-        Collector collector = collect(client, botId);
+        //Collector collector = collect(client, botId);
         for (UUID memberId : msg.users) {
             try {
-                collector.sendPDF(memberId, "file:/opt");
+                Logger.info("onMemberJoin: %s, bot: %s, user: %s", msg.type, botId, memberId);
+
+                client.sendDirectText(WELCOME_LABEL, memberId.toString());
+                //collector.sendPDF(memberId, "file:/opt");  //todo fix this
             } catch (Exception e) {
                 Logger.error("onMemberJoin: %s %s", botId, e);
             }
@@ -141,6 +120,30 @@ public class MessageHandler extends MessageHandlerBase {
         UUID botId = UUID.fromString(client.getId());
         UUID messageId = msg.id;
         String type = msg.type;
+
+        //v2
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
+    }
+
+    @Override
+    public void onConversationRename(WireClient client, SystemMessage msg) {
+        UUID convId = msg.convId;
+        UUID botId = UUID.fromString(client.getId());
+        UUID messageId = msg.id;
+        String type = msg.type;
+
+        persist(convId, null, botId, messageId, type, msg);
+
+        generateHtml(botId, convId);
+    }
+
+    @Override
+    public void onBotRemoved(UUID botId, SystemMessage msg) {
+        UUID convId = msg.convId;
+        UUID messageId = msg.id;
+        String type = "conversation.member-leave.bot-removed";
 
         //v2
         persist(convId, null, botId, messageId, type, msg);

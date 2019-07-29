@@ -132,7 +132,7 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, saturday, "12"));
         collector.add(txt(lipis, saturday, "13"));
         collector.add(img(dejan, saturday, "ognjiste", "image/png"));
-        collector.add(attachment(lipis, saturday, "Wire+Security+Whitepaper", "Wire Security Paper.pdf", "application/pdf"));
+        collector.add(attachment(lipis, saturday, "Wire+Security+Whitepaper", "Wire Security Paper.pdf", "pdf"));
         collector.add(txt(lipis, saturday, "15"));
         collector.add(txt(dejan, saturday, "Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
