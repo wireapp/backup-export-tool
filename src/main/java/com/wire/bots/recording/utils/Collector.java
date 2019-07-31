@@ -13,6 +13,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Collector {
     private static final MustacheFactory mf = new DefaultMustacheFactory();
@@ -21,7 +23,8 @@ public class Collector {
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     private Message lastMessage = null;
     private String convName;
-
+    private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
+    private static Pattern p = Pattern.compile(regex);
     public Collector(Cache cache) {
         this.cache = cache;
     }
@@ -67,7 +70,10 @@ public class Collector {
     public Sender add(TextMessage event) throws ParseException {
         Message message = new Message();
         message.id = event.getMessageId();
+
         message.text = getText(event);
+        message.youTube = extractYouTube(event.getText());
+
         message.timeStamp = event.getTime();
         message.quotedMessage = toQuotedMessage(event);
         User user = cache.getUser(event.getUserId());
@@ -75,6 +81,14 @@ public class Collector {
         sender.add(message);
 
         return append(sender, message, event.getTime());
+    }
+
+    private String extractYouTube(String text) {
+        Matcher m = p.matcher(text);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return null;
     }
 
     public Sender addEdit(EditedTextMessage event) throws ParseException {
@@ -346,6 +360,7 @@ public class Collector {
         UUID id;
         String name;
         String text;
+        String youTube;
         String image;
         Link link;
         Attachment attachment;

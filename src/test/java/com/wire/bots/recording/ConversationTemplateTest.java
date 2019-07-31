@@ -157,6 +157,7 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, saturday, "This is some url https://google.com and some text"));
         collector.add(txt(dejan, saturday, "These two urls https://google.com https://wire.com"));
         collector.addSystem("**Dejo** removed **Lipis**", saturday2, "conversation.member-leave", UUID.randomUUID());
+        collector.add(txt(dejan, saturday, "https://www.youtube.com/watch?v=rlR4PJn8b8I"));
 
         Collector.Conversation conversation = collector.getConversation();
         File htmlFile = collector.executeFile(getFilename(conversation.getTitle(), "html"));
