@@ -1,8 +1,8 @@
 package com.wire.bots.recording;
 
-import com.wire.bots.recording.utils.CollectorV2;
+import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.PdfGenerator;
-import com.wire.bots.recording.utils.TestCacheV2;
+import com.wire.bots.recording.utils.TestCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.tools.Util;
 import org.junit.Test;
@@ -92,11 +92,12 @@ public class ConversationTemplateTest {
         final String saturday = "2019-07-19T03:57:01.275Z";
         final String saturday2 = "2019-07-19T03:58:01.289Z";
 
-        TestCacheV2 cache = new TestCacheV2();
-        CollectorV2 collector = new CollectorV2(cache);
+        TestCache cache = new TestCache();
+        Collector collector = new Collector(cache);
         collector.setConvName(CONV_NAME);
 
-        collector.addSystem("**Dejo** started recording in **Recording test** with:\n- **Lipis**", thursday, "conversation.create", UUID.randomUUID());
+        collector.addSystem("**Dejo** started recording in **Recording test** with:\n- **Lipis**", thursday,
+                "conversation.create", UUID.randomUUID());
         collector.addSystem("**Dejo** added **Lipis**", thursday2, "conversation.member-join", UUID.randomUUID());
         collector.addSystem("**Dejo** added **Lipis**", thursday2, "conversation.member-join", UUID.randomUUID());
         collector.add(txt(dejan, thursday, "Privet! Kak dela? 😃👍"));
@@ -157,7 +158,7 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, saturday, "These two urls https://google.com https://wire.com"));
         collector.addSystem("**Dejo** removed **Lipis**", saturday2, "conversation.member-leave", UUID.randomUUID());
 
-        CollectorV2.Conversation conversation = collector.getConversation();
+        Collector.Conversation conversation = collector.getConversation();
         File htmlFile = collector.executeFile(getFilename(conversation.getTitle(), "html"));
         String html = Util.readFile(htmlFile);
 

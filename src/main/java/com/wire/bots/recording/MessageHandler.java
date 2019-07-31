@@ -4,26 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.waz.model.Messages;
 import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
-import com.wire.bots.recording.DAO.HistoryDAO;
-import com.wire.bots.recording.model.DBRecord;
 import com.wire.bots.recording.model.Event;
-import com.wire.bots.recording.utils.Collector;
-import com.wire.bots.recording.utils.Formatter;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.factories.StorageFactory;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.SystemMessage;
-import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.state.State;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;
-import org.apache.http.annotation.Obsolete;
 
 import java.io.File;
 import java.net.URLEncoder;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,12 +32,10 @@ public class MessageHandler extends MessageHandlerBase {
     private final ChannelsDAO channelsDAO;
     private final StorageFactory storageF;
     private final EventsDAO eventsDAO;
-    private final HistoryDAO historyDAO;
 
     private final EventProcessor eventProcessor = new EventProcessor();
 
-    MessageHandler(HistoryDAO historyDAO, EventsDAO eventsDAO, ChannelsDAO channelsDAO, StorageFactory storageF) {
-        this.historyDAO = historyDAO;
+    MessageHandler(EventsDAO eventsDAO, ChannelsDAO channelsDAO, StorageFactory storageF) {
         this.eventsDAO = eventsDAO;
         this.channelsDAO = channelsDAO;
         this.storageF = storageF;
@@ -164,13 +155,6 @@ public class MessageHandler extends MessageHandlerBase {
             if (command(client, userId, botId, convId, cmd))
                 return;
 
-            // obsolete
-            User user = client.getUser(userId.toString());
-            int timestamp = (int) (new Date().getTime() / 1000);
-            if (0 == historyDAO.insertTextRecord(botId, messageId.toString(), user.name, msg.getText(), user.accent, userId, timestamp))
-                Logger.warning("Failed to insert a text record. %s, %s", botId, messageId);
-            // obsolete
-
             persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             e.printStackTrace();
@@ -224,30 +208,6 @@ public class MessageHandler extends MessageHandlerBase {
         String type = "conversation.otr-message-add.new-image";
 
         try {
-            // obsolete
-            User user = client.getUser(userId.toString());
-            int timestamp = (int) (new Date().getTime() / 1000);
-
-            int insertRecord = historyDAO.insertAssetRecord(botId,
-                    messageId.toString(),
-                    user.name,
-                    msg.getMimeType(),
-                    msg.getAssetKey(),
-                    msg.getAssetToken(),
-                    msg.getSha256(),
-                    msg.getOtrKey(),
-                    msg.getName(),
-                    (int) msg.getSize(),
-                    msg.getHeight(),
-                    msg.getWidth(),
-                    user.accent,
-                    userId,
-                    timestamp);
-
-            if (0 == insertRecord)
-                Logger.warning("Failed to insert image record. %s, %s", botId, messageId);
-            // obsolete
-
             persist(convId, userId, botId, messageId, type, msg);
         } catch (Exception e) {
             Logger.error("onImage: %s %s %s", botId, messageId, e);
@@ -354,23 +314,6 @@ public class MessageHandler extends MessageHandlerBase {
                 client.sendDirectText(HELP, userId.toString());
                 return true;
             }
-            case "/history": {
-                Formatter formatter = new Formatter();
-                for (DBRecord record : historyDAO.getRecords(botId)) {
-                    if (!formatter.add(record)) {
-                        formatter.print(client, userId.toString());
-                        formatter.add(record);
-                    }
-                }
-                formatter.print(client, userId.toString());
-                return true;
-            }
-            case "/pdf2": {
-                client.sendDirectText("Generating PDF...", userId.toString());
-                Collector collector = collect(client, botId);
-                collector.sendPDF(userId, "file:/opt");
-                return true;
-            }
             case "/pdf": {
                 client.sendDirectText("Generating PDF...", userId.toString());
                 String filename = String.format("html/%s.html", convId);
@@ -426,19 +369,5 @@ public class MessageHandler extends MessageHandlerBase {
             Logger.error(error);
             throw new RuntimeException(error);
         }
-    }
-
-    @Obsolete
-    private Collector collect(WireClient client, UUID botId) {
-        Collector collector = new Collector(client);
-        for (DBRecord record : historyDAO.getRecords(botId)) {
-            try {
-                collector.add(record);
-            } catch (Exception e) {
-                e.printStackTrace();
-                Logger.warning("collect: %s", e);
-            }
-        }
-        return collector;
     }
 }

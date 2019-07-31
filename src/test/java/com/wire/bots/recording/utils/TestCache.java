@@ -7,8 +7,8 @@ import com.wire.bots.sdk.server.model.User;
 import java.io.File;
 import java.util.UUID;
 
-public class TestCacheV2 extends CacheV2 {
-    public TestCacheV2() {
+public class TestCache extends Cache {
+    public TestCache() {
         super(null);
     }
 
@@ -34,7 +34,7 @@ public class TestCacheV2 extends CacheV2 {
 
     @Override
     File getAssetFile(MessageAssetBase message) {
-        String extension = HelperV2.getExtension(message.getMimeType());
+        String extension = Helper.getExtension(message.getMimeType());
         return new File(String.format("src/test/resources/recording/images/%s.%s",
                 message.getAssetKey(),
                 extension));

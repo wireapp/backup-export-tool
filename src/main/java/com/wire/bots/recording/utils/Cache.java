@@ -1,53 +1,95 @@
 package com.wire.bots.recording.utils;
 
-import com.wire.bots.recording.model.DBRecord;
-import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.assets.Picture;
+import com.wire.bots.sdk.models.MessageAssetBase;
+import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
+import com.wire.bots.sdk.user.API;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-class Cache {
-    private static final ConcurrentHashMap<String, Picture> pictures = new ConcurrentHashMap<>();//<Url, Picture>
-    private static final ConcurrentHashMap<String, File> assets = new ConcurrentHashMap<>();//<assetKey, File>
-    private static final ConcurrentHashMap<UUID, File> profiles = new ConcurrentHashMap<>();//<userId, File>
+public class Cache {
+    private static final ConcurrentHashMap<String, File> pictures = new ConcurrentHashMap<>();//<assetKey, Picture>
+    private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
+    private static final ConcurrentHashMap<UUID, File> profiles = new ConcurrentHashMap<>();//<userId, Picture>
+    private API api;
 
-    static File downloadImage(WireClient client, DBRecord record) {
-        return assets.computeIfAbsent(record.assetKey, k -> {
-            try {
-                return Helper.downloadImage(client, record);
-            } catch (Exception e) {
-                Logger.warning("Cache.downloadImage: assetId: %s, ex: %s", k, e);
-                return null;
-            }
-        });
+    public Cache(API api) {
+        this.api = api;
     }
 
-    @Nullable
-    static File getProfile(UUID userId) {
-        return profiles.computeIfAbsent(userId, k -> {
-            File file = Helper.avatarFile(userId);
-            if (file.exists())
-                return file;
-            File profile = Helper.getProfile(userId);
-            if (profile.exists())
-                return profile;
-            return null;
-        });
+    public Cache() {
+        try {
+            api = Helper.getApi();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Nullable
-    static Picture getPictureUrl(WireClient client, String url) {
-        return pictures.computeIfAbsent(url, k -> {
+    File getAssetFile(MessageAssetBase message) {
+        File file = pictures.computeIfAbsent(message.getAssetKey(), k -> {
             try {
-                return Helper.upload(client, url);
+                return Helper.downloadAsset(api, message);
             } catch (Exception e) {
-                Logger.warning("Cache.getPicture: url: %s, ex: %s", url, e);
-                return null;
+                Logger.warning("Cache.getAssetFile: %s", e);
+                try {
+                    api = Helper.getApi();
+                    return Helper.downloadAsset(api, message);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getAssetFile: %s", e1);
+                    return null;
+                }
             }
         });
+
+        if (file == null)
+            file = Helper.assetFile(message.getAssetKey(), message.getMimeType());
+        return file;
+    }
+
+    File getProfileImage(User user) {
+        File file = profiles.computeIfAbsent(user.id, k -> {
+            try {
+                return Helper.getProfile(api, user);
+            } catch (Exception e) {
+                Logger.warning("Cache.getProfileImage: userId: %s, ex: %s", user.id, e);
+                try {
+                    api = Helper.getApi();
+                    return Helper.getProfile(api, user);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getProfileImage: userId: %s, ex: %s", user.id, e1);
+                    return null;
+                }
+            }
+        });
+
+        if (file == null)
+            file = new File(Helper.avatarFile(user.id));
+        return file;
+    }
+
+    public User getUser(UUID userId) {
+        User user = users.computeIfAbsent(userId, k -> {
+            try {
+                return api.getUser(userId);
+            } catch (Exception e) {
+                Logger.warning("Cache.getUser: userId: %s, ex: %s", userId, e);
+                try {
+                    api = Helper.getApi();
+                    return api.getUser(userId);
+                } catch (Exception e1) {
+                    Logger.error("Cache.getUser: userId: %s, ex: %s", userId, e1);
+                    return null;
+                }
+            }
+        });
+
+        if (user == null) {
+            user = new User();
+            user.id = userId;
+            user.name = userId.toString();
+        }
+        return user;
     }
 }

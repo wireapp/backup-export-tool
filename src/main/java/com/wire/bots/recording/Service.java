@@ -19,7 +19,6 @@ package com.wire.bots.recording;
 
 import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
-import com.wire.bots.recording.DAO.HistoryDAO;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.recording.utils.ImagesBundle;
 import com.wire.bots.sdk.MessageHandlerBase;
@@ -58,11 +57,10 @@ public class Service extends Server<Config> {
     @Override
     protected MessageHandlerBase createHandler(Config config, Environment env) {
         final DBI jdbi = new DBIFactory().build(environment, config.database, "postgresql");
-        final HistoryDAO historyDAO = jdbi.onDemand(HistoryDAO.class);
         final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
         final ChannelsDAO channelsDAO = jdbi.onDemand(ChannelsDAO.class);
 
-        messageHandler = new MessageHandler(historyDAO, eventsDAO, channelsDAO, getStorageFactory());
+        messageHandler = new MessageHandler(eventsDAO, channelsDAO, getStorageFactory());
         return messageHandler;
     }
 

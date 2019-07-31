@@ -2,8 +2,8 @@ package com.wire.bots.recording;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wire.bots.recording.model.Event;
-import com.wire.bots.recording.utils.CacheV2;
-import com.wire.bots.recording.utils.CollectorV2;
+import com.wire.bots.recording.utils.Cache;
+import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.Member;
 import com.wire.bots.sdk.server.model.SystemMessage;
@@ -15,22 +15,22 @@ import java.util.List;
 import java.util.UUID;
 
 class EventProcessor {
-    private final CacheV2 cache;
+    private final Cache cache;
     private final ObjectMapper mapper = new ObjectMapper();
 
     EventProcessor() {
-        this.cache = new CacheV2();
+        this.cache = new Cache();
     }
 
     File saveHtml(List<Event> events, String filename) throws IOException {
-        CollectorV2 collector = new CollectorV2(cache);
+        Collector collector = new Collector(cache);
         for (Event event : events) {
             add(collector, event);
         }
         return collector.executeFile(filename);
     }
 
-    private void add(CollectorV2 collector, Event event) {
+    private void add(Collector collector, Event event) {
         try {
             switch (event.type) {
                 case "conversation.create": {
@@ -135,7 +135,7 @@ class EventProcessor {
         }
     }
 
-    private String formatConversation(SystemMessage msg, CacheV2 cache) {
+    private String formatConversation(SystemMessage msg, Cache cache) {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("**%s** started recording in **%s** with: \n",
                 cache.getUser(msg.from).name,
