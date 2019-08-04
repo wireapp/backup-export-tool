@@ -62,13 +62,13 @@ public class MessageHandler extends MessageHandlerBase {
     public void onNewConversation(WireClient client, SystemMessage msg) {
         try {
             client.sendText(WELCOME_LABEL);
-            client.sendDirectText(HELP, msg.from.toString());
+            client.sendDirectText(HELP, msg.from);
         } catch (Exception e) {
             Logger.error("onNewConversation: %s %s", client.getId(), e);
         }
 
         UUID convId = msg.convId;
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.id;
         String type = msg.type;
 
@@ -79,7 +79,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onMemberJoin(WireClient client, SystemMessage msg) {
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
 
         Logger.debug("onMemberJoin: %s users: %s", botId, msg.users);
 
@@ -88,7 +88,7 @@ public class MessageHandler extends MessageHandlerBase {
             try {
                 Logger.info("onMemberJoin: %s, bot: %s, user: %s", msg.type, botId, memberId);
 
-                client.sendDirectText(WELCOME_LABEL, memberId.toString());
+                client.sendDirectText(WELCOME_LABEL, memberId);
                 //collector.sendPDF(memberId, "file:/opt");  //todo fix this
             } catch (Exception e) {
                 Logger.error("onMemberJoin: %s %s", botId, e);
@@ -108,7 +108,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onMemberLeave(WireClient client, SystemMessage msg) {
         UUID convId = msg.convId;
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.id;
         String type = msg.type;
 
@@ -121,7 +121,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onConversationRename(WireClient client, SystemMessage msg) {
         UUID convId = msg.convId;
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.id;
         String type = msg.type;
 
@@ -145,7 +145,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onText(WireClient client, TextMessage msg) {
         UUID userId = msg.getUserId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.getMessageId();
         UUID convId = client.getConversationId();
         String type = "conversation.otr-message-add.new-text";
@@ -164,7 +164,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onEditText(WireClient client, EditedTextMessage msg) {
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID convId = client.getConversationId();
         UUID userId = msg.getUserId();
         UUID messageId = msg.getMessageId();
@@ -189,7 +189,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onDelete(WireClient client, DeletedTextMessage msg) {
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.getMessageId();
         UUID convId = client.getConversationId();
         UUID userId = msg.getUserId();
@@ -203,7 +203,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onImage(WireClient client, ImageMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
@@ -218,7 +218,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onVideoPreview(WireClient client, ImageMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-image";
 
@@ -232,7 +232,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onLinkPreview(WireClient client, LinkPreviewMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-link";
 
@@ -246,7 +246,7 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onAttachment(WireClient client, AttachmentMessage msg) {
         UUID convId = client.getConversationId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID messageId = msg.getMessageId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-attachment";
@@ -262,7 +262,7 @@ public class MessageHandler extends MessageHandlerBase {
     public void onReaction(WireClient client, ReactionMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID userId = msg.getUserId();
         String type = "conversation.otr-message-add.new-reaction";
 
@@ -271,7 +271,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onPing(WireClient client, PingMessage msg) {
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();
         UUID userId = msg.getUserId();
@@ -282,7 +282,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     @Override
     public void onEvent(WireClient client, UUID userId, Messages.GenericMessage genericMessage) {
-        UUID botId = UUID.fromString(client.getId());
+        UUID botId = client.getId();
         UUID convId = client.getConversationId();
 
         Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
@@ -305,17 +305,17 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
-        State state = storageF.create(botId.toString());
+        State state = storageF.create(botId);
         if (!state.getState().origin.id.equals(userId))
             return false;
 
         switch (cmd) {
             case "/help": {
-                client.sendDirectText(HELP, userId.toString());
+                client.sendDirectText(HELP, userId);
                 return true;
             }
             case "/pdf": {
-                client.sendDirectText("Generating PDF...", userId.toString());
+                client.sendDirectText("Generating PDF...", userId);
                 String filename = String.format("html/%s.html", convId);
                 List<Event> events = eventsDAO.listAllAsc(convId);
 
@@ -325,13 +325,13 @@ public class MessageHandler extends MessageHandlerBase {
                 String convName = client.getConversation().name;
                 String pdfFilename = String.format("html/%s.pdf", URLEncoder.encode(convName, "UTF-8"));
                 File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
-                client.sendDirectFile(pdfFile, "application/pdf", userId.toString());
+                client.sendDirectFile(pdfFile, "application/pdf", userId);
                 return true;
             }
             case "/public": {
                 channelsDAO.insert(convId);
                 String text = String.format("https://services.wire.com/recording/channel/%s.html", convId);
-                client.sendDirectText(text, userId.toString());
+                client.sendDirectText(text, userId);
                 return true;
             }
             case "/private": {
@@ -339,7 +339,7 @@ public class MessageHandler extends MessageHandlerBase {
                 String filename = String.format("html/%s.html", convId);
                 boolean delete = new File(filename).delete();
                 String txt = String.format("%s deleted: %s", filename, delete);
-                client.sendDirectText(txt, userId.toString());
+                client.sendDirectText(txt, userId);
                 return true;
             }
         }
