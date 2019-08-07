@@ -25,6 +25,7 @@ public class Collector {
     private String convName;
     private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
     private static Pattern p = Pattern.compile(regex);
+
     public Collector(Cache cache) {
         this.cache = cache;
     }
@@ -113,6 +114,26 @@ public class Collector {
         return append(sender, message, event.getTime());
     }
 
+    public void add(VideoMessage event) throws ParseException {
+        Message message = new Message();
+        message.id = event.getMessageId();
+        message.timeStamp = event.getTime();
+
+        File file = cache.getAssetFile(event);
+        message.video = new Video();
+        message.video.url = getFilename(file);
+        message.video.width = event.getWidth();
+        message.video.height = event.getHeight();
+        message.video.mimeType = event.getMimeType();
+
+        User user = cache.getUser(event.getUserId());
+
+        Sender sender = sender(user);
+        sender.add(message);
+
+        append(sender, message, event.getTime());
+    }
+
     public Sender add(AttachmentMessage event) throws ParseException {
         Message message = new Message();
         message.id = event.getMessageId();
@@ -150,7 +171,6 @@ public class Collector {
             message.likes = String.join(", ", names);
         }
     }
-
 
     public void addLink(LinkPreviewMessage event) throws ParseException {
         Message message = new Message();
@@ -362,6 +382,7 @@ public class Collector {
         String text;
         String youTube;
         String image;
+        Video video;
         Link link;
         Attachment attachment;
         String timeStamp;
@@ -387,6 +408,13 @@ public class Collector {
 
     public static class Attachment {
         String name;
+        String url;
+    }
+
+    public static class Video {
+        int width;
+        int height;
+        String mimeType;
         String url;
     }
 

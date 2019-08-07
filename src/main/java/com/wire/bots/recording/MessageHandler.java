@@ -215,6 +215,21 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
+    public void onVideo(WireClient client, VideoMessage msg) {
+        UUID convId = client.getConversationId();
+        UUID messageId = msg.getMessageId();
+        UUID botId = client.getId();
+        UUID userId = msg.getUserId();
+        String type = "conversation.otr-message-add.new-video";
+
+        try {
+            persist(convId, userId, botId, messageId, type, msg);
+        } catch (Exception e) {
+            Logger.error("onVideo: %s %s %s", botId, messageId, e);
+        }
+    }
+
+    @Override
     public void onVideoPreview(WireClient client, ImageMessage msg) {
         UUID convId = client.getConversationId();
         UUID messageId = msg.getMessageId();

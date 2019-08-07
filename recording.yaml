@@ -25,7 +25,6 @@ db:
 
 database:
   driverClass: org.postgresql.Driver
-  user: admin
   password: ${POSTGRES_PASSWORD}
   url: jdbc:postgresql://localhost/postgres
   properties:

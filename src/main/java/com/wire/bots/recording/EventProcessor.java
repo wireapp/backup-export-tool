@@ -72,6 +72,11 @@ class EventProcessor {
                     collector.add(message);
                 }
                 break;
+                case "conversation.otr-message-add.new-video": {
+                    VideoMessage message = mapper.readValue(event.payload, VideoMessage.class);
+                    collector.add(message);
+                }
+                break;
                 case "conversation.otr-message-add.new-link": {
                     LinkPreviewMessage message = mapper.readValue(event.payload, LinkPreviewMessage.class);
                     collector.addLink(message);

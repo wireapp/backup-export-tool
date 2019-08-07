@@ -30,6 +30,8 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.skife.jdbi.v2.DBI;
 
+import java.util.concurrent.ExecutorService;
+
 public class Service extends Server<Config> {
     public static Service instance;
 
@@ -65,6 +67,7 @@ public class Service extends Server<Config> {
     }
 
     protected void onRun(Config config, Environment env) {
-        messageHandler.warmup();
+        ExecutorService warmup = env.lifecycle().executorService("warmup").build();
+        warmup.submit(() -> messageHandler.warmup());
     }
 }
