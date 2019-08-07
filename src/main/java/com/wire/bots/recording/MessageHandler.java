@@ -281,6 +281,12 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     @Override
+    public void onUserUpdate(UUID id, UUID userId) {
+        Logger.info("onUserUpdate: %s, userId: %s", id, userId);
+        eventProcessor.clearCache(userId);
+    }
+
+    @Override
     public void onEvent(WireClient client, UUID userId, Messages.GenericMessage genericMessage) {
         UUID botId = client.getId();
         UUID convId = client.getConversationId();

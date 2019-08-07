@@ -92,4 +92,9 @@ public class Cache {
         }
         return user;
     }
+
+    public void clear(UUID userId) {
+        users.remove(userId);
+        profiles.remove(userId);
+    }
 }

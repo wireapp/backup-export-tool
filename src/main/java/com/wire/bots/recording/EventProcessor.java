@@ -22,6 +22,10 @@ class EventProcessor {
         this.cache = new Cache();
     }
 
+    void clearCache(UUID userId) {
+        cache.clear(userId);
+    }
+
     File saveHtml(List<Event> events, String filename) throws IOException {
         Collector collector = new Collector(cache);
         for (Event event : events) {
