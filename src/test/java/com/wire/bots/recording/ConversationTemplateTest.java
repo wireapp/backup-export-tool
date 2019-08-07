@@ -54,6 +54,16 @@ public class ConversationTemplateTest {
         return ret;
     }
 
+    private static VideoMessage vid(UUID userId, String time, String key, String mimeType) {
+        VideoMessage ret = new VideoMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
+        ret.setAssetKey(key);
+        ret.setMimeType(mimeType);
+        ret.setTime(time);
+        ret.setHeight(568);
+        ret.setWidth(320);
+        return ret;
+    }
+
     private static AttachmentMessage attachment(UUID userId, String time, String key, String name, String mimeType) {
         AttachmentMessage ret = new AttachmentMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
         ret.setAssetKey(key);
@@ -158,6 +168,7 @@ public class ConversationTemplateTest {
         collector.add(txt(dejan, saturday, "These two urls https://google.com https://wire.com"));
         collector.addSystem("**Dejo** removed **Lipis**", saturday2, "conversation.member-leave", UUID.randomUUID());
         collector.add(txt(dejan, saturday, "https://www.youtube.com/watch?v=rlR4PJn8b8I"));
+        collector.add(vid(dejan, saturday, "panormos", "video/mp4"));
 
         Collector.Conversation conversation = collector.getConversation();
         File htmlFile = collector.executeFile(getFilename(conversation.getTitle(), "html"));
