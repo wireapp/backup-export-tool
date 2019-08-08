@@ -142,18 +142,9 @@
         width: 74px;
       }
 
-      .aspect-ratio {
-        position: relative;
-        width: 100%;
-        height: 0;
-        padding-bottom: 56%;
-      }
-      .aspect-ratio iframe {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
+      iframe {
+        width: 560px;
+        height: 315px;
       }
 
       iframe,
@@ -214,9 +205,7 @@
                 <div class="likes">{{ likes }}</div>
                 {{/likes}}
                 {{#youTube}}
-                <div class="aspect-ratio">
-                  <iframe src="https://www.youtube.com/embed/{{ youTube }}"> </iframe>
-                </div>
+                <iframe src="https://www.youtube.com/embed/{{ youTube }}"> </iframe>
                 {{/youTube}}
                 {{#video}}
                 <video width="{{ width }}" height="{{ height }}" controls="controls">
