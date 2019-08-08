@@ -4,6 +4,7 @@ import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.recording.utils.TestCache;
 import com.wire.bots.sdk.models.*;
+import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;
 import org.junit.Test;
 
@@ -14,7 +15,7 @@ public class ConversationTemplateTest {
     public static final UUID dejan = UUID.fromString("40b96378-951d-11e9-bc42-526af7764f64");
     private static final UUID lipis = UUID.fromString("40b96896-951d-11e9-bc42-526af7764f64");
     private static final String CONV_NAME = "Recording Test";
-    private static final String SRC_TEST_OUT = "src/test/out";
+    private static final String SRC_TEST_OUT = "src/test/resources";
 
     private static TextMessage txt(UUID userId, String time, String text) {
         TextMessage ret = new TextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
@@ -172,10 +173,13 @@ public class ConversationTemplateTest {
 
         Collector.Conversation conversation = collector.getConversation();
         File htmlFile = collector.executeFile(getFilename(conversation.getTitle(), "html"));
+        Logger.info("Generated file: %s", htmlFile.getAbsolutePath());
+
         String html = Util.readFile(htmlFile);
 
         String pdfFilename = getFilename(conversation.getTitle(), "pdf");
-        PdfGenerator.save(pdfFilename, html, "file:src/test/resources");
+        File pdfFile = PdfGenerator.save(pdfFilename, html, "file:src/test/resources");
+        Logger.info("Generated file: %s", pdfFile.getAbsolutePath());
     }
 
     private String getFilename(String name, String extension) {

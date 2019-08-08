@@ -5,6 +5,7 @@
 *.iml
 *.lck
 *.log
+Recording Test.pdf
+Recording Test.html
 data/
-src/test/out
 target/
