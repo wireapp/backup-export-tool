@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>{{ title }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="robots" content="noindex, nofollow"/>
-    <meta http-equiv="refresh" content="90"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta http-equiv="refresh" content="90" />
     <style>
       @media print {
         body {
@@ -15,9 +15,15 @@
           margin: 0;
           -webkit-print-color-adjust: exact;
         }
+
+        iframe,
+        video {
+          display: none;
+        }
       }
       body {
         width: 680px;
+        max-width: 100%;
         margin: 0;
         padding: 0;
         font-size: 16px;
@@ -127,93 +133,114 @@
         border-left: 4px solid #ccc;
         margin: 1.5em 0;
         padding: 0.5em 10px;
-        quotes: "\201C""\201D""\2018""\2019";
+        quotes: '\201C''\201D''\2018''\2019';
       }
 
       .preview {
-         text-align: left;
-         horizontal-align: left;
-         height: 74px;
-         width: 74px;
+        text-align: left;
+        height: 74px;
+        width: 74px;
+      }
+
+      .aspect-ratio {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56%;
+      }
+      .aspect-ratio iframe {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+      }
+
+      iframe,
+      video {
+        border: 1px solid #777;
       }
     </style>
-</head>
-<body>
-<h1>{{ title }}</h1>
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
 
-<table>
-    {{#days}}
-    <tr>
+    <table>
+      {{#days}}
+      <tr>
         <td class="date-td" colspan="3">{{ date }}</td>
-    </tr>
-    {{#senders}}
-    <tr class="sender-row {{ system }}">
+      </tr>
+      {{#senders}}
+      <tr class="sender-row {{ system }}">
         <td class="avatar-td">
-            <div
-                    class="avatar"
-                    style="
+          <div
+            class="avatar"
+            style="
               background-image: url({{ avatar }});
               border-color: {{ accent }};"
-            ></div>
+          ></div>
         </td>
         <td>
-            <div class="name" style="color: {{ accent }}">{{ name }}</div>
-            <table>
-                {{#messages}}
-                <tr>
-                    <td class="message">
-                        <a id="{{ id }}"></a>
-                        {{#quotedMessage}}
-                        <blockquote>
-                            <strong>{{ name }}</strong>
-                            {{{ text }}}
-                            <a class="link" href="#{{ id }}">Original message from {{ date }}</a>
-                        </blockquote>
-                        {{/quotedMessage}}
-                        {{{ text }}}
-                        {{#image}}
-                        <img class="image" src="{{ image }}"/>
-                        {{/image}}
-                        {{#attachment}}
-                        <a class="attachment" href="{{ url }}">{{ name }}</a>
-                        {{/attachment}}
-                        {{#link}}
-                        <blockquote>
-                            <p style="text-align: center;"><strong>{{ title }}</strong></p>
-                            <img class="preview" src="{{ preview }}"/>
-                            <a class="link" href="{{ url }}">{{ url }}</a>
-                        </blockquote>
-                        {{/link}}
-                        {{#likes}}
-                        <div class="likes">{{ likes }}</div>
-                        {{/likes}}
-                        {{#youTube}}
-                        <iframe width="540" height="360" src="https://www.youtube.com/embed/{{ youTube }}">
-                        </iframe>
-                        {{/youTube}}
-                        {{#video}}
-                        <video width="{{ width }}" height="{{ height }}" controls="controls">
-                            <source src="{{ url }}" type="{{ mimeType }}"/>
-                            Your browser does not support the video tag.
-                        </video>
-                        {{/video}}
-                    </td>
-                    <td data-timestamp="{{ timeStamp }}" class="time-td">{{ time }}</td>
-                </tr>
-                {{/messages}}
-            </table>
+          <div class="name" style="color: {{ accent }}">{{ name }}</div>
+          <table>
+            {{#messages}}
+            <tr>
+              <td class="message">
+                <a id="{{ id }}"></a>
+                {{#quotedMessage}}
+                <blockquote>
+                  <strong>{{ name }}</strong>
+                  {{{ text }}}
+                  <a class="link" href="#{{ id }}">Original message from {{ date }}</a>
+                </blockquote>
+                {{/quotedMessage}}
+                {{{ text }}}
+                {{#image}}
+                <img class="image" src="{{ image }}" />
+                {{/image}}
+                {{#attachment}}
+                <a class="attachment" href="{{ url }}">{{ name }}</a>
+                {{/attachment}}
+                {{#link}}
+                <blockquote>
+                  <p style="text-align: center;">
+                    <strong>{{ title }}</strong>
+                  </p>
+                  <img class="preview" src="{{ preview }}" />
+                  <a class="link" href="{{ url }}">{{ url }}</a>
+                </blockquote>
+                {{/link}}
+                {{#likes}}
+                <div class="likes">{{ likes }}</div>
+                {{/likes}}
+                {{#youTube}}
+                <div class="aspect-ratio">
+                  <iframe src="https://www.youtube.com/embed/{{ youTube }}"> </iframe>
+                </div>
+                {{/youTube}}
+                {{#video}}
+                <video width="{{ width }}" height="{{ height }}" controls="controls">
+                  <source src="{{ url }}" type="{{ mimeType }}" />
+                  Your browser does not support the video tag.
+                </video>
+                {{/video}}
+              </td>
+              <td data-timestamp="{{ timeStamp }}" class="time-td">{{ time }}</td>
+            </tr>
+            {{/messages}}
+          </table>
         </td>
-    </tr>
-    {{/senders}}
-    {{/days}}
-</table>
+      </tr>
+      {{/senders}}
+      {{/days}}
+    </table>
 
-<script src="/recording/scripts/moment.min.js"></script>
-<script>
+    <script src="/recording/scripts/moment.min.js"></script>
+    <script>
       let times = document.querySelectorAll('[data-timestamp]');
       times.forEach(time => {
         time.textContent = moment(time.getAttribute('data-timestamp')).format('HH:mm');
       });
-</script>
-</body>
+    </script>
+  </body>
 </html>
