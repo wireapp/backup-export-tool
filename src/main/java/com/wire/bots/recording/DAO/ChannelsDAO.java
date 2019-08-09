@@ -9,15 +9,21 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChannelsDAO {
-    @SqlUpdate("INSERT INTO Recording_Channels (conversationId) VALUES (:conversationId) ON CONFLICT (conversationId) DO NOTHING")
-    int insert(@Bind("conversationId") UUID conversationId);
+    @SqlUpdate("INSERT INTO Recording_Channels (conversationId, botId) " +
+            "VALUES (:conversationId, :botId) ON CONFLICT (conversationId) DO NOTHING")
+    int insert(@Bind("conversationId") UUID conversationId,
+               @Bind("botId") UUID botId);
 
-    @SqlQuery("SELECT conversationId FROM Recording_Channels WHERE conversationId = :conversationId")
-    @RegisterMapper(ConversationIdResultSetMapper.class)
-    UUID get(@Bind("conversationId") UUID conversationId);
+    @SqlQuery("SELECT conversationId AS UUID FROM Recording_Channels WHERE conversationId = :conversationId")
+    @RegisterMapper(UUIDResultSetMapper.class)
+    UUID contains(@Bind("conversationId") UUID conversationId);
 
-    @SqlQuery("SELECT conversationId FROM Recording_Channels")
-    @RegisterMapper(ConversationIdResultSetMapper.class)
+    @SqlQuery("SELECT botId AS UUID FROM Recording_Channels WHERE conversationId = :conversationId")
+    @RegisterMapper(UUIDResultSetMapper.class)
+    UUID getBotId(@Bind("conversationId") UUID conversationId);
+
+    @SqlQuery("SELECT conversationId AS UUID FROM Recording_Channels")
+    @RegisterMapper(UUIDResultSetMapper.class)
     List<UUID> listConversations();
 
     @SqlUpdate("DELETE FROM Recording_Channels WHERE conversationId = :conversationId")

@@ -6,6 +6,7 @@ import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.model.Event;
 import com.wire.bots.recording.utils.PdfGenerator;
+import com.wire.bots.sdk.ClientRepo;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.factories.StorageFactory;
@@ -41,17 +42,20 @@ public class MessageHandler extends MessageHandlerBase {
         this.storageF = storageF;
     }
 
-    void warmup() {
+    void warmup(ClientRepo repo) {
         Logger.info("Warming up...");
         List<UUID> conversations = channelsDAO.listConversations();
         for (UUID convId : conversations) {
             try {
-                String filename = String.format("html/%s.html", convId);
-                List<Event> events = eventsDAO.listAllAsc(convId);
-
-                File file = eventProcessor.saveHtml(events, filename);
-
-                Logger.info("warmed up: %s", file.getName());
+                UUID botId = channelsDAO.getBotId(convId);
+                if (botId != null) {
+                    try (WireClient client = repo.getClient(botId)) {
+                        String filename = String.format("html/%s.html", convId);
+                        List<Event> events = eventsDAO.listAllAsc(convId);
+                        File file = eventProcessor.saveHtml(client, events, filename);
+                        Logger.info("warmed up: %s", file.getName());
+                    }
+                }
             } catch (Exception e) {
                 Logger.error("warmup: %s %s", convId, e);
             }
@@ -74,7 +78,7 @@ public class MessageHandler extends MessageHandlerBase {
 
         persist(convId, null, botId, messageId, type, msg);
 
-        generateHtml(botId, convId);
+        generateHtml(client, botId, convId);
     }
 
     @Override
@@ -102,7 +106,7 @@ public class MessageHandler extends MessageHandlerBase {
         //v2
         persist(convId, null, botId, messageId, type, msg);
 
-        generateHtml(botId, convId);
+        generateHtml(client, botId, convId);
     }
 
     @Override
@@ -115,7 +119,7 @@ public class MessageHandler extends MessageHandlerBase {
         //v2
         persist(convId, null, botId, messageId, type, msg);
 
-        generateHtml(botId, convId);
+        generateHtml(client, botId, convId);
     }
 
     @Override
@@ -127,7 +131,7 @@ public class MessageHandler extends MessageHandlerBase {
 
         persist(convId, null, botId, messageId, type, msg);
 
-        generateHtml(botId, convId);
+        generateHtml(client, botId, convId);
     }
 
     @Override
@@ -138,8 +142,6 @@ public class MessageHandler extends MessageHandlerBase {
 
         //v2
         persist(convId, null, botId, messageId, type, msg);
-
-        generateHtml(botId, convId);
     }
 
     @Override
@@ -308,16 +310,16 @@ public class MessageHandler extends MessageHandlerBase {
 
         Logger.info("onEvent: bot: %s, conv: %s, from: %s", botId, convId, userId);
 
-        generateHtml(botId, convId);
+        generateHtml(client, botId, convId);
     }
 
-    private void generateHtml(UUID botId, UUID convId) {
+    private void generateHtml(WireClient client, UUID botId, UUID convId) {
         try {
-            if (null != channelsDAO.get(convId)) {
+            if (null != channelsDAO.contains(convId)) {
                 List<Event> events = eventsDAO.listAllAsc(convId);
                 String filename = String.format("html/%s.html", convId);
 
-                File file = eventProcessor.saveHtml(events, filename);
+                File file = eventProcessor.saveHtml(client, events, filename);
                 assert file.exists();
             }
         } catch (Exception e) {
@@ -340,7 +342,7 @@ public class MessageHandler extends MessageHandlerBase {
                 String filename = String.format("html/%s.html", convId);
                 List<Event> events = eventsDAO.listAllAsc(convId);
 
-                File file = eventProcessor.saveHtml(events, filename);
+                File file = eventProcessor.saveHtml(client, events, filename);
                 String html = Util.readFile(file);
 
                 String convName = client.getConversation().name;
@@ -350,7 +352,7 @@ public class MessageHandler extends MessageHandlerBase {
                 return true;
             }
             case "/public": {
-                channelsDAO.insert(convId);
+                channelsDAO.insert(convId, botId);
                 String text = String.format("https://services.wire.com/recording/channel/%s.html", convId);
                 client.sendDirectText(text, userId);
                 return true;

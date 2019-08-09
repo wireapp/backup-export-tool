@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wire.bots.recording.model.Event;
 import com.wire.bots.recording.utils.Cache;
 import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.Member;
 import com.wire.bots.sdk.server.model.SystemMessage;
+import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
 import java.io.File;
@@ -26,22 +28,22 @@ class EventProcessor {
         cache.clear(userId);
     }
 
-    File saveHtml(List<Event> events, String filename) throws IOException {
-        Collector collector = new Collector(cache);
+    File saveHtml(WireClient client, List<Event> events, String filename) throws IOException {
+        Collector collector = new Collector(client, cache);
         for (Event event : events) {
-            add(collector, event);
+            add(client, collector, event);
         }
         return collector.executeFile(filename);
     }
 
-    private void add(Collector collector, Event event) {
+    private void add(WireClient client, Collector collector, Event event) {
         try {
             switch (event.type) {
                 case "conversation.create": {
                     SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
                     collector.setConvName(msg.conversation.name);
 
-                    String text = formatConversation(msg, collector.getCache());
+                    String text = formatConversation(msg, collector.getCache(), client);
                     collector.addSystem(text, msg.time, event.type, msg.id);
                 }
                 break;
@@ -144,13 +146,15 @@ class EventProcessor {
         }
     }
 
-    private String formatConversation(SystemMessage msg, Cache cache) {
+    private String formatConversation(SystemMessage msg, Cache cache, WireClient client) {
         StringBuilder sb = new StringBuilder();
+        User user = cache.getUser(client, msg.from);
         sb.append(String.format("**%s** started recording in **%s** with: \n",
-                cache.getUser(msg.from).name,
+                user.name,
                 msg.conversation.name));
         for (Member member : msg.conversation.members) {
-            sb.append(String.format("- **%s** \n", cache.getUser(member.id).name));
+            user = cache.getUser(client, member.id);
+            sb.append(String.format("- **%s** \n", user.name));
         }
         return sb.toString();
     }
