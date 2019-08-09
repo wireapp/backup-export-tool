@@ -68,6 +68,6 @@ public class Service extends Server<Config> {
 
     protected void onRun(Config config, Environment env) {
         ExecutorService warmup = env.lifecycle().executorService("warmup").build();
-        warmup.submit(() -> messageHandler.warmup());
+        warmup.submit(() -> messageHandler.warmup(getRepo()));
     }
 }

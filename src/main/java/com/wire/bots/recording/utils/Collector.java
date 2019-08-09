@@ -3,8 +3,10 @@ package com.wire.bots.recording.utils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
+import com.wire.bots.sdk.tools.Logger;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -18,6 +20,7 @@ import java.util.regex.Pattern;
 
 public class Collector {
     private static final MustacheFactory mf = new DefaultMustacheFactory();
+    private final WireClient client;
     private final Cache cache;
     private final LinkedList<Day> days = new LinkedList<>();
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
@@ -26,7 +29,8 @@ public class Collector {
     private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
     private static Pattern p = Pattern.compile(regex);
 
-    public Collector(Cache cache) {
+    public Collector(WireClient client, Cache cache) {
+        this.client = client;
         this.cache = cache;
     }
 
@@ -77,8 +81,7 @@ public class Collector {
 
         message.timeStamp = event.getTime();
         message.quotedMessage = toQuotedMessage(event);
-        User user = cache.getUser(event.getUserId());
-        Sender sender = sender(user);
+        Sender sender = sender(event.getUserId());
         sender.add(message);
 
         return append(sender, message, event.getTime());
@@ -103,12 +106,10 @@ public class Collector {
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
 
-        File file = cache.getAssetFile(event);
+        File file = cache.getAssetFile(client, event);
         message.image = getFilename(file);
 
-        User user = cache.getUser(event.getUserId());
-
-        Sender sender = sender(user);
+        Sender sender = sender(event.getUserId());
         sender.add(message);
 
         return append(sender, message, event.getTime());
@@ -119,16 +120,14 @@ public class Collector {
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
 
-        File file = cache.getAssetFile(event);
+        File file = cache.getAssetFile(client, event);
         message.video = new Video();
         message.video.url = getFilename(file);
         message.video.width = event.getWidth();
         message.video.height = event.getHeight();
         message.video.mimeType = event.getMimeType();
 
-        User user = cache.getUser(event.getUserId());
-
-        Sender sender = sender(user);
+        Sender sender = sender(event.getUserId());
         sender.add(message);
 
         append(sender, message, event.getTime());
@@ -139,16 +138,14 @@ public class Collector {
         message.id = event.getMessageId();
         message.timeStamp = event.getTime();
 
-        File file = cache.getAssetFile(event);
+        File file = cache.getAssetFile(client, event);
         String assetFilename = getFilename(file);
 
         message.attachment = new Attachment();
         message.attachment.name = event.getName();
         message.attachment.url = assetFilename;
 
-        User user = cache.getUser(event.getUserId());
-
-        Sender sender = sender(user);
+        Sender sender = sender(event.getUserId());
         sender.add(message);
 
         return append(sender, message, event.getTime());
@@ -183,13 +180,11 @@ public class Collector {
         message.link.summary = event.getSummary();
         message.link.url = event.getUrl();
 
-        File file = cache.getAssetFile(event);
+        File file = cache.getAssetFile(client, event);
         if (file.exists())
             message.link.preview = getFilename(file);
 
-        User user = cache.getUser(event.getUserId());
-
-        Sender sender = sender(user);
+        Sender sender = sender(event.getUserId());
         sender.add(message);
 
         append(sender, message, event.getTime());
@@ -233,12 +228,13 @@ public class Collector {
         return id != null ? messagesHashMap.get(id) : null;
     }
 
-    private Sender sender(User user) {
+    private Sender sender(UUID userId) {
+        User user = cache.getUser(client, userId);
         Sender sender = new Sender();
-        sender.senderId = user.id;
+        sender.senderId = userId;
         sender.name = user.name;
         sender.accent = toColor(user.accent);
-        sender.avatar = getAvatar(user);
+        sender.avatar = getAvatar(user.id);
         return sender;
     }
 
@@ -308,10 +304,19 @@ public class Collector {
         return String.format("/recording/%s/%s", "images", file.getName());
     }
 
-    private String getAvatar(User user) {
-        File file = cache.getProfileImage(user);
-        String ret = String.format("/recording/%s/%s", "avatars", file.getName());
-        return file.exists() ? ret : null;
+    @Nullable
+    private String getAvatar(UUID userId) {
+        User user = cache.getUserProfiles(userId);
+        if (user == null) {
+            Logger.warning("getAvatar: user: %s, is unknown", userId);
+            return null;
+        }
+        File file = cache.getProfileImage(client, userId, user.assets);
+        if (!file.exists()) {
+            Logger.warning("getAvatar: user: %s, missing avatar: %s", userId, file.getAbsolutePath());
+            return null;
+        }
+        return String.format("/recording/%s/%s", "avatars", file.getName());
     }
 
     public Conversation getConversation() {
@@ -326,7 +331,7 @@ public class Collector {
     }
 
     public String getUserName(UUID userId) {
-        return cache.getUser(userId).name;
+        return cache.getUser(client, userId).name;
     }
 
     public Cache getCache() {
@@ -430,7 +435,7 @@ public class Collector {
             return Objects.equals(senderId, s.senderId);
         }
 
-        public void add(Message message) {
+        void add(Message message) {
             message.name = name;
             getMessages().add(message);
         }

@@ -1,25 +1,3 @@
-CREATE TABLE History (
- botId UUID NOT NULL,
- messageId varchar NOT NULL,
- sender varchar NOT NULL,
- mimeType varchar NOT NULL,
- text varchar,
- assetKey varchar,
- assetToken varchar,
- sha256 bytea,
- otrKey bytea,
- PRIMARY KEY(botId, messageId)
-);
-
-ALTER TABLE History ADD COLUMN timestamp INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE History ADD COLUMN filename varchar;
-ALTER TABLE History ADD COLUMN size INTEGER DEFAULT 0;
-ALTER TABLE History ADD COLUMN width INTEGER DEFAULT 0;
-ALTER TABLE History ADD COLUMN height INTEGER DEFAULT 0;
-ALTER TABLE History ADD COLUMN accent INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE History ADD COLUMN senderId UUID;
-
-
 CREATE TABLE Recording_Events (
  messageId UUID PRIMARY KEY,
  conversationId UUID NOT NULL,
@@ -29,5 +7,6 @@ CREATE TABLE Recording_Events (
 );
 
 CREATE TABLE Recording_Channels (
- conversationId UUID PRIMARY KEY
+ conversationId UUID PRIMARY KEY,
+ botId UUID
 );

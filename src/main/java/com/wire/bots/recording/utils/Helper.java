@@ -2,11 +2,11 @@ package com.wire.bots.recording.utils;
 
 import com.wire.bots.recording.Service;
 import com.wire.bots.sdk.Configuration;
+import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.server.model.Asset;
-import com.wire.bots.sdk.server.model.User;
-import com.wire.bots.sdk.tools.Util;
+import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
 import com.wire.bots.sdk.user.LoginClient;
 import org.commonmark.Extension;
@@ -22,8 +22,6 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -35,31 +33,32 @@ class Helper {
             .extensions(extensions)
             .build();
 
-    static File getProfile(API api, User user) throws IOException, HttpException {
-        String filename = avatarFile(user.id);
+    static File getProfile(WireClient client, UUID userId, List<Asset> assets) throws Exception {
+        String filename = avatarFile(userId);
         File file = new File(filename);
-        if (user.assets == null)
+        if (assets == null) {
+            Logger.warning("getProfile: user: %s, `assets` is null", userId);
             return file;
+        }
 
-        for (Asset asset : user.assets) {
+        for (Asset asset : assets) {
             if (asset.size.equals("preview")) {
-                byte[] profile = api.downloadAsset(asset.key, null);
-                save(profile, file);
-                break;
+                byte[] profile = client.downloadProfilePicture(asset.key);
+                Logger.info("downloaded profile: %s, size: %d, file: %s", userId, profile.length, file.getAbsolutePath());
+                return save(profile, file);
             }
         }
+        Logger.warning("getProfile: user: %s, missing profile asset", userId);
         return file;
     }
 
-    static File downloadAsset(API api, MessageAssetBase message) throws Exception {
+    static File downloadAsset(WireClient client, MessageAssetBase message) throws Exception {
+        byte[] image = client.downloadAsset(message.getAssetKey(),
+                message.getAssetToken(),
+                message.getSha256(),
+                message.getOtrKey());
+
         File file = assetFile(message.getAssetKey(), message.getMimeType());
-        byte[] cipher = api.downloadAsset(message.getAssetKey(), message.getAssetToken());
-
-        byte[] sha256 = MessageDigest.getInstance("SHA-256").digest(cipher);
-        if (!Arrays.equals(sha256, message.getSha256()))
-            throw new Exception("Failed sha256 check");
-
-        byte[] image = Util.decrypt(message.getOtrKey(), cipher);
         return save(image, file);
     }
 
