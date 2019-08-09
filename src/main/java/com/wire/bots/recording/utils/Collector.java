@@ -5,6 +5,7 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
+import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 
@@ -306,17 +307,29 @@ public class Collector {
 
     @Nullable
     private String getAvatar(UUID userId) {
-        User user = cache.getUserProfiles(userId);
-        if (user == null) {
-            Logger.warning("getAvatar: user: %s, is unknown", userId);
+        User user = cache.getProfile(userId);
+        String profileAssetKey = getProfileAssetKey(user);
+        if (profileAssetKey != null) {
+            File file = cache.getProfileImage(client, profileAssetKey);
+            return String.format("/recording/%s/%s", "avatars", file.getName());
+        }
+        return null;
+    }
+
+    @Nullable
+    private String getProfileAssetKey(User user) {
+        if (user.assets == null) {
+            Logger.warning("getAvatar: user: %s, `assets` is null", user.id);
             return null;
         }
-        File file = cache.getProfileImage(client, userId, user.assets);
-        if (!file.exists()) {
-            Logger.warning("getAvatar: user: %s, missing avatar: %s", userId, file.getAbsolutePath());
-            return null;
+
+        for (Asset asset : user.assets) {
+            if (asset.size.equals("preview")) {
+                return asset.key;
+            }
         }
-        return String.format("/recording/%s/%s", "avatars", file.getName());
+        Logger.warning("getAvatar: user: %s, has no profile assets", user.id);
+        return null;
     }
 
     public Conversation getConversation() {

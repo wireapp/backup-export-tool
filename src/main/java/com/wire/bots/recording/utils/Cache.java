@@ -2,20 +2,18 @@ package com.wire.bots.recording.utils;
 
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
 
 import java.io.File;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache {
-    private static final ConcurrentHashMap<String, File> pictures = new ConcurrentHashMap<>();//<assetKey, Picture>
+    private static final ConcurrentHashMap<String, File> assetsMap = new ConcurrentHashMap<>();//<assetKey, File>
     private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
-    private static final ConcurrentHashMap<UUID, File> profiles = new ConcurrentHashMap<>();//<userId, Picture>
+    private static final ConcurrentHashMap<UUID, User> profiles = new ConcurrentHashMap<>();//<userId, User>
     private API api;
 
     public Cache(API api) {
@@ -31,7 +29,7 @@ public class Cache {
     }
 
     File getAssetFile(WireClient client, MessageAssetBase message) {
-        return pictures.computeIfAbsent(message.getAssetKey(), k -> {
+        return assetsMap.computeIfAbsent(message.getAssetKey(), k -> {
             try {
                 return Helper.downloadAsset(client, message);
             } catch (Exception e) {
@@ -41,28 +39,28 @@ public class Cache {
         });
     }
 
-    File getProfileImage(WireClient client, UUID userId, List<Asset> assets) {
-        return profiles.computeIfAbsent(userId, k -> {
+    File getProfileImage(WireClient client, String key) {
+        return assetsMap.computeIfAbsent(key, k -> {
             try {
-                return Helper.getProfile(client, userId, assets);
+                return Helper.getProfile(client, key);
             } catch (Exception e) {
-                Logger.error("Cache.getProfileImage: userId: %s, ex: %s", userId, e);
-                return new File(Helper.avatarFile(userId));
+                Logger.error("Cache.getProfileImage: key: %s, ex: %s", key, e);
+                return new File(Helper.avatarFile(key));
             }
         });
     }
 
-    public User getUserProfiles(UUID userId) {
-        return users.computeIfAbsent(userId, k -> {
+    public User getProfile(UUID userId) {
+        return profiles.computeIfAbsent(userId, k -> {
             try {
                 return api.getUser(userId);
             } catch (Exception e) {
-                Logger.warning("Cache.getUser: userId: %s, ex: %s", userId, e);
+                Logger.warning("Cache.getProfile: userId: %s, ex: %s", userId, e);
                 try {
                     api = Helper.getApi();
                     return api.getUser(userId);
                 } catch (Exception e1) {
-                    Logger.error("Cache.getUser: userId: %s, ex: %s", userId, e1);
+                    Logger.error("Cache.getProfile: userId: %s, ex: %s", userId, e1);
                     User ret = new User();
                     ret.id = userId;
                     ret.name = userId.toString();

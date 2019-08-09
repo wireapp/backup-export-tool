@@ -7,7 +7,7 @@ import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
 
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class TestCache extends Cache {
@@ -16,13 +16,19 @@ public class TestCache extends Cache {
     }
 
     @Override
-    public User getUserProfiles(UUID userId) {
+    public User getProfile(UUID userId) {
         User ret = new User();
         ret.id = userId;
-
+        ret.assets = new ArrayList<>();
+        Asset asset = new Asset();
+        asset.key = userId.toString();
+        asset.size = "preview";
+        ret.assets.add(asset);
+        
         if (userId.equals(ConversationTemplateTest.dejan)) {
             ret.name = "Dejan";
             ret.accent = 7;
+
         } else {
             ret.name = "Lipis";
             ret.accent = 1;
@@ -32,12 +38,12 @@ public class TestCache extends Cache {
 
     @Override
     public User getUser(WireClient client, UUID userId) {
-        return getUserProfiles(userId);
+        return getProfile(userId);
     }
 
     @Override
-    File getProfileImage(WireClient client, UUID userId, List<Asset> assets) {
-        return new File(String.format("src/test/resources/recording/avatars/%s.png", userId));
+    File getProfileImage(WireClient client, String key) {
+        return new File(String.format("src/test/resources/recording/avatars/%s.png", key));
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.wire.bots.sdk.Configuration;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
 import com.wire.bots.sdk.user.LoginClient;
@@ -24,7 +23,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 class Helper {
     private static final List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
@@ -33,23 +31,13 @@ class Helper {
             .extensions(extensions)
             .build();
 
-    static File getProfile(WireClient client, UUID userId, List<Asset> assets) throws Exception {
-        String filename = avatarFile(userId);
+    static File getProfile(WireClient client, String key) throws Exception {
+        String filename = avatarFile(key);
         File file = new File(filename);
-        if (assets == null) {
-            Logger.warning("getProfile: user: %s, `assets` is null", userId);
-            return file;
-        }
 
-        for (Asset asset : assets) {
-            if (asset.size.equals("preview")) {
-                byte[] profile = client.downloadProfilePicture(asset.key);
-                Logger.info("downloaded profile: %s, size: %d, file: %s", userId, profile.length, file.getAbsolutePath());
-                return save(profile, file);
-            }
-        }
-        Logger.warning("getProfile: user: %s, missing profile asset", userId);
-        return file;
+        byte[] profile = client.downloadProfilePicture(key);
+        Logger.info("downloaded profile: %s, size: %d, file: %s", key, profile.length, file.getAbsolutePath());
+        return save(profile, file);
     }
 
     static File downloadAsset(WireClient client, MessageAssetBase message) throws Exception {
@@ -80,8 +68,8 @@ class Helper {
         return split.length == 1 ? split[0] : split[1];
     }
 
-    static String avatarFile(UUID senderId) {
-        return String.format("avatars/%s.png", senderId);
+    static String avatarFile(String key) {
+        return String.format("avatars/%s.png", key);
     }
 
     @Nullable
