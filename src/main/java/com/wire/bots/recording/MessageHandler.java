@@ -52,7 +52,7 @@ public class MessageHandler extends MessageHandlerBase {
                     try (WireClient client = repo.getClient(botId)) {
                         String filename = String.format("html/%s.html", convId);
                         List<Event> events = eventsDAO.listAllAsc(convId);
-                        File file = eventProcessor.saveHtml(client, events, filename);
+                        File file = eventProcessor.saveHtml(client, events, filename, false);
                         Logger.info("warmed up: %s", file.getName());
                     }
                 }
@@ -234,10 +234,10 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onVideoPreview(WireClient client, ImageMessage msg) {
         UUID convId = client.getConversationId();
-        UUID messageId = msg.getMessageId();
+        UUID messageId = UUID.randomUUID();
         UUID botId = client.getId();
         UUID userId = msg.getUserId();
-        String type = "conversation.otr-message-add.new-image";
+        String type = "conversation.otr-message-add.new-preview";
 
         try {
             persist(convId, userId, botId, messageId, type, msg);
@@ -319,7 +319,7 @@ public class MessageHandler extends MessageHandlerBase {
                 List<Event> events = eventsDAO.listAllAsc(convId);
                 String filename = String.format("html/%s.html", convId);
 
-                File file = eventProcessor.saveHtml(client, events, filename);
+                File file = eventProcessor.saveHtml(client, events, filename, false);
                 assert file.exists();
             }
         } catch (Exception e) {
@@ -342,7 +342,7 @@ public class MessageHandler extends MessageHandlerBase {
                 String filename = String.format("html/%s.html", convId);
                 List<Event> events = eventsDAO.listAllAsc(convId);
 
-                File file = eventProcessor.saveHtml(client, events, filename);
+                File file = eventProcessor.saveHtml(client, events, filename, true);
                 String html = Util.readFile(file);
 
                 String convName = client.getConversation().name;

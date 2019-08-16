@@ -28,15 +28,15 @@ class EventProcessor {
         cache.clear(userId);
     }
 
-    File saveHtml(WireClient client, List<Event> events, String filename) throws IOException {
+    File saveHtml(WireClient client, List<Event> events, String filename, boolean withPreviews) throws IOException {
         Collector collector = new Collector(client, cache);
         for (Event event : events) {
-            add(client, collector, event);
+            add(client, collector, event, withPreviews);
         }
         return collector.executeFile(filename);
     }
 
-    private void add(WireClient client, Collector collector, Event event) {
+    private void add(WireClient client, Collector collector, Event event, boolean withPreviews) {
         try {
             switch (event.type) {
                 case "conversation.create": {
@@ -72,6 +72,13 @@ class EventProcessor {
                 case "conversation.otr-message-add.new-image": {
                     ImageMessage message = mapper.readValue(event.payload, ImageMessage.class);
                     collector.add(message);
+                }
+                break;
+                case "conversation.otr-message-add.new-preview": {
+                    if (withPreviews) {
+                        ImageMessage message = mapper.readValue(event.payload, ImageMessage.class);
+                        collector.add(message);
+                    }
                 }
                 break;
                 case "conversation.otr-message-add.new-video": {
@@ -141,8 +148,8 @@ class EventProcessor {
                 break;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error("MessageHandler.add: %s %s %s", event.conversationId, event.type, e);
+            //e.printStackTrace();
+            Logger.error("EventProcessor.add: msg: %s `%s` err: %s", event.messageId, event.type, e);
         }
     }
 

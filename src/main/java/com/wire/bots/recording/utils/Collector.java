@@ -7,7 +7,6 @@ import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
-import com.wire.bots.sdk.tools.Logger;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -27,7 +26,8 @@ public class Collector {
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     private Message lastMessage = null;
     private String convName;
-    private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
+    private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/" +
+            "|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
     private static Pattern p = Pattern.compile(regex);
 
     public Collector(WireClient client, Cache cache) {
@@ -319,7 +319,6 @@ public class Collector {
     @Nullable
     private String getProfileAssetKey(User user) {
         if (user.assets == null) {
-            Logger.warning("getAvatar: user: %s, `assets` is null", user.id);
             return null;
         }
 
@@ -328,7 +327,6 @@ public class Collector {
                 return asset.key;
             }
         }
-        Logger.warning("getAvatar: user: %s, has no profile assets", user.id);
         return null;
     }
 
