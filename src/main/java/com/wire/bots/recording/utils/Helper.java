@@ -59,6 +59,8 @@ class Helper {
 
     static File assetFile(String assetKey, String mimeType) {
         String extension = getExtension(mimeType);
+        if (extension.isEmpty())
+            extension = "error";
         String filename = String.format("images/%s.%s", assetKey, extension);
         return new File(filename);
     }

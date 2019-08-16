@@ -176,14 +176,16 @@ public class Collector {
         message.timeStamp = event.getTime();
         message.text = Helper.markdown2Html(event.getText());
 
-        message.link = new Link();
-        message.link.title = event.getTitle();
-        message.link.summary = event.getSummary();
-        message.link.url = event.getUrl();
+        Link link = new Link();
+        link.title = event.getTitle();
+        link.summary = event.getSummary();
+        link.url = event.getUrl();
 
         File file = cache.getAssetFile(client, event);
         if (file.exists())
-            message.link.preview = getFilename(file);
+            link.preview = getFilename(file);
+
+        message.link = link;
 
         Sender sender = sender(event.getUserId());
         sender.add(message);
