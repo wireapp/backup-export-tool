@@ -1,10 +1,15 @@
 package com.wire.bots.recording.utils;
 
+import com.wire.bots.recording.Service;
+import com.wire.bots.sdk.Configuration;
 import com.wire.bots.sdk.WireClient;
+import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.server.model.User;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.user.API;
+import com.wire.bots.sdk.user.LoginClient;
+import com.wire.bots.sdk.user.model.Access;
 
 import java.io.File;
 import java.util.UUID;
@@ -14,19 +19,6 @@ public class Cache {
     private static final ConcurrentHashMap<String, File> assetsMap = new ConcurrentHashMap<>();//<assetKey, File>
     private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
     private static final ConcurrentHashMap<UUID, User> profiles = new ConcurrentHashMap<>();//<userId, User>
-    private API api;
-
-    public Cache(API api) {
-        this.api = api;
-    }
-
-    public Cache() {
-        try {
-            api = Helper.getApi();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     File getAssetFile(WireClient client, MessageAssetBase message) {
         return assetsMap.computeIfAbsent(message.getAssetKey(), k -> {
@@ -52,19 +44,28 @@ public class Cache {
 
     public User getProfile(UUID userId) {
         return profiles.computeIfAbsent(userId, k -> {
+            String email = Configuration.propOrEnv("email", true);
+            String password = Configuration.propOrEnv("password", true);
+
+            LoginClient loginClient = new LoginClient(Service.instance.getClient());
+            Access access = null;
             try {
+                access = loginClient.login(email, password);
+                API api = new API(Service.instance.getClient(), null, access.getToken());
                 return api.getUser(userId);
             } catch (Exception e) {
-                Logger.warning("Cache.getProfile: userId: %s, ex: %s", userId, e);
-                try {
-                    api = Helper.getApi();
-                    return api.getUser(userId);
-                } catch (Exception e1) {
-                    Logger.error("Cache.getProfile: userId: %s, ex: %s", userId, e1);
-                    User ret = new User();
-                    ret.id = userId;
-                    ret.name = userId.toString();
-                    return ret;
+                Logger.error("Cache.getProfile: userId: %s, ex: %s", userId, e);
+                User ret = new User();
+                ret.id = userId;
+                ret.name = userId.toString();
+                return ret;
+            } finally {
+                if (access != null) {
+                    try {
+                        loginClient.logout(access.getToken(), access.getCookie());
+                    } catch (HttpException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });

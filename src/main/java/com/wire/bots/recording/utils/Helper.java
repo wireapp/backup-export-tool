@@ -1,13 +1,8 @@
 package com.wire.bots.recording.utils;
 
-import com.wire.bots.recording.Service;
-import com.wire.bots.sdk.Configuration;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.tools.Logger;
-import com.wire.bots.sdk.user.API;
-import com.wire.bots.sdk.user.LoginClient;
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.node.Node;
@@ -15,8 +10,6 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 import javax.annotation.Nullable;
-import javax.naming.AuthenticationException;
-import javax.ws.rs.client.Client;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -85,15 +78,5 @@ class Helper {
                 .extensions(extensions)
                 .build()
                 .render(document);
-    }
-
-    static API getApi() throws HttpException, AuthenticationException {
-        String email = Configuration.propOrEnv("email", true);
-        String password = Configuration.propOrEnv("password", true);
-
-        Client client = Service.instance.getClient();
-        LoginClient loginClient = new LoginClient(client);
-        String token = loginClient.login(email, password).getToken();
-        return new API(client, null, token);
     }
 }

@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class TestCache extends Cache {
-    public TestCache() {
-        super(null);
-    }
 
     @Override
     public User getProfile(UUID userId) {
