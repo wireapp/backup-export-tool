@@ -329,8 +329,8 @@ public class MessageHandler extends MessageHandlerBase {
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
         State state = storageF.create(botId);
-        if (!state.getState().origin.id.equals(userId))
-            return false;
+//        if (!state.getState().origin.id.equals(userId))
+//            return false;
 
         switch (cmd) {
             case "/help": {
@@ -353,7 +353,7 @@ public class MessageHandler extends MessageHandlerBase {
             }
             case "/public": {
                 channelsDAO.insert(convId, botId);
-                String text = String.format("https://services.wire.com/recording/channel/%s.html", convId);
+                String text = String.format("https://services.%s/recording/channel/%s.html", Util.getDomain(), convId);
                 client.sendDirectText(text, userId);
                 return true;
             }
