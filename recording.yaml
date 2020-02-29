@@ -6,7 +6,7 @@ server:
 logging:
   level: INFO
   loggers:
-    "com.wire.bots.logger": INFO
+    "com.wire.bots.logger": ${LOG_LEVEL:-INFO}
 
 swagger:
   resourcePackage: com.wire.bots.sdk.server.resources
@@ -15,17 +15,20 @@ swagger:
     - http
     - https
 
-auth: ${WIRE_RECORDING_SERVICE_TOKEN}
+auth: ${WIRE_SERVICE_TOKEN:-}
+email: ${WIRE_EMAIL:-}
+password: ${WIRE_PASSWORD:-}
 
 db:
   host: localhost
   port: 6379 #redis
   user: admin
-  password: ${REDIS_PASSWORD}
+  password: ${REDIS_PASSWORD:-}
 
 database:
   driverClass: org.postgresql.Driver
-  password: ${POSTGRES_PASSWORD}
+  password: ${POSTGRES_PASSWORD:-}
+  user: ${POSTGRES_USER:-postgres}
   url: jdbc:postgresql://localhost/postgres
   properties:
     charSet: UTF-8

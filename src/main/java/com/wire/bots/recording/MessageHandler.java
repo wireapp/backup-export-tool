@@ -53,13 +53,15 @@ public class MessageHandler extends MessageHandlerBase {
                         String filename = String.format("html/%s.html", convId);
                         List<Event> events = eventsDAO.listAllAsc(convId);
                         File file = eventProcessor.saveHtml(client, events, filename, false);
-                        Logger.info("warmed up: %s", file.getName());
+                        Logger.debug("warmed up: %s", file.getName());
+                        Thread.sleep(2 * 1000);
                     }
                 }
             } catch (Exception e) {
                 Logger.error("warmup: %s %s", convId, e);
             }
         }
+        Logger.info("Finished Warming up %d convs", conversations.size());
     }
 
     @Override

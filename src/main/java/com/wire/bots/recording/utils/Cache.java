@@ -1,7 +1,6 @@
 package com.wire.bots.recording.utils;
 
 import com.wire.bots.recording.Service;
-import com.wire.bots.sdk.Configuration;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
@@ -44,13 +43,13 @@ public class Cache {
 
     public User getProfile(UUID userId) {
         return profiles.computeIfAbsent(userId, k -> {
-            String email = Configuration.propOrEnv("email", true);
-            String password = Configuration.propOrEnv("password", true);
+            String email = Service.instance.getConfig().email;
+            String password = Service.instance.getConfig().password;
 
             LoginClient loginClient = new LoginClient(Service.instance.getClient());
             Access access = null;
             try {
-                access = loginClient.login(email, password);
+                access = getAccess(email, password, loginClient);
                 API api = new API(Service.instance.getClient(), null, access.getToken());
                 return api.getUser(userId);
             } catch (Exception e) {
@@ -69,6 +68,26 @@ public class Cache {
                 }
             }
         });
+    }
+
+    private Access getAccess(String email, String password, LoginClient loginClient) throws HttpException, InterruptedException {
+        int retries = 1;
+        HttpException exception = null;
+        while (retries < 5) {
+            try {
+                return loginClient.login(email, password);
+            } catch (HttpException e) {
+                exception = e;
+
+                if (e.getStatusCode() != 420)
+                    break;
+
+                Logger.warning("getAccess: %s, %d, retrying...", e.getMessage(), e.getStatusCode());
+                retries++;
+                Thread.sleep(5 * 1000);
+            }
+        }
+        throw exception;
     }
 
     public User getUser(WireClient client, UUID userId) {

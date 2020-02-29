@@ -32,4 +32,10 @@ public class Config extends Configuration {
     @NotNull
     @JsonProperty
     public DataSourceFactory database = new DataSourceFactory();
+
+    @NotNull
+    public String email;
+
+    @NotNull
+    public String password;
 }

@@ -126,7 +126,7 @@ public class ConversationTemplateTest {
         collector.add(like(dejan, "", thursday, five.getMessageId()));
         collector.addEdit(edit(dejan, "This was an edit", thursday));
 
-        collector.add(txt(lipis, thursday, "😃Lorem ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
+        collector.add(txt(lipis, thursday, "😃Lorem  \uD83D\uDC81\uD83C\uDFFB ipsum **dolor** sit amet, consectetur adipiscing elit, sed " +
                 "do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
                 " quis nostrud exercitation ullamco _laboris_ nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum"));
