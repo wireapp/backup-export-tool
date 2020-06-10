@@ -9,10 +9,8 @@ import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.ClientRepo;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.factories.StorageFactory;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.SystemMessage;
-import com.wire.bots.sdk.state.State;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;
 
@@ -31,15 +29,13 @@ public class MessageHandler extends MessageHandlerBase {
             "`/private` - stop publishing this conversation";
 
     private final ChannelsDAO channelsDAO;
-    private final StorageFactory storageF;
     private final EventsDAO eventsDAO;
 
     private final EventProcessor eventProcessor = new EventProcessor();
 
-    MessageHandler(EventsDAO eventsDAO, ChannelsDAO channelsDAO, StorageFactory storageF) {
+    MessageHandler(EventsDAO eventsDAO, ChannelsDAO channelsDAO) {
         this.eventsDAO = eventsDAO;
         this.channelsDAO = channelsDAO;
-        this.storageF = storageF;
     }
 
     void warmup(ClientRepo repo) {
@@ -163,6 +159,12 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
+            String error = String.format("An error has occurred: %s", e.getMessage());
+            try {
+                client.sendDirectText(error, msg.getUserId());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -330,10 +332,6 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
-        State state = storageF.create(botId);
-//        if (!state.getState().origin.id.equals(userId))
-//            return false;
-
         switch (cmd) {
             case "/help": {
                 client.sendDirectText(HELP, userId);
@@ -350,13 +348,13 @@ public class MessageHandler extends MessageHandlerBase {
                 String convName = client.getConversation().name;
                 String pdfFilename = String.format("html/%s.pdf", URLEncoder.encode(convName, "UTF-8"));
                 File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
-                client.sendDirectFile(pdfFile, "application/pdf", userId);
+                client.sendFile(pdfFile, "application/pdf");
                 return true;
             }
             case "/public": {
                 channelsDAO.insert(convId, botId);
                 String text = String.format("https://services.%s/recording/channel/%s.html", Util.getDomain(), convId);
-                client.sendDirectText(text, userId);
+                client.sendText(text, userId);
                 return true;
             }
             case "/private": {
@@ -364,7 +362,7 @@ public class MessageHandler extends MessageHandlerBase {
                 String filename = String.format("html/%s.html", convId);
                 boolean delete = new File(filename).delete();
                 String txt = String.format("%s deleted: %s", filename, delete);
-                client.sendDirectText(txt, userId);
+                client.sendText(txt, userId);
                 return true;
             }
         }
