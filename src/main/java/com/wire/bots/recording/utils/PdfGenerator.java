@@ -3,6 +3,7 @@ package com.wire.bots.recording.utils;
 import com.openhtmltopdf.extend.FSSupplier;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
+import com.openhtmltopdf.util.XRLog;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,6 +20,7 @@ public class PdfGenerator {
     private static final PdfRendererBuilder builder;
 
     static {
+        XRLog.setLoggingEnabled(false);
         builder = new PdfRendererBuilder().useSVGDrawer(new BatikSVGDrawer());
         for (String font : fonts) {
             builder.useFont(new FSSupplier<InputStream>() {
@@ -39,13 +41,13 @@ public class PdfGenerator {
     }
 
     private static void build(String html, String baseUrl, OutputStream out) throws Exception {
-        builder
-                .useUriResolver((bu, uri) -> {
+        builder.useUriResolver((bu, uri) -> {
                     if (uri.contains(":"))
                         return uri.contains(".") ? uri : null;
                     return bu + uri;
                 })
                 .withHtmlContent(html, baseUrl)
+                .useFastMode()
                 .toStream(out)
                 .run();
     }

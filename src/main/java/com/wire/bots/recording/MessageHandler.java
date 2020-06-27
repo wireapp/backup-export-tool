@@ -159,12 +159,6 @@ public class MessageHandler extends MessageHandlerBase {
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error("OnText: %s ex: %s", client.getId(), e);
-            String error = String.format("An error has occurred: %s", e.getMessage());
-            try {
-                client.sendDirectText(error, msg.getUserId());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
         }
     }
 
@@ -332,6 +326,9 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private boolean command(WireClient client, UUID userId, UUID botId, UUID convId, String cmd) throws Exception {
+//        if (!state.getState().origin.id.equals(userId))
+//            return false;
+
         switch (cmd) {
             case "/help": {
                 client.sendDirectText(HELP, userId);
@@ -348,12 +345,12 @@ public class MessageHandler extends MessageHandlerBase {
                 String convName = client.getConversation().name;
                 String pdfFilename = String.format("html/%s.pdf", URLEncoder.encode(convName, "UTF-8"));
                 File pdfFile = PdfGenerator.save(pdfFilename, html, "file:/opt");
-                client.sendFile(pdfFile, "application/pdf");
+                client.sendDirectFile(pdfFile, "application/pdf", userId);
                 return true;
             }
             case "/public": {
                 channelsDAO.insert(convId, botId);
-                String text = String.format("https://services.%s/recording/channel/%s.html", Util.getDomain(), convId);
+                String text = String.format("https://services.wire.com/recording/channel/%s.html", convId);
                 client.sendText(text, userId);
                 return true;
             }
@@ -362,7 +359,7 @@ public class MessageHandler extends MessageHandlerBase {
                 String filename = String.format("html/%s.html", convId);
                 boolean delete = new File(filename).delete();
                 String txt = String.format("%s deleted: %s", filename, delete);
-                client.sendText(txt, userId);
+                client.sendDirectText(txt, userId);
                 return true;
             }
         }
