@@ -40,9 +40,9 @@ public class ConversationTemplateTest {
         return ret;
     }
 
-    private static EditedTextMessage edit(UUID userId, String edit, String time) {
+    private static EditedTextMessage edit(UUID userId, String text, String time) {
         EditedTextMessage ret = new EditedTextMessage(UUID.randomUUID(), UUID.randomUUID(), "", userId);
-        ret.setText(edit);
+        ret.setText(text);
         ret.setTime(time);
         return ret;
     }
@@ -104,7 +104,7 @@ public class ConversationTemplateTest {
         final String saturday2 = "2019-07-19T03:58:01.289Z";
 
         TestCache cache = new TestCache();
-        Collector collector = new Collector(null, cache);
+        Collector collector = new Collector(cache);
         collector.setConvName(CONV_NAME);
 
         collector.addSystem("**Dejo** started recording in **Recording test** with:\n- **Lipis**", thursday,

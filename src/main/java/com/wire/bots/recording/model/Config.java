@@ -19,20 +19,12 @@
 package com.wire.bots.recording.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.wire.bots.sdk.Configuration;
-import io.dropwizard.db.DataSourceFactory;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Config extends Configuration {
-    @Valid
-    @NotNull
-    @JsonProperty
-    public DataSourceFactory database = new DataSourceFactory();
-
     @NotNull
     public String email;
 

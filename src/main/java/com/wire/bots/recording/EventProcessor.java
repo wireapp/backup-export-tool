@@ -17,19 +17,17 @@ import java.util.List;
 import java.util.UUID;
 
 class EventProcessor {
-    private final Cache cache;
     private final ObjectMapper mapper = new ObjectMapper();
 
     EventProcessor() {
-        this.cache = new Cache();
     }
 
     void clearCache(UUID userId) {
-        cache.clear(userId);
+        Cache.clear(userId);
     }
 
     File saveHtml(WireClient client, List<Event> events, String filename, boolean withPreviews) throws IOException {
-        Collector collector = new Collector(client, cache);
+        Collector collector = new Collector(new Cache(client));
         for (Event event : events) {
             add(client, collector, event, withPreviews);
         }
@@ -155,12 +153,12 @@ class EventProcessor {
 
     private String formatConversation(SystemMessage msg, Cache cache, WireClient client) {
         StringBuilder sb = new StringBuilder();
-        User user = cache.getUser(client, msg.from);
+        User user = cache.getUser(msg.from);
         sb.append(String.format("**%s** started recording in **%s** with: \n",
                 user.name,
                 msg.conversation.name));
         for (Member member : msg.conversation.members) {
-            user = cache.getUser(client, member.id);
+            user = cache.getUser(member.id);
             sb.append(String.format("- **%s** \n", user.name));
         }
         return sb.toString();

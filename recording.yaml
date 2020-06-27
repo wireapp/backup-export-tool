@@ -39,3 +39,18 @@ database:
   checkConnectionWhileIdle: false
   evictionInterval: 10s
   minIdleTime: 1 minute
+
+jerseyClient:
+  timeout: 40s
+  connectionTimeout: 20s
+  connectionRequestTimeout: 20s
+  keepAlive: 0ms
+  retries: 3
+  userAgent: recording
+
+  tls:
+    protocol: TLSv1.2
+    provider: SunJSSE
+    supportedProtocols:
+      - TLSv1.1
+      - TLSv1.2

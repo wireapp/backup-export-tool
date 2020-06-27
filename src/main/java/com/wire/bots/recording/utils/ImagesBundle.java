@@ -20,7 +20,7 @@ public class ImagesBundle extends AssetsBundle {
         return new _AssetServlet(getResourcePath(), getUriPath(), getIndexFile(), StandardCharsets.UTF_8);
     }
 
-    class _AssetServlet extends AssetServlet {
+    static class _AssetServlet extends AssetServlet {
         _AssetServlet(String resourcePath, String uriPath, @Nullable String indexFile, @Nullable Charset defaultCharset) {
             super(resourcePath, uriPath, indexFile, defaultCharset);
         }

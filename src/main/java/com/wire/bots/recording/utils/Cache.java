@@ -18,11 +18,22 @@ public class Cache {
     private static final ConcurrentHashMap<String, File> assetsMap = new ConcurrentHashMap<>();//<assetKey, File>
     private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
     private static final ConcurrentHashMap<UUID, User> profiles = new ConcurrentHashMap<>();//<userId, User>
+    private final WireClient client;
 
-    File getAssetFile(WireClient client, MessageAssetBase message) {
+    public Cache(WireClient client) {
+        this.client = client;
+    }
+
+    public static void clear(UUID userId) {
+        users.remove(userId);
+        profiles.remove(userId);
+    }
+
+    File getAssetFile(MessageAssetBase message) {
         return assetsMap.computeIfAbsent(message.getAssetKey(), k -> {
             try {
-                return Helper.downloadAsset(client, message);
+                byte[] image = downloadAsset(message);
+                return Helper.saveAsset(image, message);
             } catch (Exception e) {
                 Logger.error("Cache.getAssetFile: %s", e);
                 return Helper.assetFile(message.getAssetKey(), message.getMimeType());
@@ -30,10 +41,11 @@ public class Cache {
         });
     }
 
-    File getProfileImage(WireClient client, String key) {
+    File getProfileImage(String key) {
         return assetsMap.computeIfAbsent(key, k -> {
             try {
-                return Helper.getProfile(client, key);
+                byte[] profile = downloadProfilePicture(key);
+                return Helper.getProfile(profile, key);
             } catch (Exception e) {
                 Logger.error("Cache.getProfileImage: key: %s, ex: %s", key, e);
                 return new File(Helper.avatarFile(key));
@@ -41,33 +53,41 @@ public class Cache {
         });
     }
 
-    public User getProfile(UUID userId) {
-        return profiles.computeIfAbsent(userId, k -> {
-            String email = Service.instance.getConfig().email;
-            String password = Service.instance.getConfig().password;
+    protected byte[] downloadAsset(MessageAssetBase message) throws Exception {
+        return client.downloadAsset(message.getAssetKey(),
+                message.getAssetToken(),
+                message.getSha256(),
+                message.getOtrKey());
+    }
 
-            LoginClient loginClient = new LoginClient(Service.instance.getClient());
-            Access access = null;
-            try {
-                access = getAccess(email, password, loginClient);
-                API api = new API(Service.instance.getClient(), null, access.getToken());
-                return api.getUser(userId);
-            } catch (Exception e) {
-                Logger.error("Cache.getProfile: userId: %s, ex: %s", userId, e);
-                User ret = new User();
-                ret.id = userId;
-                ret.name = userId.toString();
-                return ret;
-            } finally {
-                if (access != null) {
-                    try {
-                        loginClient.logout(access.getToken(), access.getCookie());
-                    } catch (HttpException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+    protected User getUserInternal(UUID userId) throws HttpException {
+        return client.getUser(userId);
+    }
+
+    protected byte[] downloadProfilePicture(String key) throws Exception {
+        return client.downloadProfilePicture(key);
+    }
+
+    public User getProfile(UUID userId) {
+        return profiles.computeIfAbsent(userId, k -> getUserObject(userId));
+    }
+
+    protected User getUserObject(UUID userId) {
+        String email = Service.instance.getConfig().email;
+        String password = Service.instance.getConfig().password;
+
+        LoginClient loginClient = new LoginClient(Service.instance.getClient());
+        try {
+            Access access = getAccess(email, password, loginClient);
+            API api = new API(Service.instance.getClient(), null, access.getToken());
+            return api.getUser(userId);
+        } catch (Exception e) {
+            Logger.error("Cache.getUserObject: userId: %s, ex: %s", userId, e);
+            User ret = new User();
+            ret.id = userId;
+            ret.name = userId.toString();
+            return ret;
+        }
     }
 
     private Access getAccess(String email, String password, LoginClient loginClient) throws HttpException, InterruptedException {
@@ -79,10 +99,10 @@ public class Cache {
             } catch (HttpException e) {
                 exception = e;
 
-                if (e.getStatusCode() != 420)
+                if (e.getCode() != 420)
                     break;
 
-                Logger.warning("getAccess: %s, %d, retrying...", e.getMessage(), e.getStatusCode());
+                Logger.warning("getAccess: %s, %d, retrying...", e.getMessage(), e.getCode());
                 retries++;
                 Thread.sleep(5 * 1000);
             }
@@ -90,11 +110,11 @@ public class Cache {
         throw exception;
     }
 
-    public User getUser(WireClient client, UUID userId) {
+    public User getUser(UUID userId) {
         return users.computeIfAbsent(userId, k -> {
             try {
-                return client.getUser(userId);
-            } catch (Exception e) {
+                return getUserInternal(userId);
+            } catch (HttpException e) {
                 Logger.error("Cache.getUser: userId: %s, ex: %s", userId, e);
                 User ret = new User();
                 ret.id = userId;
@@ -102,10 +122,5 @@ public class Cache {
                 return ret;
             }
         });
-    }
-
-    public void clear(UUID userId) {
-        users.remove(userId);
-        profiles.remove(userId);
     }
 }

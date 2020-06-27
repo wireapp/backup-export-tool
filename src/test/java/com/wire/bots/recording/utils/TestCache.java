@@ -1,7 +1,6 @@
 package com.wire.bots.recording.utils;
 
 import com.wire.bots.recording.ConversationTemplateTest;
-import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
@@ -11,6 +10,10 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class TestCache extends Cache {
+
+    public TestCache() {
+        super(null);
+    }
 
     @Override
     public User getProfile(UUID userId) {
@@ -34,17 +37,17 @@ public class TestCache extends Cache {
     }
 
     @Override
-    public User getUser(WireClient client, UUID userId) {
+    public User getUser(UUID userId) {
         return getProfile(userId);
     }
 
     @Override
-    File getProfileImage(WireClient client, String key) {
+    File getProfileImage(String key) {
         return new File(String.format("src/test/resources/recording/avatars/%s.png", key));
     }
 
     @Override
-    File getAssetFile(WireClient client, MessageAssetBase message) {
+    File getAssetFile(MessageAssetBase message) {
         String extension = Helper.getExtension(message.getMimeType());
         return new File(String.format("src/test/resources/recording/images/%s.%s",
                 message.getAssetKey(),

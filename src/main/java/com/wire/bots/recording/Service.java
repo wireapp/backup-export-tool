@@ -19,6 +19,7 @@ package com.wire.bots.recording;
 
 import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
+import com.wire.bots.recording.commands.BackupCommand;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.recording.utils.ImagesBundle;
 import com.wire.bots.sdk.MessageHandlerBase;
@@ -52,6 +53,8 @@ public class Service extends Server<Config> {
         bootstrap.addBundle(new ImagesBundle("/opt/recording/avatars", "/recording/avatars", "avatars"));
         bootstrap.addBundle(new ImagesBundle("/opt/recording/html", "/recording/channel", "channels"));
 
+        bootstrap.addCommand(new BackupCommand());
+
         Application<Config> application = bootstrap.getApplication();
         instance = (Service) application;
     }
@@ -62,7 +65,7 @@ public class Service extends Server<Config> {
         final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
         final ChannelsDAO channelsDAO = jdbi.onDemand(ChannelsDAO.class);
 
-        messageHandler = new MessageHandler(eventsDAO, channelsDAO, getStorageFactory());
+        messageHandler = new MessageHandler(eventsDAO, channelsDAO);
         return messageHandler;
     }
 
