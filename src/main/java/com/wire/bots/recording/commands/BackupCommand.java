@@ -30,10 +30,12 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
 public class BackupCommand extends Command {
+    private static final String VERSION = "0.1.1";
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
     private final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
 
@@ -69,6 +71,8 @@ public class BackupCommand extends Command {
 
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
+        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
+
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
@@ -117,9 +121,15 @@ public class BackupCommand extends Command {
         jerseyCfg.setChunkedEncodingEnabled(false);
         jerseyCfg.setGzipEnabled(false);
         jerseyCfg.setGzipEnabledForRequests(false);
-        jerseyCfg.setTimeout(Duration.seconds(20));
+        jerseyCfg.setTimeout(Duration.seconds(40));
+        jerseyCfg.setConnectionTimeout(Duration.seconds(20));
+        jerseyCfg.setConnectionRequestTimeout(Duration.seconds(20));
+        jerseyCfg.setRetries(3);
+        jerseyCfg.setKeepAlive(Duration.milliseconds(0));
         final TlsConfiguration tlsConfiguration = new TlsConfiguration();
         tlsConfiguration.setProtocol("TLSv1.2");
+        tlsConfiguration.setProvider("SunJSSE");
+        tlsConfiguration.setSupportedProtocols(Arrays.asList("TLSv1.2", "TLSv1.1"));
         jerseyCfg.setTlsConfiguration(tlsConfiguration);
 
         final Client client = new JerseyClientBuilder(environment)
