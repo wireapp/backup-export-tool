@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.wire.bots.recording.utils.Collector;
+import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
 import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.models.*;
@@ -27,15 +28,24 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import javax.ws.rs.client.Client;
 import java.io.File;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
 public class BackupCommand extends Command {
+    private static final String VERSION = "0.1.3";
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
     private final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private _Export export;
 
     public BackupCommand() {
         super("pdf", "Convert Wire Desktop backup file into PDF");
@@ -69,44 +79,75 @@ public class BackupCommand extends Command {
 
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
+        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
+
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
 
-        final File inputDir = new File("recording/in");
-        final File outputDir = new File("recording/output");
-        final File imagesDir = new File("recording/images");
-        final File avatarsDir = new File("recording/avatars");
-
+        final File inputDir = new File("tmp");
         inputDir.mkdirs();
-        outputDir.mkdirs();
-        imagesDir.mkdirs();
-        avatarsDir.mkdirs();
 
         unzip(in, inputDir.getAbsolutePath());
 
-        final File eventsFile = new File("recording/in/events.json");
-        final File conversationsFile = new File("recording/in/conversations.json");
-        final File exportFile = new File("recording/in/export.json");
+        objectMapper.addHandler(new _DeserializationProblemHandler());
 
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.addHandler(new DeserializationProblemHandler() {
-            @Override
-            public Object handleWeirdStringValue(DeserializationContext c, Class<?> t, String v, String f) {
-                return null;
-            }
+        final File exportFile = new File("tmp/export.json");
 
-            @Override
-            public Object handleWeirdNumberValue(DeserializationContext c, Class<?> t, Number v, String f) {
-                return null;
-            }
+        export = objectMapper.readValue(exportFile, _Export.class);
 
-            @Override
-            public Object handleUnexpectedToken(DeserializationContext c, Class<?> t, JsonToken j, JsonParser p, String f) {
-                return null;
-            }
-        });
+        System.out.printf("Processing backup:\nDevice: %s\nUser: %s (@%s)\nid: %s\ncreated: %s\nplatform: %s\nversion: %d\n\n",
+                export.client_id,
+                export.user_name,
+                export.user_handle,
+                export.user_id,
+                export.creation_time,
+                export.platform,
+                export.version);
 
+        final String root = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
+
+        makeDirs(root);
+
+        final File eventsFile = new File(String.format("%s/in/%s", root, "events.json"));
+        final File conversationsFile = new File(String.format("%s/in/%s", root, "conversations.json"));
+
+        Files.copy(new File("tmp/events.json").toPath(), eventsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new File("tmp/conversations.json").toPath(), conversationsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(exportFile.toPath(), new File(String.format("%s/in/%s", root, "export.json")).toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        final Event[] events = objectMapper.readValue(eventsFile, Event[].class);
+        final _Conversation[] conversations = objectMapper.readValue(conversationsFile, _Conversation[].class);
+
+        System.out.printf("Loaded: %d conversations and %d events\n\n",
+                conversations.length,
+                events.length);
+
+        Helper.root = root;
+        Collector.root = root;
+
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
+
+        processConversations(conversations, cache);
+
+        processEvents(events, cache);
+
+        createPDFs(root);
+    }
+
+    private void makeDirs(String root) {
+        final File imagesDir = new File(String.format("%s/assets", root));
+        final File avatarsDir = new File(String.format("%s/avatars", root));
+        final File outDir = new File(String.format("%s/out", root));
+        final File inDir = new File(String.format("%s/in", root));
+
+        imagesDir.mkdirs();
+        avatarsDir.mkdirs();
+        outDir.mkdirs();
+        inDir.mkdirs();
+    }
+
+    private Client getClient(Bootstrap<?> bootstrap) {
         final Environment environment = new Environment(getName(),
                 objectMapper,
                 bootstrap.getValidatorFactory().getValidator(),
@@ -117,47 +158,31 @@ public class BackupCommand extends Command {
         jerseyCfg.setChunkedEncodingEnabled(false);
         jerseyCfg.setGzipEnabled(false);
         jerseyCfg.setGzipEnabledForRequests(false);
-        jerseyCfg.setTimeout(Duration.seconds(20));
+        jerseyCfg.setTimeout(Duration.seconds(40));
+        jerseyCfg.setConnectionTimeout(Duration.seconds(20));
+        jerseyCfg.setConnectionRequestTimeout(Duration.seconds(20));
+        jerseyCfg.setRetries(3);
+        jerseyCfg.setKeepAlive(Duration.milliseconds(0));
+
         final TlsConfiguration tlsConfiguration = new TlsConfiguration();
         tlsConfiguration.setProtocol("TLSv1.2");
+        tlsConfiguration.setProvider("SunJSSE");
+        tlsConfiguration.setSupportedProtocols(Arrays.asList("TLSv1.2", "TLSv1.1"));
         jerseyCfg.setTlsConfiguration(tlsConfiguration);
 
-        final Client client = new JerseyClientBuilder(environment)
+        return new JerseyClientBuilder(environment)
                 .using(jerseyCfg)
                 .withProvider(MultiPartFeature.class)
                 .withProvider(JacksonJsonProvider.class)
                 .build(getName());
-
-        final Event[] events = objectMapper.readValue(eventsFile, Event[].class);
-        final _Conversation[] conversations = objectMapper.readValue(conversationsFile, _Conversation[].class);
-        final _Export export = objectMapper.readValue(exportFile, _Export.class);
-
-        System.out.printf("Processing backup:\nDevice: %s\nUser: %s (@%s)\nid: %s\ncreated: %s\nplatform: %s\nversion: %d\n\n",
-                export.client_id,
-                export.user_name,
-                export.user_handle,
-                export.user_id,
-                export.creation_time,
-                export.platform,
-                export.version);
-        System.out.printf("Loaded: %d conversations and %d events\n\n",
-                conversations.length,
-                events.length);
-
-        InstantCache cache = new InstantCache(email, password, client);
-
-        processConversations(conversations, cache);
-
-        processEvents(events, cache);
-
-        createPDFs();
     }
 
-    private void createPDFs() {
+    private void createPDFs(String root) {
         for (Collector collector : collectorHashMap.values()) {
             try {
                 final String html = collector.execute();
-                String out = String.format("recording/output/%s.pdf", collector.getConvName());
+                final String filename = URLEncoder.encode(collector.getConvName(), StandardCharsets.UTF_8.toString());
+                String out = String.format("%s/out/%s.pdf", root, filename);
                 PdfGenerator.save(out, html, "file:./");
                 System.out.printf("Generated pdf: %s\n", out);
             } catch (Exception e) {
@@ -229,6 +254,15 @@ public class BackupCommand extends Command {
             Collector collector = new Collector(cache);
             _Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
+            collector.details = new Collector.Details();
+            collector.details.name = export.user_name;
+            collector.details.handle = export.user_handle;
+            collector.details.id = export.user_id.toString();
+            collector.details.device = export.client_id;
+            collector.details.platform = export.platform;
+            collector.details.date = export.creation_time;
+            collector.details.version = export.version;
+
             return collector;
         });
     }
@@ -410,5 +444,22 @@ public class BackupCommand extends Command {
         String user_name;
         @JsonProperty
         int version;
+    }
+
+    static class _DeserializationProblemHandler extends DeserializationProblemHandler {
+        @Override
+        public Object handleWeirdStringValue(DeserializationContext c, Class<?> t, String v, String f) {
+            return null;
+        }
+
+        @Override
+        public Object handleWeirdNumberValue(DeserializationContext c, Class<?> t, Number v, String f) {
+            return null;
+        }
+
+        @Override
+        public Object handleUnexpectedToken(DeserializationContext c, Class<?> t, JsonToken j, JsonParser p, String f) {
+            return null;
+        }
     }
 }

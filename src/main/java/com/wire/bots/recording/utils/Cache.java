@@ -114,7 +114,7 @@ public class Cache {
         return users.computeIfAbsent(userId, k -> {
             try {
                 return getUserInternal(userId);
-            } catch (HttpException e) {
+            } catch (Exception e) {
                 Logger.error("Cache.getUser: userId: %s, ex: %s", userId, e);
                 User ret = new User();
                 ret.id = userId;

@@ -24,10 +24,11 @@ public class Collector {
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     private Message lastMessage = null;
     private String convName;
+    public Details details;
     private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/" +
             "|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
     private static Pattern p = Pattern.compile(regex);
-    private String base = "/recording";
+    public static String root = "recording";
 
     public Collector(Cache cache) {
 
@@ -142,8 +143,8 @@ public class Collector {
         String assetFilename = getFilename(file);
 
         message.attachment = new Attachment();
-        message.attachment.name = event.getName();
-        message.attachment.url = "file://" + file.getAbsolutePath();
+        message.attachment.name = String.format("%s (%s)", event.getName(), event.getAssetKey());
+        message.attachment.url = "file://" + assetFilename;
 
         Sender sender = sender(event.getUserId());
         sender.add(message);
@@ -249,7 +250,7 @@ public class Collector {
     }
 
     private String systemIcon(String type) {
-        final String base = String.format("%s/assets/", this.base);
+        final String base = String.format("/%s/assets/", Collector.root);
         switch (type) {
             case "conversation.create":
                 return base + "icons8-record-48.png";
@@ -302,7 +303,7 @@ public class Collector {
     }
 
     private String getFilename(File file) {
-        return String.format("%s/%s/%s", base, "images", file.getName());
+        return String.format("/%s/%s/%s", root, "assets", file.getName());
     }
 
     @Nullable
@@ -311,7 +312,7 @@ public class Collector {
         String profileAssetKey = getProfileAssetKey(user);
         if (profileAssetKey != null) {
             File file = cache.getProfileImage(profileAssetKey);
-            return String.format("%s/%s/%s", base, "avatars", file.getName());
+            return String.format("/%s/%s/%s", root, "avatars", file.getName());
         }
         return null;
     }
@@ -334,6 +335,7 @@ public class Collector {
         Conversation ret = new Conversation();
         ret.days = days;
         ret.title = convName;
+        ret.details = details;
         return ret;
     }
 
@@ -356,10 +358,21 @@ public class Collector {
     public static class Conversation {
         LinkedList<Day> days = new LinkedList<>();
         String title;
+        Details details;
 
         public String getTitle() {
             return title;
         }
+    }
+
+    public static class Details {
+        public String device;
+        public String date;
+        public String platform;
+        public String handle;
+        public String id;
+        public String name;
+        public int version;
     }
 
     private Mustache compileTemplate() {
@@ -458,13 +471,5 @@ public class Collector {
         List<Message> getMessages() {
             return messages;
         }
-    }
-
-    public String getBase() {
-        return base;
-    }
-
-    public void setBase(String base) {
-        this.base = base;
     }
 }

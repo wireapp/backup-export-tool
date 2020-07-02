@@ -154,7 +154,19 @@
     </style>
   </head>
   <body>
-    <h1>{{ title }}</h1>
+  {{#details}}
+  <p style="font-size: 8px">
+  <p>Name: {{name}}</p>
+  <p>Username: {{handle}}</p>
+  <p>User ID: {{id}}</p>
+  <p>Device ID: {{device}}</p>
+  <p>Platform: {{platform}}</p>
+  <p>Created on: {{date}}</p>
+  <p>Version: {{version}}</p>
+  </p>
+  {{/details}}
+
+  <h1>{{ title }}</h1>
 
     <table>
       {{#days}}
