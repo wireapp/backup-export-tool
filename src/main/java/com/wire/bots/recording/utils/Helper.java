@@ -16,8 +16,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-class Helper {
+public class Helper {
     private static final List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
+    public static String root = "recording";
+
     private static final Parser parser = Parser
             .builder()
             .extensions(extensions)
@@ -47,7 +49,7 @@ class Helper {
         String extension = getExtension(mimeType);
         if (extension.isEmpty())
             extension = "error";
-        String filename = String.format("recording/images/%s.%s", assetKey, extension);
+        String filename = String.format("%s/assets/%s.%s", root, assetKey, extension);
         return new File(filename);
     }
 
@@ -57,7 +59,7 @@ class Helper {
     }
 
     static String avatarFile(String key) {
-        return String.format("recording/avatars/%s.png", key);
+        return String.format("%s/avatars/%s.png", root, key);
     }
 
     @Nullable
