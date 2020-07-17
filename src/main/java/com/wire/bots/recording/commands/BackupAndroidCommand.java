@@ -2,53 +2,38 @@ package com.wire.bots.recording.commands;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
-import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.models.TextMessage;
-import io.dropwizard.cli.Command;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import io.dropwizard.util.Duration;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import pw.forst.wire.android.backups.database.dto.*;
 import pw.forst.wire.android.backups.steps.DecryptionResult;
 import pw.forst.wire.android.backups.steps.ExportMetadata;
 
-import javax.ws.rs.client.Client;
-import java.io.File;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static pw.forst.wire.android.backups.database.converters.DatabaseKt.extractDatabase;
 import static pw.forst.wire.android.backups.steps.OrchestrateKt.decryptAndExtract;
 
-public class BackupAndroidCommand extends Command {
+public class BackupAndroidCommand extends BackupCommandBase {
+
     private static final String VERSION = "0.1.3";
-    private final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
-    private final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
+    protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
     private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
-    private ExportMetadata exportMetadata;
     // as this is commandline tool, this is OK
+    private ExportMetadata exportMetadata;
     private DatabaseMetadata databaseMetadata;
+    private UUID backupUserId;
 
     public BackupAndroidCommand() {
         super("android-pdf", "Convert Wire Desktop backup file into PDF");
     }
-
 
     @Override
     public void configure(Subparser subparser) {
@@ -81,17 +66,6 @@ public class BackupAndroidCommand extends Command {
                 .type(String.class)
                 .required(true)
                 .help("Backup password");
-    }
-
-    private UUID backupUserId;
-
-    private static Long toMillis(String timestamp) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
-        } catch (ParseException ex) {
-            ex.printStackTrace();
-        }
-        return null;
     }
 
     @Override
@@ -256,7 +230,7 @@ public class BackupAndroidCommand extends Command {
     }
 
     private void delayedCollector(String timestamp, Runnable r) {
-        Long time = toMillis(timestamp);
+        Long time = timeToMillis(timestamp);
         if (time == null) {
             // it was not possible to parse time
             return;
@@ -271,64 +245,6 @@ public class BackupAndroidCommand extends Command {
         timedMessages.forEach((timestamp, actions) -> actions.forEach(Runnable::run));
         timedMessages.clear();
     }
-
-    private void makeDirs(String root) {
-        final File imagesDir = new File(String.format("%s/assets", root));
-        final File avatarsDir = new File(String.format("%s/avatars", root));
-        final File outDir = new File(String.format("%s/out", root));
-        final File inDir = new File(String.format("%s/in", root));
-
-        boolean a = imagesDir.mkdirs()
-                && avatarsDir.mkdirs()
-                && outDir.mkdirs()
-                && inDir.mkdirs();
-        System.out.printf("All directories created: %b", a);
-    }
-
-    private Client getClient(Bootstrap<?> bootstrap) {
-        final Environment environment = new Environment(getName(),
-                new ObjectMapper(),
-                bootstrap.getValidatorFactory().getValidator(),
-                bootstrap.getMetricRegistry(),
-                bootstrap.getClassLoader());
-
-        JerseyClientConfiguration jerseyCfg = new JerseyClientConfiguration();
-        jerseyCfg.setChunkedEncodingEnabled(false);
-        jerseyCfg.setGzipEnabled(false);
-        jerseyCfg.setGzipEnabledForRequests(false);
-        jerseyCfg.setTimeout(Duration.seconds(40));
-        jerseyCfg.setConnectionTimeout(Duration.seconds(20));
-        jerseyCfg.setConnectionRequestTimeout(Duration.seconds(20));
-        jerseyCfg.setRetries(3);
-        jerseyCfg.setKeepAlive(Duration.milliseconds(0));
-
-        final TlsConfiguration tlsConfiguration = new TlsConfiguration();
-        tlsConfiguration.setProtocol("TLSv1.2");
-        tlsConfiguration.setProvider("SunJSSE");
-        tlsConfiguration.setSupportedProtocols(Arrays.asList("TLSv1.2", "TLSv1.1"));
-        jerseyCfg.setTlsConfiguration(tlsConfiguration);
-
-        return new JerseyClientBuilder(environment)
-                .using(jerseyCfg)
-                .withProvider(MultiPartFeature.class)
-                .withProvider(JacksonJsonProvider.class)
-                .build(getName());
-    }
-
-    private void createPDFs(String root) {
-        for (Collector collector : collectorHashMap.values()) {
-            try {
-                final String html = collector.execute();
-                final String filename = URLEncoder.encode(collector.getConvName(), StandardCharsets.UTF_8.toString());
-                String out = String.format("%s/out/%s.pdf", root, filename);
-                PdfGenerator.save(out, html, "file:./");
-                System.out.printf("Generated pdf: %s\n", out);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class Conversation {
