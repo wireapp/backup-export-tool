@@ -18,7 +18,6 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import org.apache.xmlgraphics.image.loader.cache.ExpirationPolicy;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import pw.forst.wire.android.backups.database.dto.*;
 import pw.forst.wire.android.backups.steps.DecryptionResult;
@@ -27,15 +26,13 @@ import pw.forst.wire.android.backups.steps.ExportMetadata;
 import javax.ws.rs.client.Client;
 import java.io.File;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static pw.forst.wire.android.backups.database.converters.DatabaseConverterKt.extractDatabase;
-import static pw.forst.wire.android.backups.steps.DecryptKt.initSodium;
+import static pw.forst.wire.android.backups.database.converters.DatabaseKt.extractDatabase;
 import static pw.forst.wire.android.backups.steps.OrchestrateKt.decryptAndExtract;
 
 public class BackupAndroidCommand extends Command {
@@ -43,8 +40,10 @@ public class BackupAndroidCommand extends Command {
     private final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
     private final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
 
-    private DatabaseMetadata databaseMetadata;
+    private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
     private ExportMetadata exportMetadata;
+    // as this is commandline tool, this is OK
+    private DatabaseMetadata databaseMetadata;
 
     public BackupAndroidCommand() {
         super("android-pdf", "Convert Wire Desktop backup file into PDF");
@@ -84,6 +83,17 @@ public class BackupAndroidCommand extends Command {
                 .help("Backup password");
     }
 
+    private UUID backupUserId;
+
+    private static Long toMillis(String timestamp) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
+        } catch (ParseException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
@@ -93,6 +103,8 @@ public class BackupAndroidCommand extends Command {
         final String in = namespace.getString("in");
         final String userId = namespace.getString("userId");
         final String databasePassword = namespace.getString("dbPassword");
+
+        backupUserId = UUID.fromString(userId);
 
         makeDirs(userId);
         Helper.root = userId;
@@ -109,10 +121,155 @@ public class BackupAndroidCommand extends Command {
         databaseMetadata = databaseDto.getMetaData();
 
         processConversations(databaseDto, cache);
+        appendMembers(databaseDto.getConversationsData(), cache);
 
+        processConversationsData(databaseDto.getConversationsData(), cache);
         processMessages(databaseDto, cache);
 
+        fillCollector();
         createPDFs(userId);
+    }
+
+    private void processConversations(DatabaseDto db, InstantCache cache) {
+        db.getNamedConversations().forEach(conversation ->
+                conversationHashMap.put(conversation.getId(), new Conversation(conversation.getId(), conversation.getName()))
+        );
+
+        db.getDirectConversations().forEach(conversation -> {
+            final String name = cache.getUser(conversation.getOtherUser()).name;
+            final Conversation conv = new Conversation(conversation.getId(), name);
+            conversationHashMap.put(conv.id, conv);
+
+            System.out.printf("%s, id: %s\n",
+                    conv.name,
+                    conv.id);
+        });
+    }
+
+    private void appendMembers(ConversationsDataDto data, InstantCache cache) {
+        data.getMembers().forEach(convMembers -> {
+            final Collector collector = getCollector(convMembers.getConversationId(), cache);
+            final List<String> members = convMembers.getCurrentMembers()
+                    .stream()
+                    .map(collector::getUserName)
+                    .collect(Collectors.toList());
+
+            final String message = String.format("Members at the time of export: %s", String.join(", ", members));
+
+            delayedCollector(exportMetadata.getCreationTime(), () -> {
+                try {
+                    collector.addSystem(message, exportMetadata.getCreationTime(), "", UUID.randomUUID());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    private void processConversationsData(ConversationsDataDto data, InstantCache cache) {
+        joinedEvent(data.getJoined(), cache);
+        leftEvent(data.getLeft(), cache);
+    }
+
+    private void joinedEvent(List<ConversationAddMemberDto> joined, InstantCache cache) {
+        joined.forEach(event -> {
+            final Collector collector = getCollector(event.getConversationId(), cache);
+            final String addingUserUsername = collector.getUserName(event.getAddingUser());
+            event.getAddedUsers().forEach(addedUser -> {
+                final String addedUserUsername = collector.getUserName(addedUser);
+                delayedCollector(event.getTimeStamp(), () -> {
+                    try {
+                        collector.addSystem(
+                                String.format("%s added %s", addingUserUsername, addedUserUsername),
+                                event.getTimeStamp(),
+                                "conversation.member-join",
+                                UUID.randomUUID()
+                        );
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+        });
+    }
+
+    private void leftEvent(List<ConversationLeaveMembersDto> left, InstantCache cache) {
+        left.forEach(event -> {
+            final Collector collector = getCollector(event.getConversationId(), cache);
+            event.getLeavingMembers().forEach(leaving -> {
+                final String userName = collector.getUserName(leaving);
+                delayedCollector(event.getTimeStamp(), () -> {
+                    try {
+                        collector.addSystem(
+                                String.format("%s left the conversation", userName),
+                                event.getTimeStamp(),
+                                "conversation.member-leave",
+                                UUID.randomUUID()
+                        );
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+        });
+    }
+
+    private Conversation getConversation(UUID convId) {
+        return conversationHashMap.get(convId);
+    }
+
+    private void processMessages(DatabaseDto db, InstantCache cache) {
+        db.getMessages().forEach(message -> {
+            final TextMessage txt = new TextMessage(message.getId(), message.getConversationId(), null, message.getUserId());
+            txt.setTime(message.getTime());
+            txt.setText(message.getContent());
+            txt.setQuotedMessageId(message.getQuote());
+            final Collector collector = getCollector(message.getConversationId(), cache);
+
+            delayedCollector(message.getTime(), () -> {
+                try {
+                    collector.add(txt);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    private Collector getCollector(UUID convId, InstantCache cache) {
+        return collectorHashMap.computeIfAbsent(convId, x -> {
+            Collector collector = new Collector(cache);
+            Conversation conversation = getConversation(convId);
+            collector.setConvName(conversation.name);
+            collector.details = new Collector.Details();
+
+            collector.details.name = databaseMetadata.getName();
+            collector.details.handle = databaseMetadata.getHandle();
+            collector.details.id = backupUserId.toString();
+            // TODO we don't know how to get it
+            // collector.details.device = export.client_id;
+            collector.details.platform = exportMetadata.getPlatform();
+            collector.details.date = exportMetadata.getCreationTime();
+            collector.details.version = exportMetadata.getVersion();
+            return collector;
+        });
+    }
+
+    private void delayedCollector(String timestamp, Runnable r) {
+        Long time = toMillis(timestamp);
+        if (time == null) {
+            // it was not possible to parse time
+            return;
+        }
+
+        List<Runnable> runnables = timedMessages.getOrDefault(time, new LinkedList<>());
+        runnables.add(r);
+        timedMessages.put(time, runnables);
+    }
+
+    private void fillCollector() {
+        timedMessages.forEach((timestamp, actions) -> actions.forEach(Runnable::run));
+        timedMessages.clear();
     }
 
     private void makeDirs(String root) {
@@ -121,10 +278,11 @@ public class BackupAndroidCommand extends Command {
         final File outDir = new File(String.format("%s/out", root));
         final File inDir = new File(String.format("%s/in", root));
 
-        imagesDir.mkdirs();
-        avatarsDir.mkdirs();
-        outDir.mkdirs();
-        inDir.mkdirs();
+        boolean a = imagesDir.mkdirs()
+                && avatarsDir.mkdirs()
+                && outDir.mkdirs()
+                && inDir.mkdirs();
+        System.out.printf("All directories created: %b", a);
     }
 
     private Client getClient(Bootstrap<?> bootstrap) {
@@ -171,30 +329,9 @@ public class BackupAndroidCommand extends Command {
         }
     }
 
-    private void processConversations(DatabaseDto db, InstantCache cache) {
-        for (NamedConversationDto conversation : db.getNamedConversations()) {
-            final Conversation conv = new Conversation(conversation.getId(), conversation.getName());
-            conversationHashMap.put(conv.id, conv);
-        }
-
-        for (DirectConversationDto conversation : db.getDirectConversations()) {
-            try {
-                final String name = cache.getUser(conversation.getOtherUser()).name;
-                final Conversation conv = new Conversation(conversation.getId(), name);
-
-                conversationHashMap.put(conv.id, conv);
-
-                System.out.printf("%s, id: %s\n",
-                        conv.name,
-                        conv.id);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    static class Conversation {
+    private static class Conversation {
         @JsonProperty
         UUID id;
         @JsonProperty
@@ -206,167 +343,4 @@ public class BackupAndroidCommand extends Command {
         }
     }
 
-    private void processMessages(DatabaseDto db, InstantCache cache) {
-        db.getMessages().forEach(messageDto -> {
-            try {
-                processMessage(messageDto, getCollector(messageDto.getConversationId(), messageDto.getUserId(), cache));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private void processMessage(MessageDto message, Collector collector) throws ParseException {
-        final TextMessage txt = new TextMessage(message.getId(), message.getConversationId(), null, message.getUserId());
-        txt.setTime(message.getTime());
-        txt.setText(message.getContent());
-        txt.setQuotedMessageId(message.getQuote());
-        collector.add(txt);
-    }
-//    private void processEvents(Event[] events, InstantCache cache) {
-//        System.out.println("\nEvents:");
-//
-//        for (Event event : events) {
-//            if (event.type == null)
-//                continue;
-//
-//            System.out.printf("Id: %s, time: %s, conv: %s, type: %s\n",
-//                    event.id,
-//                    event.time,
-//                    event.conversation,
-//                    event.type
-//            );
-//
-//            try {
-//                switch (event.type) {
-//                    case "conversation.group-creation": {
-//                        onGroupCreation(getCollector(event.conversation, cache), event);
-//                    }
-//                    break;
-//                    case "conversation.message-add": {
-//                        onMessageAdd(getCollector(event.conversation, cache), event);
-//                    }
-//                    break;
-//                    case "conversation.asset-add": {
-//                        onAssetAdd(getCollector(event.conversation, cache), event);
-//                    }
-//                    break;
-//                    case "conversation.member-join": {
-//                        onMemberJoin(getCollector(event.conversation, cache), event);
-//                    }
-//                    break;
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
-    private Collector getCollector(UUID convId, UUID userId, InstantCache cache) {
-        return collectorHashMap.computeIfAbsent(convId, x -> {
-            Collector collector = new Collector(cache);
-            Conversation conversation = getConversation(convId);
-            collector.setConvName(conversation.name);
-            collector.details = new Collector.Details();
-//           TODO obtain those from export info
-
-            collector.details.name = databaseMetadata.getName();
-            collector.details.handle = databaseMetadata.getHandle();
-            collector.details.id = userId.toString();
-//            collector.details.device = export.client_id;
-            collector.details.platform = exportMetadata.getPlatform();
-            collector.details.date = exportMetadata.getCreationTime();
-            collector.details.version = exportMetadata.getVersion();
-
-            return collector;
-        });
-    }
-
-    private Conversation getConversation(UUID convId) {
-        return conversationHashMap.get(convId);
-    }
-
-//    private void onMemberJoin(Collector collector, Event event) throws ParseException {
-//        for (UUID userId : event.data.user_ids) {
-//            String txt = String.format("**%s** %s **%s**",
-//                    collector.getUserName(event.from),
-//                    "added",
-//                    collector.getUserName(userId));
-//            collector.addSystem(txt, event.time, "conversation.member-join", event.id);
-//        }
-//    }
-
-//    private void onAssetAdd(Collector collector, Event event) throws ParseException {
-//        if (event.data.otrKey == null || event.data.sha256 == null)
-//            return;
-//        if (event.data.contentType.startsWith("image")) {
-//            final ImageMessage img = new ImageMessage(event.id, event.conversation, null, event.from);
-//            img.setTime(event.time);
-//            img.setSize(event.data.contentLength);
-//            img.setMimeType(event.data.contentType);
-//            img.setAssetToken(event.data.token);
-//            img.setAssetKey(event.data.key);
-//            img.setOtrKey(toArray(event.data.otrKey));
-//            img.setSha256(toArray(event.data.sha256));
-//            collector.add(img);
-//        } else {
-//            final AttachmentMessage att = new AttachmentMessage(event.id, event.conversation, null, event.from);
-//            att.setTime(event.time);
-//            att.setSize(event.data.contentLength);
-//            att.setMimeType(event.data.contentType);
-//            att.setAssetToken(event.data.token);
-//            att.setAssetKey(event.data.key);
-//            att.setOtrKey(toArray(event.data.otrKey));
-//            att.setSha256(toArray(event.data.sha256));
-//            att.setName(event.data.info.name);
-//            collector.add(att);
-//        }
-//    }
-//
-//    private void onMessageAdd(Collector collector, Mess) throws ParseException {
-//        if (event.data.replacingMessageId != null) {
-//            EditedTextMessage edit = new EditedTextMessage(event.id, event.conversation, null, event.from);
-//            edit.setText(event.data.content);
-//            edit.setTime(event.editedTime != null ? event.editedTime : event.time);
-//            edit.setReplacingMessageId(event.data.replacingMessageId);
-//            collector.addEdit(edit);
-//        } else {
-//            final TextMessage txt = new TextMessage(event.id, event.conversation, null, event.from);
-//            txt.setTime(event.time);
-//            txt.setText(event.data.content);
-//            if (event.data.quote != null) {
-//                txt.setQuotedMessageId(event.data.quote.messageId);
-//            }
-//            collector.add(txt);
-//        }
-//
-//        if (event.reactions != null) {
-//            for (UUID userId : event.reactions.keySet()) {
-//                ReactionMessage like = new ReactionMessage(UUID.randomUUID(), event.conversation, null, userId);
-//                like.setReactionMessageId(event.id);
-//                like.setEmoji(event.reactions.get(userId));
-//                like.setTime(event.time);
-//                collector.add(like);
-//            }
-//        }
-//    }
-
-    private byte[] toArray(HashMap<String, Byte> otrKey) {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(32);
-        for (String key : otrKey.keySet()) {
-            byteBuffer.put(Integer.parseInt(key), otrKey.get(key));
-        }
-        return byteBuffer.array();
-    }
-
-//    private void onGroupCreation(Collector collector, Event event) throws ParseException {
-//        String txt = String.format("**%s** created conversation **%s** with:",
-//                collector.getUserName(event.from),
-//                event.data.name);
-//        collector.addSystem(txt, event.time, "conversation.create", event.id);
-//        for (UUID userId : event.data.userIds) {
-//            final String userName = collector.getUserName(userId);
-//            collector.addSystem(userName, event.time, "conversation.member-join", UUID.randomUUID());
-//        }
-//    }
 }

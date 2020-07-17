@@ -29,7 +29,7 @@
         <dependency>
             <groupId>pw.forst.wire.android.extraction</groupId>
             <artifactId>android-db-decryption</artifactId>
-            <version>1.9.914</version>
+            <version>1.9.917</version>
         </dependency>
 
         <dependency>
