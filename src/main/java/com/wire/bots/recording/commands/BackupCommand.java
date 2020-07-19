@@ -184,6 +184,7 @@ public class BackupCommand extends BackupCommandBase {
             Collector collector = new Collector(cache);
             _Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
+            collector.setConversationId(convId);
             collector.details = new Collector.Details();
             collector.details.name = export.user_name;
             collector.details.handle = export.user_handle;

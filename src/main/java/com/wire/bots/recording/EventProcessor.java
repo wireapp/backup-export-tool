@@ -40,6 +40,7 @@ class EventProcessor {
                 case "conversation.create": {
                     SystemMessage msg = mapper.readValue(event.payload, SystemMessage.class);
                     collector.setConvName(msg.conversation.name);
+                    collector.setConversationId(msg.convId);
 
                     String text = formatConversation(msg, collector.getCache(), client);
                     collector.addSystem(text, msg.time, event.type, msg.id);

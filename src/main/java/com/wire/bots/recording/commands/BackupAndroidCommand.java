@@ -2,9 +2,13 @@ package com.wire.bots.recording.commands;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.waz.model.Messages;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
+import com.wire.bots.sdk.models.AttachmentMessage;
+import com.wire.bots.sdk.models.ImageMessage;
+import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.models.TextMessage;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -99,9 +103,62 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
         processConversationsData(databaseDto.getConversationsData(), cache);
         processMessages(databaseDto, cache);
-
+        processAttachments(databaseDto.getAttachments(), cache);
         fillCollector();
         createPDFs(userId);
+    }
+
+    private void processAttachments(Collection<AttachmentDto> attachments, InstantCache cache) {
+        attachments.forEach(attachment -> {
+            final Collector collector = getCollector(attachment.getConversationId(), cache);
+            attachmentAdd(collector, attachment);
+        });
+    }
+
+    private byte[] obtainOtr(AttachmentDto attachmentDto) {
+        try {
+            Messages.GenericMessage proto = Messages.GenericMessage.parseFrom(attachmentDto.getProtobuf());
+            return proto.getAsset().getUploaded().getOtrKey().toByteArray();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.out.println("It was not possible to obtain otr key!");
+            return null;
+        }
+
+    }
+
+    private void attachmentAdd(Collector collector, AttachmentDto attachmentDto) {
+        byte[] otr = obtainOtr(attachmentDto);
+        if (otr == null) {
+            // not possible to obtain otr
+            return;
+        }
+        final MessageAssetBase msg = attachmentDto.getMimeType().startsWith("image")
+                ? new ImageMessage(attachmentDto.getId(), attachmentDto.getConversationId(), null, attachmentDto.getSender())
+                : new AttachmentMessage(attachmentDto.getId(), attachmentDto.getConversationId(), null, attachmentDto.getSender());
+
+        msg.setTime(attachmentDto.getTimestamp());
+        msg.setSize(attachmentDto.getContentLength());
+        msg.setMimeType(attachmentDto.getMimeType());
+        msg.setAssetToken(attachmentDto.getAssetToken());
+        msg.setAssetKey(attachmentDto.getAssetKey());
+        msg.setOtrKey(otr);
+        msg.setSha256(attachmentDto.getSha());
+        msg.setName(attachmentDto.getName());
+
+        delayedCollector(attachmentDto.getTimestamp(), () -> {
+            try {
+                // visitor pattern would be better...
+                if (msg instanceof ImageMessage) {
+                    collector.add((ImageMessage) msg);
+                } else {
+                    collector.add((AttachmentMessage) msg);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        });
+
     }
 
     private void processConversations(DatabaseDto db, InstantCache cache) {
@@ -215,13 +272,12 @@ public class BackupAndroidCommand extends BackupCommandBase {
             Collector collector = new Collector(cache);
             Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
+            collector.setConversationId(convId);
             collector.details = new Collector.Details();
 
             collector.details.name = databaseMetadata.getName();
             collector.details.handle = databaseMetadata.getHandle();
             collector.details.id = backupUserId.toString();
-            // TODO we don't know how to get it
-            // collector.details.device = export.client_id;
             collector.details.platform = exportMetadata.getPlatform();
             collector.details.date = exportMetadata.getCreationTime();
             collector.details.version = exportMetadata.getVersion();
@@ -230,13 +286,13 @@ public class BackupAndroidCommand extends BackupCommandBase {
     }
 
     private void delayedCollector(String timestamp, Runnable r) {
-        Long time = timeToMillis(timestamp);
+        final Long time = timeToMillis(timestamp);
         if (time == null) {
             // it was not possible to parse time
             return;
         }
 
-        List<Runnable> runnables = timedMessages.getOrDefault(time, new LinkedList<>());
+        final List<Runnable> runnables = timedMessages.getOrDefault(time, new LinkedList<>());
         runnables.add(r);
         timedMessages.put(time, runnables);
     }
@@ -258,5 +314,4 @@ public class BackupAndroidCommand extends BackupCommandBase {
             this.name = name;
         }
     }
-
 }

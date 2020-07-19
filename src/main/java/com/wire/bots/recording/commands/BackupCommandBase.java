@@ -86,8 +86,15 @@ abstract class BackupCommandBase extends Command {
         for (Collector collector : collectorHashMap.values()) {
             try {
                 final String html = collector.execute();
-                final String filename = URLEncoder.encode(collector.getConvName(), StandardCharsets.UTF_8.toString());
-                String out = String.format("%s/out/%s.pdf", root, filename);
+                final UUID conversationId = collector.getConversationId();
+                final String fileNameBase = conversationId != null ?
+                        String.format("%s-%s", collector.getConvName(), conversationId.toString())
+                        : collector.getConvName();
+
+                final String filename = URLEncoder.encode(
+                        fileNameBase,
+                        StandardCharsets.UTF_8.toString());
+                final String out = String.format("%s/out/%s.pdf", root, filename);
                 PdfGenerator.save(out, html, "file:./");
                 System.out.printf("Generated pdf: %s\n", out);
             } catch (Exception e) {
