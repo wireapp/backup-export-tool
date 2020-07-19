@@ -98,9 +98,8 @@ public class Collector {
     }
 
     public Sender addEdit(EditedTextMessage event) throws ParseException {
-        Sender sender = add(event);
-        sender.name += " ✏️";
-        return sender;
+        addSystem("✏ Edited", event.getTime(), "", event.getMessageId());
+        return add(event);
     }
 
     public Sender add(ImageMessage event) throws ParseException {

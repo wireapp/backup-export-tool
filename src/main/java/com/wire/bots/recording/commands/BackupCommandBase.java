@@ -49,7 +49,7 @@ abstract class BackupCommandBase extends Command {
                 & avatarsDir.mkdirs()
                 & outDir.mkdirs()
                 & inDir.mkdirs();
-        System.out.printf("All directories created: %b", a);
+        System.out.printf("All directories created: %b\n", a);
     }
 
     protected Client getClient(Bootstrap<?> bootstrap) {
@@ -86,6 +86,7 @@ abstract class BackupCommandBase extends Command {
         for (Collector collector : collectorHashMap.values()) {
             try {
                 final String html = collector.execute();
+
                 final UUID conversationId = collector.getConversationId();
                 final String fileNameBase = conversationId != null ?
                         String.format("%s-%s", collector.getConvName(), conversationId.toString())

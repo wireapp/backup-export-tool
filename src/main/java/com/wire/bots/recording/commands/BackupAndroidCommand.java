@@ -6,10 +6,7 @@ import com.waz.model.Messages;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
-import com.wire.bots.sdk.models.AttachmentMessage;
-import com.wire.bots.sdk.models.ImageMessage;
-import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.models.TextMessage;
+import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -104,14 +101,25 @@ public class BackupAndroidCommand extends BackupCommandBase {
         processConversationsData(databaseDto.getConversationsData(), cache);
         processMessages(databaseDto, cache);
         processAttachments(databaseDto.getAttachments(), cache);
+        processLikings(databaseDto.getLikings(), cache);
         fillCollector();
         createPDFs(userId);
     }
 
+    private void processLikings(Collection<LikingsDto> likings, InstantCache cache) {
+        likings.forEach(liking -> {
+            final Collector collector = getCollector(liking.getConversationId(), cache);
+            final ReactionMessage like = new ReactionMessage(UUID.randomUUID(), liking.getConversationId(), null, liking.getUserId());
+            like.setReactionMessageId(liking.getMessageId());
+            like.setEmoji("❤️"); // no other emojis allowed so far
+            like.setTime(liking.getTime());
+            delayedCollector(liking.getTime(), () -> collector.add(like));
+        });
+    }
+
     private void processAttachments(Collection<AttachmentDto> attachments, InstantCache cache) {
         attachments.forEach(attachment -> {
-            final Collector collector = getCollector(attachment.getConversationId(), cache);
-            attachmentAdd(collector, attachment);
+            attachmentAdd(getCollector(attachment.getConversationId(), cache), attachment);
         });
     }
 
@@ -251,7 +259,17 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
     private void processMessages(DatabaseDto db, InstantCache cache) {
         db.getMessages().forEach(message -> {
-            final TextMessage txt = new TextMessage(message.getId(), message.getConversationId(), null, message.getUserId());
+            final TextMessage txt;
+
+            if (!message.getEdited()) {
+                txt = new TextMessage(message.getId(), message.getConversationId(), null, message.getUserId());
+            } else {
+                final EditedTextMessage edited
+                        = new EditedTextMessage(message.getId(), message.getConversationId(), null, message.getUserId());
+                edited.setReplacingMessageId(message.getId());
+                txt = edited;
+            }
+
             txt.setTime(message.getTime());
             txt.setText(message.getContent());
             txt.setQuotedMessageId(message.getQuote());
@@ -259,7 +277,12 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
             delayedCollector(message.getTime(), () -> {
                 try {
-                    collector.add(txt);
+                    // again, double dispatch would be better..
+                    if (txt instanceof EditedTextMessage) {
+                        collector.addEdit((EditedTextMessage) txt);
+                    } else {
+                        collector.add(txt);
+                    }
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
