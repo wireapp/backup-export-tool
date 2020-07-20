@@ -45,11 +45,11 @@ abstract class BackupCommandBase extends Command {
         final File outDir = new File(String.format("%s/out", root));
         final File inDir = new File(String.format("%s/in", root));
 
-        boolean a = imagesDir.mkdirs()
+        boolean dirsCreated = imagesDir.mkdirs()
                 & avatarsDir.mkdirs()
                 & outDir.mkdirs()
                 & inDir.mkdirs();
-        System.out.printf("All directories created: %b\n", a);
+        System.out.printf("All directories created: %b\n", dirsCreated);
     }
 
     protected Client getClient(Bootstrap<?> bootstrap) {

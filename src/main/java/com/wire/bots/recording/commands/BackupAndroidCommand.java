@@ -23,7 +23,7 @@ import static pw.forst.wire.android.backups.steps.OrchestrateKt.decryptAndExtrac
 
 public class BackupAndroidCommand extends BackupCommandBase {
 
-    private static final String VERSION = "0.1.3";
+    private static final String VERSION = "0.2.0";
     protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
     private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
@@ -33,7 +33,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
     private UUID backupUserId;
 
     public BackupAndroidCommand() {
-        super("android-pdf", "Convert Wire Desktop backup file into PDF");
+        super("android-pdf", "Convert Wire Android backup file into PDF");
     }
 
     @Override
@@ -56,11 +56,17 @@ public class BackupAndroidCommand extends BackupCommandBase {
                 .required(true)
                 .help("Backup file");
 
-        subparser.addArgument("-u", "--user-id")
-                .dest("userId")
+        subparser.addArgument("-out", "--output")
+                .dest("out")
+                .type(String.class)
+                .required(false)
+                .help("Output directory");
+
+        subparser.addArgument("-u", "--username")
+                .dest("username")
                 .type(String.class)
                 .required(true)
-                .help("User Id");
+                .help("Username");
 
         subparser.addArgument("-bp", "--backup-password")
                 .dest("dbPassword")
@@ -76,34 +82,46 @@ public class BackupAndroidCommand extends BackupCommandBase {
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
-        final String userId = namespace.getString("userId");
+        final String out = namespace.getString("out");
+        final String userName = namespace.getString("username");
         final String databasePassword = namespace.getString("dbPassword");
 
-        backupUserId = UUID.fromString(userId);
-
-        makeDirs(userId);
-        Helper.root = userId;
-        Collector.root = userId;
+        // init cache
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
-
-        final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, userId);
+        backupUserId = cache.getUserId(userName);
+        if (backupUserId == null) {
+            throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
+        }
+        // set root and create directories
+        String root;
+        if (out != null) {
+            root = out.endsWith("/") ? out + backupUserId.toString() : String.format("%s/%s", out, backupUserId.toString());
+        } else {
+            root = backupUserId.toString();
+        }
+        makeDirs(root); // create necessary directories
+        Helper.root = root; // set root for physical files
+        Collector.root = backupUserId.toString(); // set root (last folder in path) for pdf links to asssets
+        // decrypt database
+        final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, backupUserId.toString());
         if (decryptionResult == null) {
             throw new IllegalArgumentException("It was not possible to decrypt the database!");
         }
-
-        final DatabaseDto databaseDto = extractDatabase(UUID.fromString(userId), decryptionResult.getDatabaseFile());
+        // extract database data
+        final DatabaseDto databaseDto = extractDatabase(backupUserId, decryptionResult.getDatabaseFile());
         exportMetadata = decryptionResult.getMetadata();
         databaseMetadata = databaseDto.getMetaData();
-
+        // process data and prepare collectors
         processConversations(databaseDto, cache);
         appendMembers(databaseDto.getConversationsData(), cache);
-
         processConversationsData(databaseDto.getConversationsData(), cache);
         processMessages(databaseDto, cache);
         processAttachments(databaseDto.getAttachments(), cache);
         processLikings(databaseDto.getLikings(), cache);
+        // execute delayed operations
         fillCollector();
-        createPDFs(userId);
+        // build pdfs
+        createPDFs(root);
     }
 
     private void processLikings(Collection<LikingsDto> likings, InstantCache cache) {
@@ -118,9 +136,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
     }
 
     private void processAttachments(Collection<AttachmentDto> attachments, InstantCache cache) {
-        attachments.forEach(attachment -> {
-            attachmentAdd(getCollector(attachment.getConversationId(), cache), attachment);
-        });
+        attachments.forEach(attachment -> attachmentAdd(getCollector(attachment.getConversationId(), cache), attachment));
     }
 
     private byte[] obtainOtr(AttachmentDto attachmentDto) {
@@ -156,6 +172,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
         delayedCollector(attachmentDto.getTimestamp(), () -> {
             try {
+                System.out.printf("Processing attachment %s\n", msg.getName());
                 // visitor pattern would be better...
                 if (msg instanceof ImageMessage) {
                     collector.add((ImageMessage) msg);

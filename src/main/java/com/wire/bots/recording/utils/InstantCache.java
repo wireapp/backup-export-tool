@@ -30,6 +30,16 @@ public class InstantCache extends Cache {
         this.api = new API(client, null, access.getToken());
     }
 
+    public UUID getUserId(String handle) {
+        try {
+            return this.api.getUserId(handle);
+        } catch (HttpException e) {
+            Logger.error("InstantCache.getUserId: username: %s, ex: %s", handle, e);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     @Override
     protected User getUserObject(UUID userId) {
         try {
