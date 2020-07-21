@@ -82,9 +82,13 @@ public class BackupAndroidCommand extends BackupCommandBase {
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
-        final String out = namespace.getString("out");
         final String userName = namespace.getString("username");
         final String databasePassword = namespace.getString("dbPassword");
+
+        String out = namespace.getString("out");
+        if (out != null && out.endsWith("/")) {
+            out = out.substring(0, out.length() - 1);
+        }
 
         // init cache
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
@@ -93,19 +97,14 @@ public class BackupAndroidCommand extends BackupCommandBase {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
         }
         // set root and create directories
-        String fileSystemRoot;
         final String logicalRoot = backupUserId.toString();
-        if (out != null) {
-            fileSystemRoot = out.endsWith("/") ? out + logicalRoot : String.format("%s/%s", out, logicalRoot);
-        } else {
-            fileSystemRoot = logicalRoot;
-        }
+        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
 
         makeDirs(fileSystemRoot); // create necessary directories
         Helper.root = fileSystemRoot; // set root for physical files
         Collector.root = logicalRoot; // set root (last folder in path) for pdf links to asssets
         // decrypt database
-        final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, backupUserId.toString());
+        final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, backupUserId.toString(), fileSystemRoot + "/tmp");
         if (decryptionResult == null) {
             throw new IllegalArgumentException("It was not possible to decrypt the database!");
         }
