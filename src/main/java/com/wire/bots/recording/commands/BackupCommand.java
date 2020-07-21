@@ -50,6 +50,12 @@ public class BackupCommand extends BackupCommandBase {
                 .required(true)
                 .help("Backup file");
 
+        subparser.addArgument("-out", "--output")
+                .dest("out")
+                .type(String.class)
+                .required(false)
+                .help("Output directory");
+
         subparser.addArgument("-e", "--email")
                 .dest("email")
                 .type(String.class)
@@ -70,15 +76,20 @@ public class BackupCommand extends BackupCommandBase {
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
+        String out = namespace.getString("out");
+        if (out != null && out.endsWith("/")) {
+            out = out.substring(0, out.length() - 1);
+        }
+        String temporaryExtractionDirectory = (out != null ? out : ".") + "/tmp";
 
-        final File inputDir = new File("tmp");
+        final File inputDir = new File(temporaryExtractionDirectory);
         inputDir.mkdirs();
 
         unzip(in, inputDir.getAbsolutePath());
 
         objectMapper.addHandler(new _DeserializationProblemHandler());
 
-        final File exportFile = new File("tmp/export.json");
+        final File exportFile = new File(temporaryExtractionDirectory + "/export.json");
 
         export = objectMapper.readValue(exportFile, _Export.class);
 
@@ -91,16 +102,16 @@ public class BackupCommand extends BackupCommandBase {
                 export.platform,
                 export.version);
 
-        final String root = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
+        final String logicalRoot = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
+        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
+        makeDirs(fileSystemRoot);
 
-        makeDirs(root);
+        final File eventsFile = new File(String.format("%s/in/%s", fileSystemRoot, "events.json"));
+        final File conversationsFile = new File(String.format("%s/in/%s", fileSystemRoot, "conversations.json"));
 
-        final File eventsFile = new File(String.format("%s/in/%s", root, "events.json"));
-        final File conversationsFile = new File(String.format("%s/in/%s", root, "conversations.json"));
-
-        Files.copy(new File("tmp/events.json").toPath(), eventsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(new File("tmp/conversations.json").toPath(), conversationsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(exportFile.toPath(), new File(String.format("%s/in/%s", root, "export.json")).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new File(temporaryExtractionDirectory + "/events.json").toPath(), eventsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new File(temporaryExtractionDirectory + "/conversations.json").toPath(), conversationsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(exportFile.toPath(), new File(String.format("%s/in/%s", fileSystemRoot, "export.json")).toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         final Event[] events = objectMapper.readValue(eventsFile, Event[].class);
         final _Conversation[] conversations = objectMapper.readValue(conversationsFile, _Conversation[].class);
@@ -109,8 +120,8 @@ public class BackupCommand extends BackupCommandBase {
                 conversations.length,
                 events.length);
 
-        Helper.root = root;
-        Collector.root = root;
+        Helper.root = fileSystemRoot;
+        Collector.root = logicalRoot;
 
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
 
@@ -118,7 +129,7 @@ public class BackupCommand extends BackupCommandBase {
 
         processEvents(events, cache);
 
-        createPDFs(root);
+        createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
     }
 
     private void processConversations(_Conversation[] conversations, InstantCache cache) {

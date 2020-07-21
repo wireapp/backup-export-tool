@@ -82,7 +82,7 @@ abstract class BackupCommandBase extends Command {
                 .build(getName());
     }
 
-    protected void createPDFs(String root) {
+    protected void createPDFs(String root, String htmlAssetsRoot) {
         for (Collector collector : collectorHashMap.values()) {
             try {
                 final String html = collector.execute();
@@ -96,7 +96,7 @@ abstract class BackupCommandBase extends Command {
                         fileNameBase,
                         StandardCharsets.UTF_8.toString());
                 final String out = String.format("%s/out/%s.pdf", root, filename);
-                PdfGenerator.save(out, html, "file:./");
+                PdfGenerator.save(out, html, "file:" + htmlAssetsRoot);
                 System.out.printf("Generated pdf: %s\n", out);
             } catch (Exception e) {
                 e.printStackTrace();
