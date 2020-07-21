@@ -7,42 +7,28 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
-import com.wire.bots.recording.utils.PdfGenerator;
 import com.wire.bots.sdk.models.*;
-import io.dropwizard.cli.Command;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import io.dropwizard.util.Duration;
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
-import javax.ws.rs.client.Client;
 import java.io.File;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class BackupCommand extends Command {
+public class BackupCommand extends BackupCommandBase {
     private static final String VERSION = "0.1.3";
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
-    private final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private _Export export;
@@ -64,6 +50,12 @@ public class BackupCommand extends Command {
                 .required(true)
                 .help("Backup file");
 
+        subparser.addArgument("-out", "--output")
+                .dest("out")
+                .type(String.class)
+                .required(false)
+                .help("Output directory");
+
         subparser.addArgument("-e", "--email")
                 .dest("email")
                 .type(String.class)
@@ -84,15 +76,20 @@ public class BackupCommand extends Command {
         final String email = namespace.getString("email");
         final String password = namespace.getString("password");
         final String in = namespace.getString("in");
+        String out = namespace.getString("out");
+        if (out != null && out.endsWith("/")) {
+            out = out.substring(0, out.length() - 1);
+        }
+        String temporaryExtractionDirectory = (out != null ? out : ".") + "/tmp";
 
-        final File inputDir = new File("tmp");
+        final File inputDir = new File(temporaryExtractionDirectory);
         inputDir.mkdirs();
 
         unzip(in, inputDir.getAbsolutePath());
 
         objectMapper.addHandler(new _DeserializationProblemHandler());
 
-        final File exportFile = new File("tmp/export.json");
+        final File exportFile = new File(temporaryExtractionDirectory + "/export.json");
 
         export = objectMapper.readValue(exportFile, _Export.class);
 
@@ -105,16 +102,16 @@ public class BackupCommand extends Command {
                 export.platform,
                 export.version);
 
-        final String root = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
+        final String logicalRoot = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
+        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
+        makeDirs(fileSystemRoot);
 
-        makeDirs(root);
+        final File eventsFile = new File(String.format("%s/in/%s", fileSystemRoot, "events.json"));
+        final File conversationsFile = new File(String.format("%s/in/%s", fileSystemRoot, "conversations.json"));
 
-        final File eventsFile = new File(String.format("%s/in/%s", root, "events.json"));
-        final File conversationsFile = new File(String.format("%s/in/%s", root, "conversations.json"));
-
-        Files.copy(new File("tmp/events.json").toPath(), eventsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(new File("tmp/conversations.json").toPath(), conversationsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(exportFile.toPath(), new File(String.format("%s/in/%s", root, "export.json")).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new File(temporaryExtractionDirectory + "/events.json").toPath(), eventsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(new File(temporaryExtractionDirectory + "/conversations.json").toPath(), conversationsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(exportFile.toPath(), new File(String.format("%s/in/%s", fileSystemRoot, "export.json")).toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         final Event[] events = objectMapper.readValue(eventsFile, Event[].class);
         final _Conversation[] conversations = objectMapper.readValue(conversationsFile, _Conversation[].class);
@@ -123,8 +120,8 @@ public class BackupCommand extends Command {
                 conversations.length,
                 events.length);
 
-        Helper.root = root;
-        Collector.root = root;
+        Helper.root = fileSystemRoot;
+        Collector.root = logicalRoot;
 
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
 
@@ -132,63 +129,7 @@ public class BackupCommand extends Command {
 
         processEvents(events, cache);
 
-        createPDFs(root);
-    }
-
-    private void makeDirs(String root) {
-        final File imagesDir = new File(String.format("%s/assets", root));
-        final File avatarsDir = new File(String.format("%s/avatars", root));
-        final File outDir = new File(String.format("%s/out", root));
-        final File inDir = new File(String.format("%s/in", root));
-
-        imagesDir.mkdirs();
-        avatarsDir.mkdirs();
-        outDir.mkdirs();
-        inDir.mkdirs();
-    }
-
-    private Client getClient(Bootstrap<?> bootstrap) {
-        final Environment environment = new Environment(getName(),
-                objectMapper,
-                bootstrap.getValidatorFactory().getValidator(),
-                bootstrap.getMetricRegistry(),
-                bootstrap.getClassLoader());
-
-        JerseyClientConfiguration jerseyCfg = new JerseyClientConfiguration();
-        jerseyCfg.setChunkedEncodingEnabled(false);
-        jerseyCfg.setGzipEnabled(false);
-        jerseyCfg.setGzipEnabledForRequests(false);
-        jerseyCfg.setTimeout(Duration.seconds(40));
-        jerseyCfg.setConnectionTimeout(Duration.seconds(20));
-        jerseyCfg.setConnectionRequestTimeout(Duration.seconds(20));
-        jerseyCfg.setRetries(3);
-        jerseyCfg.setKeepAlive(Duration.milliseconds(0));
-
-        final TlsConfiguration tlsConfiguration = new TlsConfiguration();
-        tlsConfiguration.setProtocol("TLSv1.2");
-        tlsConfiguration.setProvider("SunJSSE");
-        tlsConfiguration.setSupportedProtocols(Arrays.asList("TLSv1.2", "TLSv1.1"));
-        jerseyCfg.setTlsConfiguration(tlsConfiguration);
-
-        return new JerseyClientBuilder(environment)
-                .using(jerseyCfg)
-                .withProvider(MultiPartFeature.class)
-                .withProvider(JacksonJsonProvider.class)
-                .build(getName());
-    }
-
-    private void createPDFs(String root) {
-        for (Collector collector : collectorHashMap.values()) {
-            try {
-                final String html = collector.execute();
-                final String filename = URLEncoder.encode(collector.getConvName(), StandardCharsets.UTF_8.toString());
-                String out = String.format("%s/out/%s.pdf", root, filename);
-                PdfGenerator.save(out, html, "file:./");
-                System.out.printf("Generated pdf: %s\n", out);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
     }
 
     private void processConversations(_Conversation[] conversations, InstantCache cache) {
@@ -254,6 +195,7 @@ public class BackupCommand extends Command {
             Collector collector = new Collector(cache);
             _Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
+            collector.setConversationId(convId);
             collector.details = new Collector.Details();
             collector.details.name = export.user_name;
             collector.details.handle = export.user_handle;

@@ -24,10 +24,11 @@ public class Collector {
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     private Message lastMessage = null;
     private String convName;
-    public static String root = "recording";
-    private static String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/" +
+    private static final String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/" +
             "|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
-    private static Pattern p = Pattern.compile(regex);
+    private static final Pattern p = Pattern.compile(regex);
+    public static String root = "recording";
+    private UUID conversationId;
     public Details details;
 
     public Collector(Cache cache) {
@@ -97,9 +98,8 @@ public class Collector {
     }
 
     public Sender addEdit(EditedTextMessage event) throws ParseException {
-        Sender sender = add(event);
-        sender.name += " ✏️";
-        return sender;
+        addSystem("✏ Edited", event.getTime(), "", event.getMessageId());
+        return add(event);
     }
 
     public Sender add(ImageMessage event) throws ParseException {
@@ -343,6 +343,16 @@ public class Collector {
         this.convName = convName;
     }
 
+    @Nullable
+    public UUID getConversationId() {
+        return this.conversationId;
+    }
+
+    public void setConversationId(UUID conversationId) {
+        this.conversationId = conversationId;
+    }
+
+
     public String getConvName() {
         return convName;
     }
@@ -421,7 +431,7 @@ public class Collector {
         String timeStamp;
         String likes;
         Message quotedMessage;
-        private HashSet<UUID> likers = new HashSet<>();
+        private final HashSet<UUID> likers = new HashSet<>();
 
         String getTime() throws ParseException {
             return toTime(timeStamp);
@@ -457,7 +467,7 @@ public class Collector {
         String name;
         String accent;
         String system;
-        private ArrayList<Message> messages = new ArrayList<>();
+        private final ArrayList<Message> messages = new ArrayList<>();
 
         boolean equals(Sender s) {
             return Objects.equals(senderId, s.senderId);
