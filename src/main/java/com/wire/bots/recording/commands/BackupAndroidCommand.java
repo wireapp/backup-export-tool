@@ -93,15 +93,17 @@ public class BackupAndroidCommand extends BackupCommandBase {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
         }
         // set root and create directories
-        String root;
+        String fileSystemRoot;
+        final String logicalRoot = backupUserId.toString();
         if (out != null) {
-            root = out.endsWith("/") ? out + backupUserId.toString() : String.format("%s/%s", out, backupUserId.toString());
+            fileSystemRoot = out.endsWith("/") ? out + logicalRoot : String.format("%s/%s", out, logicalRoot);
         } else {
-            root = backupUserId.toString();
+            fileSystemRoot = logicalRoot;
         }
-        makeDirs(root); // create necessary directories
-        Helper.root = root; // set root for physical files
-        Collector.root = backupUserId.toString(); // set root (last folder in path) for pdf links to asssets
+
+        makeDirs(fileSystemRoot); // create necessary directories
+        Helper.root = fileSystemRoot; // set root for physical files
+        Collector.root = logicalRoot; // set root (last folder in path) for pdf links to asssets
         // decrypt database
         final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, backupUserId.toString());
         if (decryptionResult == null) {
@@ -121,7 +123,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
         // execute delayed operations
         fillCollector();
         // build pdfs
-        createPDFs(root);
+        createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
     }
 
     private void processLikings(Collection<LikingsDto> likings, InstantCache cache) {
