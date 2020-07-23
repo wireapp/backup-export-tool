@@ -10,16 +10,16 @@ import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.android.backups.database.dto.*;
-import pw.forst.wire.android.backups.steps.DecryptionResult;
-import pw.forst.wire.android.backups.steps.ExportMetadata;
+import pw.forst.wire.backups.android.database.dto.*;
+import pw.forst.wire.backups.android.steps.DecryptionResult;
+import pw.forst.wire.backups.android.steps.ExportMetadata;
 
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static pw.forst.wire.android.backups.database.converters.DatabaseKt.extractDatabase;
-import static pw.forst.wire.android.backups.steps.OrchestrateKt.decryptAndExtract;
+import static pw.forst.wire.backups.android.database.converters.DatabaseKt.extractDatabase;
+import static pw.forst.wire.backups.android.steps.OrchestrateKt.decryptAndExtract;
 
 public class BackupAndroidCommand extends BackupCommandBase {
 
