@@ -8,19 +8,17 @@ import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
 import pw.forst.wire.backups.ios.model.IosMessageDto;
 
 import java.util.List;
 import java.util.UUID;
 
-import static pw.forst.wire.backups.ios.ApiKt.processIosBackup;
 import static pw.forst.wire.backups.ios.database.ConverterKt.obtainIosMessages;
 
 
 public class BackupIosCommand extends BackupCommandBase {
 
-    private static final String VERSION = "0.2.0";
+    private static final String VERSION = "0.3.0";
 
     public BackupIosCommand() {
         super("ios-pdf", "Convert Wire iOS backup file into PDF");
@@ -98,7 +96,7 @@ public class BackupIosCommand extends BackupCommandBase {
                 e.printStackTrace();
             }
         }
-        createPDFs(Collector.root, Collector.root);
+        createPDFs(Collector.root, ".");
     }
 
     protected Collector getCollector(UUID convId, InstantCache cache) {
