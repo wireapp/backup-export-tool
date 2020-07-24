@@ -11,6 +11,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import pw.forst.wire.backups.ios.IosMessageDto;
 
 import java.util.List;
+import java.util.UUID;
 
 import static pw.forst.wire.backups.ios.ConverterKt.obtainIosMessages;
 
@@ -53,8 +54,6 @@ public class BackupIosCommand extends BackupCommandBase {
 
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
 
-        Collector collector = new Collector(cache);
-
         List<IosMessageDto> messages = obtainIosMessages(in);
         for (IosMessageDto msg : messages) {
             try {
@@ -66,6 +65,8 @@ public class BackupIosCommand extends BackupCommandBase {
                         msg.getTime(),
                         genericMessage);
 
+                final Collector collector = getCollector(msg.getConversationUUID(), cache);
+                
                 if (messageBase instanceof TextMessage) {
                     collector.add((TextMessage) messageBase);
                 }
@@ -92,5 +93,15 @@ public class BackupIosCommand extends BackupCommandBase {
                 e.printStackTrace();
             }
         }
+        createPDFs(Collector.root, Collector.root);
+    }
+
+    protected Collector getCollector(UUID convId, InstantCache cache) {
+        return collectorHashMap.computeIfAbsent(convId, x -> {
+            Collector collector = new Collector(cache);
+            collector.setConvName(convId.toString());
+            collector.setConversationId(convId);
+            return collector;
+        });
     }
 }
