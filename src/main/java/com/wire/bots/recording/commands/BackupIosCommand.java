@@ -8,12 +8,11 @@ import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.backups.ios.GenericMessageDto;
+import pw.forst.wire.backups.ios.IosMessageDto;
 
 import java.util.List;
-import java.util.UUID;
 
-import static pw.forst.wire.backups.ios.GenericMessageConverterKt.obtainProtobufsForDatabase;
+import static pw.forst.wire.backups.ios.ConverterKt.obtainIosMessages;
 
 public class BackupIosCommand extends BackupCommandBase {
 
@@ -54,18 +53,18 @@ public class BackupIosCommand extends BackupCommandBase {
 
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
 
-        UUID from = UUID.randomUUID();
-        String clientId = "";
-        UUID convId = UUID.randomUUID();
-        String time = "2020-07-12T21:12:02.123Z";
-
         Collector collector = new Collector(cache);
 
-        List<GenericMessageDto> messages = obtainProtobufsForDatabase(in);
-        for (GenericMessageDto msg : messages) {
+        List<IosMessageDto> messages = obtainIosMessages(in);
+        for (IosMessageDto msg : messages) {
             try {
                 final Messages.GenericMessage genericMessage = Messages.GenericMessage.parseFrom(msg.getProtobuf());
-                final MessageBase messageBase = GenericMessageConverter.convert(from, clientId, convId, time, genericMessage);
+                final MessageBase messageBase = GenericMessageConverter.convert(
+                        msg.getSenderUUID(),
+                        "",
+                        msg.getConversationUUID(),
+                        msg.getTime(),
+                        genericMessage);
 
                 if (messageBase instanceof TextMessage) {
                     collector.add((TextMessage) messageBase);
