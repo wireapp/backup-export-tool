@@ -8,12 +8,15 @@ import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.backups.ios.IosMessageDto;
+import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
+import pw.forst.wire.backups.ios.model.IosMessageDto;
 
 import java.util.List;
 import java.util.UUID;
 
-import static pw.forst.wire.backups.ios.ConverterKt.obtainIosMessages;
+import static pw.forst.wire.backups.ios.ApiKt.processIosBackup;
+import static pw.forst.wire.backups.ios.database.ConverterKt.obtainIosMessages;
+
 
 public class BackupIosCommand extends BackupCommandBase {
 
@@ -53,7 +56,9 @@ public class BackupIosCommand extends BackupCommandBase {
         final String password = namespace.getString("password");
 
         InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
-
+//        TODO this is function for decrypting everything and extracting all data
+//        IosDatabaseExportDto databaseExport = processIosBackup(in, "backupPassword", "userId");
+//        List<IosMessageDto> messages = databaseExport.getMessages();
         List<IosMessageDto> messages = obtainIosMessages(in);
         for (IosMessageDto msg : messages) {
             try {
