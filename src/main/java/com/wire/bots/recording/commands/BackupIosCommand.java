@@ -13,7 +13,7 @@ import pw.forst.wire.backups.ios.model.IosMessageDto;
 import java.util.List;
 import java.util.UUID;
 
-import static pw.forst.wire.backups.ios.database.ConverterKt.obtainIosMessages;
+import static pw.forst.wire.backups.ios.database.MessagesConverterKt.obtainIosMessages;
 
 
 public class BackupIosCommand extends BackupCommandBase {
