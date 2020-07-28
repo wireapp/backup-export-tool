@@ -1,10 +1,10 @@
 package com.wire.bots.recording.commands;
 
 import com.waz.model.Messages;
+import com.wire.bots.recording.model.ExportConfig;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
-import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
 import io.dropwizard.setup.Bootstrap;
@@ -15,6 +15,7 @@ import pw.forst.wire.backups.ios.model.IosDatabaseDto;
 import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
 import pw.forst.wire.backups.ios.model.IosMessageDto;
 
+import javax.ws.rs.client.Client;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +79,7 @@ public class BackupIosCommand extends BackupCommandBase {
     }
 
     @Override
-    public void run(Bootstrap<?> bootstrap, Namespace namespace) throws HttpException {
+    protected void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig configuration) throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
         final String email = namespace.getString("email");
@@ -92,7 +93,8 @@ public class BackupIosCommand extends BackupCommandBase {
             out = out.substring(0, out.length() - 1);
         }
 
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
+        final Client httpClient = getClient(bootstrap, configuration);
+        InstantCache cache = new InstantCache(email, password, httpClient);
         final UUID userId = cache.getUserId(userName);
         user = cache.getUser(userId);
 

@@ -20,7 +20,7 @@ package com.wire.bots.recording;
 import com.wire.bots.recording.DAO.ChannelsDAO;
 import com.wire.bots.recording.DAO.EventsDAO;
 import com.wire.bots.recording.commands.BackupAndroidCommand;
-import com.wire.bots.recording.commands.BackupCommand;
+import com.wire.bots.recording.commands.BackupDesktopCommand;
 import com.wire.bots.recording.commands.BackupIosCommand;
 import com.wire.bots.recording.model.Config;
 import com.wire.bots.recording.utils.ImagesBundle;
@@ -54,7 +54,7 @@ public class Service extends Server<Config> {
         bootstrap.addBundle(new ImagesBundle("/opt/recording/avatars", "/recording/avatars", "avatars"));
         bootstrap.addBundle(new ImagesBundle("/opt/recording/html", "/recording/channel", "channels"));
 
-        bootstrap.addCommand(new BackupCommand());
+        bootstrap.addCommand(new BackupDesktopCommand());
         bootstrap.addCommand(new BackupAndroidCommand());
         bootstrap.addCommand(new BackupIosCommand());
 

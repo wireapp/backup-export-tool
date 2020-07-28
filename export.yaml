@@ -1,0 +1,20 @@
+jerseyClient:
+  timeout: 40s
+  connectionTimeout: 20s
+  connectionRequestTimeout: 20s
+  keepAlive: 0ms
+  retries: 3
+  userAgent: pdf backup exporter
+
+  #  proxy:
+  #    host: ${PROXY_URL:-HOEPRX01.NA.XOM.COM}
+  #    port: ${PROXY_PORT:-8080}
+  #    scheme: http
+  #    nonProxyHosts: ${NON_PROXY_HOSTS:-}
+
+  tls:
+    protocol: TLSv1.2
+    provider: SunJSSE
+    supportedProtocols:
+      - TLSv1.1
+      - TLSv1.2

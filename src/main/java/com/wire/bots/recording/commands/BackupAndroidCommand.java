@@ -3,6 +3,7 @@ package com.wire.bots.recording.commands;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.waz.model.Messages;
+import com.wire.bots.recording.model.ExportConfig;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
@@ -15,7 +16,10 @@ import pw.forst.wire.backups.android.steps.DecryptionResult;
 import pw.forst.wire.backups.android.steps.ExportMetadata;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static pw.forst.wire.backups.android.database.converters.DatabaseKt.extractDatabase;
@@ -76,7 +80,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
     }
 
     @Override
-    public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
+    public void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig config) throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
         final String email = namespace.getString("email");
@@ -91,7 +95,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
         }
 
         // init cache
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
         backupUserId = cache.getUserId(userName);
         if (backupUserId == null) {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");

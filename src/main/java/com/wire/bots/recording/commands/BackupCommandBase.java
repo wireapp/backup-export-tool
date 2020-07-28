@@ -2,26 +2,23 @@ package com.wire.bots.recording.commands;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.wire.bots.recording.model.ExportConfig;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.PdfGenerator;
-import io.dropwizard.cli.Command;
+import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.util.Duration;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import javax.ws.rs.client.Client;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
-abstract class BackupCommandBase extends Command {
+abstract class BackupCommandBase extends ConfiguredCommand<ExportConfig> {
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
 
     protected BackupCommandBase(String name, String description) {
@@ -41,31 +38,15 @@ abstract class BackupCommandBase extends Command {
         System.out.printf("All directories created: %b\n", dirsCreated);
     }
 
-    protected Client getClient(Bootstrap<?> bootstrap) {
+    protected Client getClient(Bootstrap<ExportConfig> bootstrap, ExportConfig configuration) {
         final Environment environment = new Environment(getName(),
                 new ObjectMapper(),
                 bootstrap.getValidatorFactory().getValidator(),
                 bootstrap.getMetricRegistry(),
                 bootstrap.getClassLoader());
 
-        JerseyClientConfiguration jerseyCfg = new JerseyClientConfiguration();
-        jerseyCfg.setChunkedEncodingEnabled(false);
-        jerseyCfg.setGzipEnabled(false);
-        jerseyCfg.setGzipEnabledForRequests(false);
-        jerseyCfg.setTimeout(Duration.seconds(40));
-        jerseyCfg.setConnectionTimeout(Duration.seconds(20));
-        jerseyCfg.setConnectionRequestTimeout(Duration.seconds(20));
-        jerseyCfg.setRetries(3);
-        jerseyCfg.setKeepAlive(Duration.milliseconds(0));
-
-        final TlsConfiguration tlsConfiguration = new TlsConfiguration();
-        tlsConfiguration.setProtocol("TLSv1.2");
-        tlsConfiguration.setProvider("SunJSSE");
-        tlsConfiguration.setSupportedProtocols(Arrays.asList("TLSv1.2", "TLSv1.1"));
-        jerseyCfg.setTlsConfiguration(tlsConfiguration);
-
         return new JerseyClientBuilder(environment)
-                .using(jerseyCfg)
+                .using(configuration.jerseyClient)
                 .withProvider(MultiPartFeature.class)
                 .withProvider(JacksonJsonProvider.class)
                 .build(getName());
