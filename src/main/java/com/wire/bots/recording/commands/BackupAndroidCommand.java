@@ -26,7 +26,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
     private static final String VERSION = "0.2.0";
     protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
-    private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
+    private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
     // as this is commandline tool, this is OK
     private ExportMetadata exportMetadata;
     private DatabaseMetadata databaseMetadata;
@@ -327,20 +327,11 @@ public class BackupAndroidCommand extends BackupCommandBase {
     }
 
     private void delayedCollector(String timestamp, Runnable r) {
-        final Long time = timeToMillis(timestamp);
-        if (time == null) {
-            // it was not possible to parse time
-            return;
-        }
-
-        final List<Runnable> runnables = timedMessages.getOrDefault(time, new LinkedList<>());
-        runnables.add(r);
-        timedMessages.put(time, runnables);
+        timedMessagesExecutor.add(timestamp, r);
     }
 
     private void fillCollector() {
-        timedMessages.forEach((timestamp, actions) -> actions.forEach(Runnable::run));
-        timedMessages.clear();
+        timedMessagesExecutor.execute();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

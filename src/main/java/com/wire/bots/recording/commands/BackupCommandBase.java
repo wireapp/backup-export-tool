@@ -17,8 +17,6 @@ import javax.ws.rs.client.Client;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
@@ -28,15 +26,6 @@ abstract class BackupCommandBase extends Command {
 
     protected BackupCommandBase(String name, String description) {
         super(name, description);
-    }
-
-    protected static Long timeToMillis(String timestamp) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
-        } catch (ParseException ex) {
-            ex.printStackTrace();
-        }
-        return null;
     }
 
     protected void makeDirs(String root) {
