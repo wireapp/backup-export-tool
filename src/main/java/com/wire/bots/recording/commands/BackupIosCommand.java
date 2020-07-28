@@ -15,10 +15,12 @@ import pw.forst.wire.backups.ios.model.IosDatabaseDto;
 import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
 import pw.forst.wire.backups.ios.model.IosMessageDto;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static pw.forst.wire.backups.ios.ApiKt.processIosBackup;
 
@@ -146,12 +148,34 @@ public class BackupIosCommand extends BackupCommandBase {
                     e.printStackTrace();
                 }
 
-                System.out.println(String.format("Processed %d/%d", idx, messages.size()));
+                System.out.println(String.format("Processed messages: %d/%d", idx + 1, messages.size()));
             });
         }
+        // write all messages
         timedMessagesExecutor.execute();
+        // append members list
+        writeConversationMembers();
+
         System.out.println("Creating pdfs");
         createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
+    }
+
+    private void writeConversationMembers() {
+        collectorHashMap.forEach((conversationId, conversationCollector) -> {
+            final ConversationDto conversation = conversations.get(conversationId);
+            final List<String> members = conversation.getMembers()
+                    .stream()
+                    .map(conversationCollector::getUserName)
+                    .collect(Collectors.toList());
+
+            final String message = String.format("Members at the time of export: %s", String.join(", ", members));
+            try {
+                System.out.println(String.format("Conversation \"%s\" processed.", conversation.getName()));
+                conversationCollector.addSystem(message, databaseMetadata.getCreationTime(), "", UUID.randomUUID());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     protected Collector getCollector(UUID convId, InstantCache cache) {
