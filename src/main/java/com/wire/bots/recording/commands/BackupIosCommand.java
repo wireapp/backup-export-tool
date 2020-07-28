@@ -124,7 +124,16 @@ public class BackupIosCommand extends BackupCommandBase {
                     final Collector collector = getCollector(msg.getConversationUUID(), cache);
 
                     if (messageBase instanceof TextMessage) {
-                        collector.add((TextMessage) messageBase);
+                        if (!msg.getWasEdited()) {
+                            collector.add((TextMessage) messageBase);
+                        } else {
+                            final EditedTextMessage edited
+                                    = new EditedTextMessage(messageBase.getMessageId(), messageBase.getConversationId(),
+                                    messageBase.getClientId(), messageBase.getUserId());
+                            edited.setTime(msg.getTime());
+                            edited.setText(((TextMessage) messageBase).getText());
+                            collector.addEdit(edited);
+                        }
                     }
                     if (messageBase instanceof ImageMessage) {
                         collector.add((ImageMessage) messageBase);
