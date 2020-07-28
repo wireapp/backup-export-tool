@@ -15,7 +15,6 @@ import pw.forst.wire.backups.ios.model.IosDatabaseDto;
 import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
 import pw.forst.wire.backups.ios.model.IosMessageDto;
 
-import javax.ws.rs.client.Client;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -93,8 +92,8 @@ public class BackupIosCommand extends BackupCommandBase {
             out = out.substring(0, out.length() - 1);
         }
 
-        final Client httpClient = getClient(bootstrap, configuration);
-        InstantCache cache = new InstantCache(email, password, httpClient);
+        System.out.println("Logging into Wire services.");
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration));
         final UUID userId = cache.getUserId(userName);
         user = cache.getUser(userId);
 
@@ -105,63 +104,37 @@ public class BackupIosCommand extends BackupCommandBase {
         Helper.root = fileSystemRoot;
         Collector.root = logicalRoot;
 
+        System.out.println("Reading database.");
         final IosDatabaseExportDto databaseExport = processIosBackup(in, databasePassword, user.id, fileSystemRoot);
         databaseMetadata = databaseExport.getMetadata();
         final List<IosMessageDto> messages = databaseExport.getMessages();
         // fill conversation map
         databaseExport.getConversations().forEach(c -> conversations.put(c.getId(), c));
         for (int i = 0; i < messages.size(); i++) {
-            final int idx = i; // because of the lambda closure
-            IosMessageDto msg = messages.get(idx);
-            timedMessagesExecutor.add(msg.getTime(), () -> {
-                try {
-                    final Messages.GenericMessage genericMessage = Messages.GenericMessage.parseFrom(msg.getProtobuf());
-                    final MessageBase messageBase = GenericMessageConverter.convert(
-                            msg.getSenderUUID(),
-                            "",
-                            msg.getConversationUUID(),
-                            msg.getTime(),
-                            genericMessage);
-
-                    final Collector collector = getCollector(msg.getConversationUUID(), cache);
-
-                    if (messageBase instanceof TextMessage) {
-                        if (!msg.getWasEdited()) {
-                            collector.add((TextMessage) messageBase);
-                        } else {
-                            final EditedTextMessage edited
-                                    = new EditedTextMessage(messageBase.getMessageId(), messageBase.getConversationId(),
-                                    messageBase.getClientId(), messageBase.getUserId());
-                            edited.setTime(msg.getTime());
-                            edited.setText(((TextMessage) messageBase).getText());
-                            collector.addEdit(edited);
-                        }
-                    }
-                    if (messageBase instanceof ImageMessage) {
-                        collector.add((ImageMessage) messageBase);
-                    }
-                    if (messageBase instanceof VideoMessage) {
-                        collector.add((VideoMessage) messageBase);
-                    }
-                    if (messageBase instanceof AttachmentMessage) {
-                        collector.add((AttachmentMessage) messageBase);
-                    }
-                    if (messageBase instanceof ReactionMessage) {
-                        collector.add((ReactionMessage) messageBase);
-                    }
-                    if (messageBase instanceof LinkPreviewMessage) {
-                        collector.addLink((LinkPreviewMessage) messageBase);
-                    }
-                    if (messageBase instanceof EditedTextMessage) {
-                        collector.addEdit((EditedTextMessage) messageBase);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            IosMessageDto msg = messages.get(i);
+            MessageBase messageBase;
+            try {
+                final Messages.GenericMessage genericMessage = Messages.GenericMessage.parseFrom(msg.getProtobuf());
+                messageBase = GenericMessageConverter.convert(msg.getSenderUUID(), "", msg.getConversationUUID(),
+                        msg.getTime(), genericMessage);
+                if (messageBase == null) {
+                    // TODO maybe log this - assets without information about key and token
+                    // we can't do anything about that..
+                    continue;
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                continue;
+            }
 
-                System.out.println(String.format("Processed messages: %d/%d", idx + 1, messages.size()));
-            });
+            final Collector collector = getCollector(messageBase.getConversationId(), cache);
+            final String logMessage = String.format("Processed messages: %d/%d", i + 1, messages.size());
+            // insert into collector
+            insertToCollector(collector, messageBase, msg, logMessage);
+            // insert potential reactions
+            fillReaction(collector, msg, messageBase);
         }
+        System.out.println("Execution flow prepared.");
         // write all messages
         timedMessagesExecutor.execute();
         // append members list
@@ -169,6 +142,57 @@ public class BackupIosCommand extends BackupCommandBase {
 
         System.out.println("Creating pdfs");
         createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
+    }
+
+    private void insertToCollector(Collector collector, MessageBase messageBase, IosMessageDto msg, String logMessage) {
+        timedMessagesExecutor.add(messageBase.getTime(), () -> {
+            try {
+                // I know this is really ugly...
+                if (messageBase instanceof TextMessage) {
+                    if (!msg.getWasEdited()) {
+                        collector.add((TextMessage) messageBase);
+                    } else {
+                        final EditedTextMessage edited
+                                = new EditedTextMessage(messageBase.getMessageId(), messageBase.getConversationId(),
+                                messageBase.getClientId(), messageBase.getUserId());
+                        edited.setTime(messageBase.getTime());
+                        edited.setText(((TextMessage) messageBase).getText());
+                        collector.addEdit(edited);
+                    }
+                }
+                if (messageBase instanceof ImageMessage) {
+                    collector.add((ImageMessage) messageBase);
+                }
+                if (messageBase instanceof VideoMessage) {
+                    collector.add((VideoMessage) messageBase);
+                }
+                if (messageBase instanceof AttachmentMessage) {
+                    collector.add((AttachmentMessage) messageBase);
+                }
+                if (messageBase instanceof ReactionMessage) {
+                    collector.add((ReactionMessage) messageBase);
+                }
+                if (messageBase instanceof LinkPreviewMessage) {
+                    collector.addLink((LinkPreviewMessage) messageBase);
+                }
+                if (messageBase instanceof EditedTextMessage) {
+                    collector.addEdit((EditedTextMessage) messageBase);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            System.out.println(logMessage);
+        });
+    }
+
+    private void fillReaction(Collector collector, IosMessageDto msg, MessageBase messageBase) {
+        msg.getReactions().forEach(r -> {
+            ReactionMessage like = new ReactionMessage(UUID.randomUUID(), messageBase.getConversationId(), null, r.getUserId());
+            like.setReactionMessageId(messageBase.getMessageId());
+            like.setEmoji(r.getUnicodeValue());
+            like.setTime(messageBase.getTime());
+            timedMessagesExecutor.add(messageBase.getTime(), () -> collector.add(like));
+        });
     }
 
     private void writeConversationMembers() {
