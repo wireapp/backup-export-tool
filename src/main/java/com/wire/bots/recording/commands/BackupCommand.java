@@ -203,7 +203,7 @@ public class BackupCommand extends BackupCommandBase {
             collector.details.device = export.client_id;
             collector.details.platform = export.platform;
             collector.details.date = export.creation_time;
-            collector.details.version = export.version;
+            collector.details.version = String.valueOf(export.version);
 
             return collector;
         });

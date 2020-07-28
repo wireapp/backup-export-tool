@@ -170,11 +170,11 @@ public class BackupIosCommand extends BackupCommandBase {
 
             final String message = String.format("Members at the time of export: %s", String.join(", ", members));
             try {
-                System.out.println(String.format("Conversation \"%s\" processed.", conversation.getName()));
                 conversationCollector.addSystem(message, databaseMetadata.getCreationTime(), "", UUID.randomUUID());
             } catch (ParseException e) {
                 e.printStackTrace();
             }
+            System.out.println(String.format("Conversation \"%s\" processed.", conversation.getName()));
         });
     }
 
@@ -194,6 +194,7 @@ public class BackupIosCommand extends BackupCommandBase {
             collector.details.platform = databaseMetadata.getPlatform();
             collector.details.date = databaseMetadata.getCreationTime();
             collector.details.device = databaseMetadata.getClientIdentifier();
+            collector.details.version = databaseMetadata.getModelVersion();
 
             return collector;
         });

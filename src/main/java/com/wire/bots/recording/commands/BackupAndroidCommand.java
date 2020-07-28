@@ -321,7 +321,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
             collector.details.id = backupUserId.toString();
             collector.details.platform = exportMetadata.getPlatform();
             collector.details.date = exportMetadata.getCreationTime();
-            collector.details.version = exportMetadata.getVersion();
+            collector.details.version = String.valueOf(exportMetadata.getVersion());
             return collector;
         });
     }
