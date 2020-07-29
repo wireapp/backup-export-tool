@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
+import com.wire.bots.recording.model.ExportConfig;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
@@ -26,15 +27,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class BackupCommand extends BackupCommandBase {
-    private static final String VERSION = "0.1.3";
+public class BackupDesktopCommand extends BackupCommandBase {
+    private static final String VERSION = "0.1.4";
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private _Export export;
 
-    public BackupCommand() {
-        super("pdf", "Convert Wire Desktop backup file into PDF");
+    public BackupDesktopCommand() {
+        super("desktop-pdf", "Convert Wire Desktop backup file into PDF");
     }
 
     private static void unzip(String source, String destination) throws ZipException {
@@ -44,6 +45,8 @@ public class BackupCommand extends BackupCommandBase {
 
     @Override
     public void configure(Subparser subparser) {
+        super.configure(subparser);
+
         subparser.addArgument("-in", "--input")
                 .dest("in")
                 .type(String.class)
@@ -70,7 +73,7 @@ public class BackupCommand extends BackupCommandBase {
     }
 
     @Override
-    public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
+    public void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig config) throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
         final String email = namespace.getString("email");
@@ -123,7 +126,7 @@ public class BackupCommand extends BackupCommandBase {
         Helper.root = fileSystemRoot;
         Collector.root = logicalRoot;
 
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
 
         processConversations(conversations, cache);
 
@@ -203,7 +206,7 @@ public class BackupCommand extends BackupCommandBase {
             collector.details.device = export.client_id;
             collector.details.platform = export.platform;
             collector.details.date = export.creation_time;
-            collector.details.version = export.version;
+            collector.details.version = String.valueOf(export.version);
 
             return collector;
         });

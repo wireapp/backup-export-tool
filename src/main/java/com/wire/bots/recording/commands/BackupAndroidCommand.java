@@ -3,6 +3,7 @@ package com.wire.bots.recording.commands;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.waz.model.Messages;
+import com.wire.bots.recording.model.ExportConfig;
 import com.wire.bots.recording.utils.Collector;
 import com.wire.bots.recording.utils.Helper;
 import com.wire.bots.recording.utils.InstantCache;
@@ -10,23 +11,26 @@ import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.android.backups.database.dto.*;
-import pw.forst.wire.android.backups.steps.DecryptionResult;
-import pw.forst.wire.android.backups.steps.ExportMetadata;
+import pw.forst.wire.backups.android.database.dto.*;
+import pw.forst.wire.backups.android.steps.DecryptionResult;
+import pw.forst.wire.backups.android.steps.ExportMetadata;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static pw.forst.wire.android.backups.database.converters.DatabaseKt.extractDatabase;
-import static pw.forst.wire.android.backups.steps.OrchestrateKt.decryptAndExtract;
+import static pw.forst.wire.backups.android.database.converters.DatabaseKt.extractDatabase;
+import static pw.forst.wire.backups.android.steps.OrchestrateKt.decryptAndExtract;
 
 public class BackupAndroidCommand extends BackupCommandBase {
 
     private static final String VERSION = "0.2.0";
     protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
-    private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
+    private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
     // as this is commandline tool, this is OK
     private ExportMetadata exportMetadata;
     private DatabaseMetadata databaseMetadata;
@@ -76,7 +80,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
     }
 
     @Override
-    public void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception {
+    public void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig config) throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
         final String email = namespace.getString("email");
@@ -91,7 +95,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
         }
 
         // init cache
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap));
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
         backupUserId = cache.getUserId(userName);
         if (backupUserId == null) {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
@@ -321,26 +325,17 @@ public class BackupAndroidCommand extends BackupCommandBase {
             collector.details.id = backupUserId.toString();
             collector.details.platform = exportMetadata.getPlatform();
             collector.details.date = exportMetadata.getCreationTime();
-            collector.details.version = exportMetadata.getVersion();
+            collector.details.version = String.valueOf(exportMetadata.getVersion());
             return collector;
         });
     }
 
     private void delayedCollector(String timestamp, Runnable r) {
-        final Long time = timeToMillis(timestamp);
-        if (time == null) {
-            // it was not possible to parse time
-            return;
-        }
-
-        final List<Runnable> runnables = timedMessages.getOrDefault(time, new LinkedList<>());
-        runnables.add(r);
-        timedMessages.put(time, runnables);
+        timedMessagesExecutor.add(timestamp, r);
     }
 
     private void fillCollector() {
-        timedMessages.forEach((timestamp, actions) -> actions.forEach(Runnable::run));
-        timedMessages.clear();
+        timedMessagesExecutor.execute();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

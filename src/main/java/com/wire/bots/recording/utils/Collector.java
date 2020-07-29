@@ -382,7 +382,7 @@ public class Collector {
         public String handle;
         public String id;
         public String name;
-        public int version;
+        public String version;
     }
 
     private Mustache compileTemplate() {
