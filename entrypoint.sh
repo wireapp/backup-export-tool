@@ -14,7 +14,7 @@ else
 fi
 
 java -Djava.library.path=/opt/wire/lib \
-  -Xm4g \
+  -Xmx4g \
   -jar backup-export.jar \
   "${CLIENT_TYPE}-pdf" \
   -in "/etc/backup-export/database-in" \
