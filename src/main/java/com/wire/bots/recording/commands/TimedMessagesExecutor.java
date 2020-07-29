@@ -10,6 +10,15 @@ import java.util.TreeMap;
 public class TimedMessagesExecutor {
     private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
 
+    protected static Long timeToMillis(String timestamp) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
+        } catch (ParseException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
     public void add(String timestamp, Runnable r) {
         final Long time = timeToMillis(timestamp);
         if (time == null) {
@@ -25,14 +34,5 @@ public class TimedMessagesExecutor {
     public void execute() {
         timedMessages.forEach((timestamp, actions) -> actions.forEach(Runnable::run));
         timedMessages.clear();
-    }
-
-    protected static Long timeToMillis(String timestamp) {
-        try {
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
-        } catch (ParseException ex) {
-            ex.printStackTrace();
-        }
-        return null;
     }
 }

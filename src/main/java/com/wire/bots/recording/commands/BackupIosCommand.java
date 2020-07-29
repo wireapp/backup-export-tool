@@ -25,11 +25,10 @@ import static pw.forst.wire.backups.ios.ApiKt.processIosBackup;
 public class BackupIosCommand extends BackupCommandBase {
 
     private static final String VERSION = "0.3.0";
-
-    private User user;
-    private IosDatabaseDto databaseMetadata;
     private final Map<UUID, ConversationDto> conversations = new HashMap<>();
     private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
+    private User user;
+    private IosDatabaseDto databaseMetadata;
 
     public BackupIosCommand() {
         super("ios-pdf", "Convert Wire iOS backup file into PDF");
