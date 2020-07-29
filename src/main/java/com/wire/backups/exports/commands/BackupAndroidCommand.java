@@ -1,12 +1,12 @@
-package com.wire.bots.recording.commands;
+package com.wire.backups.exports.commands;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.waz.model.Messages;
-import com.wire.bots.recording.model.ExportConfig;
-import com.wire.bots.recording.utils.Collector;
-import com.wire.bots.recording.utils.Helper;
-import com.wire.bots.recording.utils.InstantCache;
+import com.wire.backups.exports.model.ExportConfig;
+import com.wire.backups.exports.utils.Collector;
+import com.wire.backups.exports.utils.Helper;
+import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -42,6 +42,8 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
     @Override
     public void configure(Subparser subparser) {
+        super.configure(subparser);
+
         subparser.addArgument("-e", "--email")
                 .dest("email")
                 .type(String.class)

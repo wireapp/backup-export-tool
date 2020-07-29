@@ -16,7 +16,7 @@
 // along with this program. If not, see http://www.gnu.org/licenses/.
 //
 
-package com.wire.bots.recording.model;
+package com.wire.backups.exports.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wire.bots.sdk.Configuration;

@@ -1,4 +1,4 @@
-package com.wire.bots.recording.commands;
+package com.wire.backups.exports.commands;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

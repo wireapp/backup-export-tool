@@ -1,3 +1,8 @@
+logging:
+  level: ERROR
+  loggers:
+    "com.wire.bots.logger": ${LOG_LEVEL:-ERROR}
+
 jerseyClient:
   timeout: 40s
   connectionTimeout: 20s

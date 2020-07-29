@@ -1,4 +1,4 @@
-package com.wire.bots.recording.utils;
+package com.wire.backups.exports.utils;
 
 import com.wire.bots.sdk.tools.Logger;
 import io.dropwizard.assets.AssetsBundle;

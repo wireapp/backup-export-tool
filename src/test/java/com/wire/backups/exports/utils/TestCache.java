@@ -1,6 +1,6 @@
-package com.wire.bots.recording.utils;
+package com.wire.backups.exports.utils;
 
-import com.wire.bots.recording.ConversationTemplateTest;
+import com.wire.backups.exports.ConversationTemplateTest;
 import com.wire.bots.sdk.models.MessageAssetBase;
 import com.wire.bots.sdk.server.model.Asset;
 import com.wire.bots.sdk.server.model.User;
@@ -24,7 +24,7 @@ public class TestCache extends Cache {
         asset.key = userId.toString();
         asset.size = "preview";
         ret.assets.add(asset);
-        
+
         if (userId.equals(ConversationTemplateTest.dejan)) {
             ret.name = "Dejan";
             ret.accent = 7;

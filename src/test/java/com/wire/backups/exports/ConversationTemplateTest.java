@@ -1,8 +1,8 @@
-package com.wire.bots.recording;
+package com.wire.backups.exports;
 
-import com.wire.bots.recording.utils.Collector;
-import com.wire.bots.recording.utils.PdfGenerator;
-import com.wire.bots.recording.utils.TestCache;
+import com.wire.backups.exports.utils.Collector;
+import com.wire.backups.exports.utils.PdfGenerator;
+import com.wire.backups.exports.utils.TestCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;

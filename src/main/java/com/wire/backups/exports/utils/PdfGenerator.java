@@ -1,4 +1,4 @@
-package com.wire.bots.recording.utils;
+package com.wire.backups.exports.utils;
 
 import com.openhtmltopdf.extend.FSSupplier;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;

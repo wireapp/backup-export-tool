@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>recording-bot</artifactId>
-    <groupId>com.wire.bots</groupId>
+    <artifactId>export-tool</artifactId>
+    <groupId>com.wire.backups</groupId>
     <version>0.3.0</version>
 
     <repositories>
@@ -43,11 +43,6 @@
             <artifactId>lithium</artifactId>
             <version>2.36.2</version>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>io.dropwizard</groupId>-->
-        <!--            <artifactId>dropwizard-jdbi</artifactId>-->
-        <!--            <version>${dropwizard.version}</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
@@ -144,7 +139,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.wire.bots.recording.Service</mainClass>
+                                    <mainClass>com.wire.backups.exports.Service</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

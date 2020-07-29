@@ -15,34 +15,31 @@
 // along with this program. If not, see http://www.gnu.org/licenses/.
 //
 
-package com.wire.bots.recording;
+package com.wire.backups.exports;
 
-import com.wire.bots.recording.DAO.ChannelsDAO;
-import com.wire.bots.recording.DAO.EventsDAO;
-import com.wire.bots.recording.commands.BackupAndroidCommand;
-import com.wire.bots.recording.commands.BackupDesktopCommand;
-import com.wire.bots.recording.commands.BackupIosCommand;
-import com.wire.bots.recording.model.Config;
-import com.wire.bots.recording.utils.ImagesBundle;
+import com.wire.backups.exports.commands.BackupAndroidCommand;
+import com.wire.backups.exports.commands.BackupDesktopCommand;
+import com.wire.backups.exports.commands.BackupIosCommand;
+import com.wire.backups.exports.model.Config;
+import com.wire.backups.exports.utils.ImagesBundle;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.jdbi.DBIFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.skife.jdbi.v2.DBI;
-
-import java.util.concurrent.ExecutorService;
 
 public class Service extends Server<Config> {
     public static Service instance;
 
-    private MessageHandler messageHandler;
-
     public static void main(String[] args) throws Exception {
         instance = new Service();
         instance.run(args);
+    }
+
+    @Override
+    protected MessageHandlerBase createHandler(Config config, Environment environment) {
+        return new DummyMessageHandler();
     }
 
     @Override
@@ -60,20 +57,5 @@ public class Service extends Server<Config> {
 
         Application<Config> application = bootstrap.getApplication();
         instance = (Service) application;
-    }
-
-    @Override
-    protected MessageHandlerBase createHandler(Config config, Environment env) {
-        final DBI jdbi = new DBIFactory().build(environment, config.database, "postgresql");
-        final EventsDAO eventsDAO = jdbi.onDemand(EventsDAO.class);
-        final ChannelsDAO channelsDAO = jdbi.onDemand(ChannelsDAO.class);
-
-        messageHandler = new MessageHandler(eventsDAO, channelsDAO);
-        return messageHandler;
-    }
-
-    protected void onRun(Config config, Environment env) {
-        ExecutorService warmup = env.lifecycle().executorService("warmup").build();
-        warmup.submit(() -> messageHandler.warmup(getRepo()));
     }
 }

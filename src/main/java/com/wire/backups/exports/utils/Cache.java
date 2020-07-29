@@ -1,6 +1,6 @@
-package com.wire.bots.recording.utils;
+package com.wire.backups.exports.utils;
 
-import com.wire.bots.recording.Service;
+import com.wire.backups.exports.Service;
 import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.exceptions.HttpException;
 import com.wire.bots.sdk.models.MessageAssetBase;
