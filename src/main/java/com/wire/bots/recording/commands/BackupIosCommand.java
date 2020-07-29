@@ -10,10 +10,7 @@ import com.wire.bots.sdk.server.model.User;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
-import pw.forst.wire.backups.ios.model.ConversationDto;
-import pw.forst.wire.backups.ios.model.IosDatabaseDto;
-import pw.forst.wire.backups.ios.model.IosDatabaseExportDto;
-import pw.forst.wire.backups.ios.model.IosMessageDto;
+import pw.forst.wire.backups.ios.model.*;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -93,7 +90,7 @@ public class BackupIosCommand extends BackupCommandBase {
         }
 
         System.out.println("Logging into Wire services.");
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration));
+        final InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration));
         final UUID userId = cache.getUserId(userName);
         user = cache.getUser(userId);
 
@@ -108,6 +105,7 @@ public class BackupIosCommand extends BackupCommandBase {
         final IosDatabaseExportDto databaseExport = processIosBackup(in, databasePassword, user.id, fileSystemRoot);
         databaseMetadata = databaseExport.getMetadata();
         final List<IosMessageDto> messages = databaseExport.getMessages();
+        System.out.println("Database exported.");
         // fill conversation map
         databaseExport.getConversations().forEach(c -> conversations.put(c.getId(), c));
         for (int i = 0; i < messages.size(); i++) {
@@ -134,6 +132,9 @@ public class BackupIosCommand extends BackupCommandBase {
             // insert potential reactions
             fillReaction(collector, msg, messageBase);
         }
+
+        processSystemMessages(databaseExport, cache);
+
         System.out.println("Execution flow prepared.");
         // write all messages
         timedMessagesExecutor.execute();
@@ -143,6 +144,51 @@ public class BackupIosCommand extends BackupCommandBase {
         System.out.println("Creating pdfs");
         createPDFs(fileSystemRoot, fileSystemRoot.replace("/" + logicalRoot, ""));
     }
+
+    private void processSystemMessages(IosDatabaseExportDto databaseExport, InstantCache cache) {
+        processAddedUsers(databaseExport.getAddedParticipants(), cache);
+        processLeftUsers(databaseExport.getLeftParticipants(), cache);
+    }
+
+    private void processAddedUsers(List<IosUserAddedToConversation> added, InstantCache cache) {
+        added.forEach(event -> {
+            final Collector collector = getCollector(event.getConversation(), cache);
+            final String addingUserUsername = collector.getUserName(event.getWhoAddedUser());
+            final String addedUserUsername = collector.getUserName(event.getAddedUser());
+            timedMessagesExecutor.add(event.getTimestamp(), () -> {
+                try {
+                    collector.addSystem(
+                            String.format("%s added %s", addingUserUsername, addedUserUsername),
+                            event.getTimestamp(),
+                            "conversation.member-join",
+                            UUID.randomUUID()
+                    );
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    private void processLeftUsers(List<IosUserLeftConversation> left, InstantCache cache) {
+        left.forEach(event -> {
+            final Collector collector = getCollector(event.getConversation(), cache);
+            final String userName = collector.getUserName(event.getLeavingUser());
+            timedMessagesExecutor.add(event.getTimestamp(), () -> {
+                try {
+                    collector.addSystem(
+                            String.format("%s left the conversation", userName),
+                            event.getTimestamp(),
+                            "conversation.member-leave",
+                            UUID.randomUUID()
+                    );
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
 
     private void insertToCollector(Collector collector, MessageBase messageBase, IosMessageDto msg, String logMessage) {
         timedMessagesExecutor.add(messageBase.getTime(), () -> {
