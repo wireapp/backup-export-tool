@@ -11,6 +11,13 @@ jerseyClient:
   retries: 3
   userAgent: pdf backup exporter
 
+  proxy:
+    host: ${PROXY_URL:}
+    port: ${PROXY_PORT:-8080}
+    scheme: http
+    nonProxyHosts: ${NON_PROXY_HOSTS:-}
+    verifyHostname: false
+
   tls:
     protocol: TLSv1.2
     provider: SunJSSE
