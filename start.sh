@@ -2,7 +2,7 @@
 set -e
 
 # version which should be used for export
-EXPORT_TOOL_VERSION=0.0.0
+EXPORT_TOOL_VERSION=latest
 DOCKER_IMAGE="lukaswire/backup-export-tool:${EXPORT_TOOL_VERSION}"
 
 # ----- mandatory variables -----
@@ -10,6 +10,12 @@ DOCKER_IMAGE="lukaswire/backup-export-tool:${EXPORT_TOOL_VERSION}"
 BACKUP_FILE=""
 # client which created this backup - ios,android,desktop
 CLIENT_TYPE=""
+# password which was used to encrypt the backup
+# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
+BACKUP_PASSWORD=""
+# username of the user who created the backup
+# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
+BACKUP_USERNAME=""
 # application user - any account that have access to Wire
 # (not necessarily same user as created the account)
 WIRE_USER=""
@@ -17,12 +23,6 @@ WIRE_USER=""
 WIRE_PASSWORD=""
 
 # ----- optional settings -----
-# password which was used to encrypt the backup
-# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
-BACKUP_PASSWORD=""
-# username of the user who created the backup
-# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
-BACKUP_USERNAME=""
 # URL of the Wire backend - default Wire public
 BACKEND_URL=""
 # folder where the exports should be created
@@ -47,6 +47,10 @@ if [ -z "${CLIENT_TYPE}" ]; then
   echo "Options: ios, android, desktop"
   exit 1
 fi
+if [[ "${CLIENT_TYPE}" != "ios" && "${CLIENT_TYPE}" != "android" && "${CLIENT_TYPE}" != "desktop" ]]; then
+  echo "CLIENT_TYPE set to incorrect value: ${CLIENT_TYPE}, set it to: ios, android, desktop."
+  exit 1
+fi
 if [ -z "${BACKUP_PASSWORD}" ] && [ "${CLIENT_TYPE}" != "desktop" ]; then
   echo "BACKUP_PASSWORD variable not set, set it to password used during export."
   exit 1
@@ -63,19 +67,14 @@ if [ -z "${WIRE_PASSWORD}" ]; then
   echo "WIRE_PASSWORD variable not set, set it to password of WIRE_USER."
   exit 1
 fi
-if [[ "${CLIENT_TYPE}" != "ios" && "${CLIENT_TYPE}" != "android" && "${CLIENT_TYPE}" != "desktop" ]]; then
-  echo "CLIENT_TYPE set to incorrect value: ${CLIENT_TYPE}, set it to: ios, android, desktop."
-  exit 1
-fi
 
 # set optional variables
 if [ -z "${OUTPUT_PATH}" ]; then
-  OUTPUT_PATH="./"
+  OUTPUT_PATH="$(pwd)/docker-test"
 fi
 
 echo "Pulling version: ${EXPORT_TOOL_VERSION}"
-#TODO pull it
-#docker pull "${DOCKER_IMAGE}"
+docker pull "${DOCKER_IMAGE}"
 
 # Build up array of arguments...
 args=()
@@ -93,5 +92,4 @@ args+=("-e" "WIRE_PASSWORD=${WIRE_PASSWORD}")
 [ -n "${NON_PROXY_HOSTS}" ] && args+=("-e" "NON_PROXY_HOSTS=${NON_PROXY_HOSTS}")
 
 docker run --rm -it "${args[@]}" "${DOCKER_IMAGE}"
-
 echo "Created PDFs are in folder: ${OUTPUT_PATH}"
