@@ -1,0 +1,30 @@
+name: Release Pipeline
+
+on:
+  release:
+    types: published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set envs
+        # use latest tag as release version
+        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+
+      - name: Build and publish docker image
+        uses: docker/build-push-action@v1
+        with:
+          # login to repo
+          repository: lukaswire/backup-export-tool
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          # pass release_version
+          build_args: release_version=${{ env.RELEASE_VERSION }}
+          # tag the image with latest git tag
+          tag_with_ref: true
+          # add labels from the git
+          add_git_labels: true
+          # push only if this is the build containing tags
+          push: ${{ startsWith(github.ref, 'refs/tags/') }}
