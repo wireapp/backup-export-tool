@@ -13,6 +13,7 @@ docker run --rm -it \
   -e BACKUP_PASSWORD=<password-for-backup-file> \ 
   -e BACKUP_USERNAME=<username-who-created-backup> \
   -e WIRE_API_HOST=<url-to-wire-backend> \
+  -e USE_PROXY=true \
   -e PROXY_URL=<proxy-url> \
   -e PROXY_PORT=<proxy-port> \
   -e NON_PROXY_HOSTS=<proxy-hosts> \
@@ -20,7 +21,8 @@ docker run --rm -it \
 ```
 Where `<some value>` should be replaced by your own value. 
 Following variables are optional:
-- `PROXY_URL`, `PROXY_PORT`, `NON_PROXY_HOSTS` - proxy settings, use only if you need it
+- `PROXY_URL`, `PROXY_PORT`, `NON_PROXY_HOSTS` - proxy settings, use only if you need it, also
+if you specify these values, you must also add `-e USE_PROXY=true` to activate proxy
 - `WIRE_API_HOST` - URL to Wire backend, default value is used Wire public cloud
 - `BACKUP_PASSWORD` and `BACKUP_USERNAME` - use only if `CLIENT_TYPE` is `ios` or `android` 
 
