@@ -10,6 +10,7 @@ import com.wire.bots.sdk.server.model.User;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
+import pw.forst.wire.backups.api.DatabaseExport;
 import pw.forst.wire.backups.ios.model.*;
 
 import java.text.ParseException;
@@ -18,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static pw.forst.wire.backups.ios.ApiKt.processIosBackup;
 
 
 public class BackupIosCommand extends BackupCommandBase {
@@ -103,7 +102,15 @@ public class BackupIosCommand extends BackupCommandBase {
         Collector.root = logicalRoot;
 
         System.out.println("Reading database.");
-        final IosDatabaseExportDto databaseExport = processIosBackup(in, databasePassword, user.id, fileSystemRoot);
+
+        final IosDatabaseExportDto databaseExport = DatabaseExport.builder()
+                .forUserId(user.id)
+                .fromEncryptedExport(in)
+                .withPassword(databasePassword)
+                .toOutputDirectory(fileSystemRoot)
+                .buildForIosBackup()
+                .exportDatabase();
+
         databaseMetadata = databaseExport.getMetadata();
         final List<IosMessageDto> messages = databaseExport.getMessages();
         System.out.println("Database exported.");

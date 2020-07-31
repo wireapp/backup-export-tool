@@ -12,8 +12,9 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import pw.forst.wire.backups.android.database.dto.*;
-import pw.forst.wire.backups.android.steps.DecryptionResult;
+import pw.forst.wire.backups.android.model.AndroidDatabaseExportDto;
 import pw.forst.wire.backups.android.steps.ExportMetadata;
+import pw.forst.wire.backups.api.DatabaseExport;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -21,9 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static pw.forst.wire.backups.android.database.converters.DatabaseKt.extractDatabase;
-import static pw.forst.wire.backups.android.steps.OrchestrateKt.decryptAndExtract;
 
 public class BackupAndroidCommand extends BackupCommandBase {
 
@@ -109,14 +107,18 @@ public class BackupAndroidCommand extends BackupCommandBase {
         makeDirs(fileSystemRoot); // create necessary directories
         Helper.root = fileSystemRoot; // set root for physical files
         Collector.root = logicalRoot; // set root (last folder in path) for pdf links to asssets
-        // decrypt database
-        final DecryptionResult decryptionResult = decryptAndExtract(in, databasePassword, backupUserId.toString(), fileSystemRoot + "/tmp");
-        if (decryptionResult == null) {
-            throw new IllegalArgumentException("It was not possible to decrypt the database!");
-        }
+
         // extract database data
-        final DatabaseDto databaseDto = extractDatabase(backupUserId, decryptionResult.getDatabaseFile());
-        exportMetadata = decryptionResult.getMetadata();
+        final AndroidDatabaseExportDto exportDto = DatabaseExport.builder()
+                .forUserId(backupUserId.toString())
+                .fromEncryptedExport(in)
+                .withPassword(databasePassword)
+                .toOutputDirectory(fileSystemRoot + "/tmp")
+                .buildForAndroidBackup()
+                .exportDatabase();
+
+        final DatabaseDto databaseDto = exportDto.getDatabase();
+        exportMetadata = exportDto.getExportMetadata();
         databaseMetadata = databaseDto.getMetaData();
         // process data and prepare collectors
         processConversations(databaseDto, cache);
@@ -207,6 +209,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
                     conv.name,
                     conv.id);
         });
+        System.out.println("Conversations map ready.");
     }
 
     private void appendMembers(ConversationsDataDto data, InstantCache cache) {
