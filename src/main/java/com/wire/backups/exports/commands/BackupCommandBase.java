@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.UUID;
 
 abstract class BackupCommandBase extends ConfiguredCommand<ExportConfig> {
+    protected static final String VERSION = "1.1.0";
+
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
 
     protected BackupCommandBase(String name, String description) {
