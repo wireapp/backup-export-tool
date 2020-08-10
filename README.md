@@ -1,4 +1,11 @@
 # Backup export tool 
+Tool for exporting and viewing Wire client's backup. 
+Currently, supported clients are: webapps (including electron desktop apps), iOS and Android.
+
+## Execution
+There are two ways how to run the tool, using Docker (preferred) or Java.
+
+### Docker
 One should use attached [start.sh](start.sh) to run the tool.
 Fill variables first.
 
@@ -9,7 +16,7 @@ docker run --rm -it \
   -v </path/to/output/folder>:/etc/backup-export/database-out \
   -e CLIENT_TYPE=<ios,android,desktop> \ 
   -e WIRE_USER=<user-with-wire-account> \
-  -e WIRE_PASSWORD<password-for-that-user> \
+  -e WIRE_PASSWORD=<password-for-that-user> \
   -e BACKUP_PASSWORD=<password-for-backup-file> \ 
   -e BACKUP_USERNAME=<username-who-created-backup> \
   -e WIRE_API_HOST=<url-to-wire-backend> \
@@ -37,4 +44,39 @@ docker run --rm -it \
   -e BACKUP_PASSWORD=Monkey123! \ 
   -e BACKUP_USERNAME=dejan56 \
   lukaswire/backup-export-tool:latest
+```
+
+
+### Bare metal JVM
+One needs C library Libsodium installed. To install it, one should use [official documentation](https://libsodium.gitbook.io/doc/),
+or to use included binaries.
+
+To create executable `jar` please run `mvn package -DskipTests=true` which produces `target/backup-export.jar`.
+Generic way how to run the tool is following:
+```bash
+java -Djna.library.path=<path-to-binaries> \
+  -Xmx4g \
+  -jar <path-to-jar> \
+  <ios-pdf,android-pdf,desktop-pdf> \
+  -in "</path/to/database/file>" \
+  -out "</path/to/output/folder>" \
+  -e "<user-with-wire-account>" \
+  -p "<password-for-that-user>" \
+  -u "<username-who-created-backup>" \
+  -bp "<password-for-backup-file>" \
+  <export.yaml,export-proxy.yaml>
+```
+An example for iOS backup without proxy executed in the root of this repo.
+```bash
+java -Djna.library.path=libs \
+  -Xmx4g \
+  -jar target/backup-export.jar \
+  ios-pdf \
+  -in "backups/dejan56.ios_wbu" \
+  -out "dejans-export" \
+  -e "dejan56@wire.com" \
+  -p "MyCoolPasswordForWire1" \
+  -u "dejan56" \
+  -bp "AnotherCoolPasswordForBackups" \
+  export.yaml
 ```
