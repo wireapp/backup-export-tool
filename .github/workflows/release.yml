@@ -5,7 +5,7 @@ on:
     types: published
 
 jobs:
-  build:
+  docker_release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,3 +28,66 @@ jobs:
           add_git_labels: true
           # push only if this is the build containing tags
           push: ${{ startsWith(github.ref, 'refs/tags/') }}
+
+      # Send webhook to Wire using Slack Bot
+      - name: Webhook to Wire
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: Backups Exports Docker Release Pipeline
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_RELEASE }}
+        # Notify every release
+        if: always()
+
+  jar_release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # sets up jdk
+      - name: Setup JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8.0.232
+
+      # Builds application
+      - name: Build application
+        run: |
+          mvn package -DskipTests=true
+
+      # Creates release zip
+      - name: Create release zip
+        run: |
+          cp target/backup-export.jar .
+          zip -r backup-export.zip backup-export.jar libs README.md
+
+      # Obtains release URL to upload assets
+      - name: Get Release Id
+        id: get_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: bruceadams/get-release@v1.2.0
+
+      # Upload ganymede zip to the releases
+      - name: Upload Ganymede Release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: backup-export.zip
+          asset_name: backup-export.zip
+          asset_content_type: application/zip
+
+      # Send webhook to Wire using Slack Bot
+      - name: Webhook to Wire
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: Backups Exports JAR Release Pipeline
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_RELEASE }}
+        # Notify every release
+        if: always()

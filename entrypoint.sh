@@ -13,7 +13,7 @@ else
   args+=("/etc/backup-export/export.yaml")
 fi
 
-java -Djava.library.path=/opt/wire/lib \
+java -Djna.library.path=/opt/wire/lib \
   -Xmx4g \
   -jar backup-export.jar \
   "${CLIENT_TYPE}-pdf" \

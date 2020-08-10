@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class BackupDesktopCommand extends BackupCommandBase {
-    private static final String VERSION = "0.1.4";
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 

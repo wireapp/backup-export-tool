@@ -17,7 +17,7 @@ FROM dejankovacevic/bots.runtime:2.10.3
 COPY entrypoint.sh /opt/backup-export/entrypoint.sh
 RUN chmod +x /opt/backup-export/entrypoint.sh
 # copy database decryption lib
-COPY libs/libsodiumjni.so /opt/wire/lib/libsodiumjni.so
+COPY libs/libsodium.so /opt/wire/lib/libsodium.so
 # copy configuration
 COPY export.yaml /etc/backup-export/export.yaml
 COPY export-proxy.yaml /etc/backup-export/export-proxy.yaml

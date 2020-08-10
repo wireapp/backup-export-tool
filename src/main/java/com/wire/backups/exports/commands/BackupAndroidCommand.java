@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 public class BackupAndroidCommand extends BackupCommandBase {
 
-    private static final String VERSION = "0.2.0";
     protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
     private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
