@@ -94,5 +94,5 @@ java -Djna.library.path=libs \
   -out "backup-exports" \
   -e "dejan56@wire.com" \
   -p "MyCoolPasswordForWire1" \
-  export-yaml.yaml
+  export-proxy.yaml
 ```
