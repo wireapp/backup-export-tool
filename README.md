@@ -50,6 +50,7 @@ docker run --rm -it \
 ### Bare metal JVM
 One needs C library Libsodium installed. To install it, one should use [official documentation](https://libsodium.gitbook.io/doc/),
 or to use included binaries.
+One should use Java 8 to run the tool, but Java 11 seems to be working as well.
 
 To create executable `jar` please run `mvn package -DskipTests=true` which produces `target/backup-export.jar`.
 Generic way how to run the tool is following:
@@ -66,11 +67,12 @@ java -Djna.library.path=<path-to-binaries> \
   -bp "<password-for-backup-file>" \
   <export.yaml,export-proxy.yaml>
 ```
-An example for iOS backup without proxy executed in the root of this repo.
+
+An example for iOS backup without proxy (the build is downloaded and extracted `zip` from the release page)
 ```bash
 java -Djna.library.path=libs \
   -Xmx4g \
-  -jar target/backup-export.jar \
+  -jar backup-export.jar \
   ios-pdf \
   -in "backups/dejan56.ios_wbu" \
   -out "dejans-export" \
@@ -79,4 +81,18 @@ java -Djna.library.path=libs \
   -u "dejan56" \
   -bp "AnotherCoolPasswordForBackups" \
   export.yaml
+```
+
+If one needs to use proxy, `export-proxy.yaml` must be modified - replace `${PROXY_URL:}`, 
+`${PROXY_PORT:-8080}` and `${NON_PROXY_HOSTS:-}` with correct values and execute (example with web client): 
+```bash
+java -Djna.library.path=libs \
+  -Xmx4g \
+  -jar backup-export.jar \
+  desktop-pdf \
+  -in "backups/Wire-fredjones_Demo_Backup.zip" \
+  -out "backup-exports" \
+  -e "dejan56@wire.com" \
+  -p "MyCoolPasswordForWire1" \
+  export-yaml.yaml
 ```
