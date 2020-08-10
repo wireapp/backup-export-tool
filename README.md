@@ -52,6 +52,13 @@ One needs C library Libsodium installed. To install it, one should use [official
 or to use included binaries.
 One should use Java 8 to run the tool, but Java 11 seems to be working as well.
 
+Almost all parameters are set using arguments to the tool, however, in order to use different Wire backend,
+one must set environmental variable with backend URL:
+```bash
+WIRE_API_HOST=<your-wire-backend>
+```
+For example to set it on unix systems: `export WIRE_API_HOST=https://staging-nginz-https.zinfra.io` for staging.
+
 To create executable `jar` please run `mvn package -DskipTests=true` which produces `target/backup-export.jar`.
 Generic way how to run the tool is following:
 ```bash
