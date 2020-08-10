@@ -60,7 +60,7 @@ jobs:
       - name: Create release zip
         run: |
           cp target/backup-export.jar .
-          zip -r backup-export.zip backup-export.jar libs README.md
+          zip -r backup-export.zip backup-export.jar export.yaml export-proxy.yaml libs README.md
 
       # Obtains release URL to upload assets
       - name: Get Release Id
