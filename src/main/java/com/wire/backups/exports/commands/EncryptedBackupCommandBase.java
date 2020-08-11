@@ -31,7 +31,7 @@ public abstract class EncryptedBackupCommandBase extends OpenBackupCommandBase {
     @Override
     protected ExportConfiguration parseExportConfiguration(Namespace namespace) {
         final ExportConfiguration conf = super.parseExportConfiguration(namespace);
-        conf.setUserName(namespace.getString("email"));
+        conf.setUserName(namespace.getString("username"));
         conf.setDatabasePassword(namespace.getString("dbPassword"));
         return conf;
     }
