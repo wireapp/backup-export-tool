@@ -1,4 +1,4 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
