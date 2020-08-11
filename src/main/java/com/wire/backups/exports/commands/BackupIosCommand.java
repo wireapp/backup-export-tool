@@ -89,7 +89,8 @@ public class BackupIosCommand extends BackupCommandBase {
         }
 
         System.out.println("Logging into Wire services.");
-        final InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration));
+        final Helper helper = new Helper();
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration), helper);
         final UUID userId = cache.getUserId(userName);
         user = cache.getUser(userId);
 
@@ -97,8 +98,8 @@ public class BackupIosCommand extends BackupCommandBase {
         final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
         makeDirs(fileSystemRoot); // create necessary directories
 
-        Helper.root = fileSystemRoot;
-        Collector.root = logicalRoot;
+        helper.setRoot(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
         System.out.println("Reading database.");
 
@@ -270,7 +271,7 @@ public class BackupIosCommand extends BackupCommandBase {
         return collectorHashMap.computeIfAbsent(convId, x -> {
             final ConversationDto conversation = conversations.get(convId);
 
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             collector.setConvName(conversation.getName());
             collector.setConversationId(conversation.getId());
 

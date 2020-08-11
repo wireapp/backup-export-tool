@@ -21,13 +21,19 @@ public class InstantCache extends Cache {
     private final Client client;
     private API api;
 
-    public InstantCache(String email, String password, Client client) throws HttpException {
-        super(null);
+    public InstantCache(String email, String password, Client client, Helper helper) throws HttpException {
+        super(null, helper);
+
         this.email = email;
         this.password = password;
         this.client = client;
         Access access = new LoginClient(client).login(email, password);
         this.api = new API(client, null, access.getToken());
+
+    }
+
+    public InstantCache(String email, String password, Client client) throws HttpException {
+        this(email, password, client, new Helper());
     }
 
     public UUID getUserId(String handle) {

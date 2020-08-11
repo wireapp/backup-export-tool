@@ -122,10 +122,10 @@ public class BackupDesktopCommand extends BackupCommandBase {
                 conversations.length,
                 events.length);
 
-        Helper.root = fileSystemRoot;
-        Collector.root = logicalRoot;
+        final Helper helper = new Helper(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config), helper);
 
         processConversations(conversations, cache);
 
@@ -194,7 +194,7 @@ public class BackupDesktopCommand extends BackupCommandBase {
 
     private Collector getCollector(UUID convId, InstantCache cache) {
         return collectorHashMap.computeIfAbsent(convId, x -> {
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             _Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
             collector.setConversationId(convId);

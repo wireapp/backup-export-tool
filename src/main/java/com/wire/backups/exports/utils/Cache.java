@@ -15,13 +15,23 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache {
+    /**
+     * Actually can be left static, as this is cache and keys/user ids and stuff like that don't change.
+     */
     private static final ConcurrentHashMap<String, File> assetsMap = new ConcurrentHashMap<>();//<assetKey, File>
     private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
     private static final ConcurrentHashMap<UUID, User> profiles = new ConcurrentHashMap<>();//<userId, User>
+
     private final WireClient client;
+    private final Helper helper;
+
+    public Cache(WireClient client, Helper helper) {
+        this.client = client;
+        this.helper = helper;
+    }
 
     public Cache(WireClient client) {
-        this.client = client;
+        this(client, new Helper());
     }
 
     public static void clear(UUID userId) {
@@ -33,10 +43,10 @@ public class Cache {
         return assetsMap.computeIfAbsent(message.getAssetKey(), k -> {
             try {
                 byte[] image = downloadAsset(message);
-                return Helper.saveAsset(image, message);
+                return helper.saveAsset(image, message);
             } catch (Exception e) {
                 Logger.error("Cache.getAssetFile: %s", e);
-                return Helper.assetFile(message.getAssetKey(), message.getMimeType());
+                return helper.assetFile(message.getAssetKey(), message.getMimeType());
             }
         });
     }
@@ -45,10 +55,10 @@ public class Cache {
         return assetsMap.computeIfAbsent(key, k -> {
             try {
                 byte[] profile = downloadProfilePicture(key);
-                return Helper.getProfile(profile, key);
+                return helper.getProfile(profile, key);
             } catch (Exception e) {
                 Logger.error("Cache.getProfileImage: key: %s, ex: %s", key, e);
-                return new File(Helper.avatarFile(key));
+                return new File(helper.avatarFile(key));
             }
         });
     }

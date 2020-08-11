@@ -94,7 +94,8 @@ public class BackupAndroidCommand extends BackupCommandBase {
         }
 
         // init cache
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
+        final Helper helper = new Helper();
+        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config), helper);
         backupUserId = cache.getUserId(userName);
         if (backupUserId == null) {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
@@ -104,8 +105,8 @@ public class BackupAndroidCommand extends BackupCommandBase {
         final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
 
         makeDirs(fileSystemRoot); // create necessary directories
-        Helper.root = fileSystemRoot; // set root for physical files
-        Collector.root = logicalRoot; // set root (last folder in path) for pdf links to asssets
+        helper.setRoot(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
         // extract database data
         final AndroidDatabaseExportDto exportDto = DatabaseExport.builder()
@@ -318,7 +319,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
     private Collector getCollector(UUID convId, InstantCache cache) {
         return collectorHashMap.computeIfAbsent(convId, x -> {
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
             collector.setConversationId(convId);
