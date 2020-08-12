@@ -46,7 +46,7 @@ public class Helper {
     }
 
     static File assetFile(String assetKey, String mimeType) {
-        String extension = getExtension(mimeType);
+        String extension = mimeType != null ? getExtension(mimeType) : "";
         if (extension.isEmpty())
             extension = "error";
         String filename = String.format("%s/assets/%s.%s", root, assetKey, extension);
