@@ -140,11 +140,15 @@ public class Collector {
         message.timeStamp = event.getTime();
 
         File file = cache.getAssetFile(event);
-        String assetFilename = getFilename(file);
 
         message.attachment = new Attachment();
         message.attachment.name = String.format("%s (%s)", event.getName(), event.getAssetKey());
-        message.attachment.url = "file://" + assetFilename;
+        try {
+            message.attachment.url = "file://" + file.getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+            message.attachment.url = "file://" + file.getAbsolutePath();
+        }
 
         Sender sender = sender(event.getUserId());
         sender.add(message);
