@@ -35,13 +35,11 @@ public class DesktopExporter extends ExporterBase {
         zipFile.extractAll(destination);
     }
 
-    private final ExportConfiguration config;
-
     public DesktopExporter(ExportConfiguration config, Client client) {
-        super(client);
-        this.config = config;
+        super(client, config);
     }
 
+    @Override
     public void run() throws Exception {
         String temporaryExtractionDirectory = (config.getOut() != null ? config.getOut() : ".") + "/tmp";
 

@@ -28,13 +28,12 @@ public class AndroidExporter extends ExporterBase {
     private ExportMetadata exportMetadata;
     private DatabaseMetadata databaseMetadata;
     private UUID backupUserId;
-    private final ExportConfiguration config;
 
     public AndroidExporter(ExportConfiguration config, Client client) {
-        super(client);
-        this.config = config;
+        super(client, config);
     }
 
+    @Override
     public void run() throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 

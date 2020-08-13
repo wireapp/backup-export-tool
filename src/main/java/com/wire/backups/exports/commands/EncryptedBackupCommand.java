@@ -4,10 +4,10 @@ import com.wire.backups.exports.exporters.ExportConfiguration;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
-public abstract class EncryptedBackupCommandBase extends OpenBackupCommandBase {
+public class EncryptedBackupCommand extends OpenBackupCommand {
 
-    protected EncryptedBackupCommandBase(String name, String description) {
-        super(name, description);
+    public EncryptedBackupCommand(String name, String description, ExporterProducer exporterProducer) {
+        super(name, description, exporterProducer);
     }
 
     @Override

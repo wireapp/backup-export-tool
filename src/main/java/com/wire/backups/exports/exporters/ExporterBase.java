@@ -10,15 +10,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.UUID;
 
-abstract class ExporterBase {
+abstract class ExporterBase implements Exporter {
     protected static final String VERSION = "1.1.0";
 
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
     protected String logicalRoot;
-    protected Client client;
+    protected final Client client;
+    protected final ExportConfiguration config;
 
-    protected ExporterBase(Client client) {
+    protected ExporterBase(Client client, ExportConfiguration config) {
         this.client = client;
+        this.config = config;
     }
 
     protected void makeDirs(String root) {
@@ -56,5 +58,4 @@ abstract class ExporterBase {
             }
         }
     }
-
 }

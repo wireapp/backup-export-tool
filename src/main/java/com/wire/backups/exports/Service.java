@@ -17,13 +17,17 @@
 
 package com.wire.backups.exports;
 
-import com.wire.backups.exports.commands.BackupAndroidCommand;
-import com.wire.backups.exports.commands.BackupDesktopCommand;
-import com.wire.backups.exports.commands.BackupIosCommand;
+import com.wire.backups.exports.commands.EncryptedBackupCommand;
+import com.wire.backups.exports.commands.ExporterProducer;
+import com.wire.backups.exports.commands.OpenBackupCommand;
+import com.wire.backups.exports.exporters.AndroidExporter;
+import com.wire.backups.exports.exporters.DesktopExporter;
+import com.wire.backups.exports.exporters.IosExporter;
 import com.wire.backups.exports.model.Config;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import io.dropwizard.Application;
+import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
@@ -44,11 +48,28 @@ public class Service extends Server<Config> {
     public void initialize(Bootstrap<Config> bootstrap) {
         super.initialize(bootstrap);
 
-        bootstrap.addCommand(new BackupDesktopCommand());
-        bootstrap.addCommand(new BackupAndroidCommand());
-        bootstrap.addCommand(new BackupIosCommand());
+        bootstrap.addCommand(openBackups("Desktop", DesktopExporter::new));
+        bootstrap.addCommand(encryptedBackups("iOS", IosExporter::new));
+        bootstrap.addCommand(encryptedBackups("Android", AndroidExporter::new));
 
         Application<Config> application = bootstrap.getApplication();
         instance = (Service) application;
+    }
+
+    @SuppressWarnings("SameParameterValue") // don't care
+    private Command openBackups(String client, ExporterProducer exporterProducer) {
+        return new OpenBackupCommand(
+                client.toLowerCase() + "-pdf",
+                String.format("Convert Wire %s backup file into PDF", client),
+                exporterProducer
+        );
+    }
+
+    private Command encryptedBackups(String client, ExporterProducer exporterProducer) {
+        return new EncryptedBackupCommand(
+                client.toLowerCase() + "-pdf",
+                String.format("Convert Wire %s backup file into PDF", client),
+                exporterProducer
+        );
     }
 }

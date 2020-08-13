@@ -23,13 +23,11 @@ public class IosExporter extends ExporterBase {
     private User user;
     private IosDatabaseDto databaseMetadata;
 
-    private final ExportConfiguration config;
-
     public IosExporter(ExportConfiguration config, Client client) {
-        super(client);
-        this.config = config;
+        super(client, config);
     }
 
+    @Override
     public void run() throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
