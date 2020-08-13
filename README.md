@@ -51,7 +51,7 @@ docker run --rm -it \
   -e WIRE_PASSWORD=VerySecretPassword1! \
   -e BACKUP_PASSWORD=Monkey123! \ 
   -e BACKUP_USERNAME=dejan56 \
-  lukaswire/backup-export-tool:1.1.0
+  lukaswire/backup-export-tool:1.1.3
 ```
 
 
