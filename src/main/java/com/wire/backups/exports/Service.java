@@ -21,11 +21,9 @@ import com.wire.backups.exports.commands.BackupAndroidCommand;
 import com.wire.backups.exports.commands.BackupDesktopCommand;
 import com.wire.backups.exports.commands.BackupIosCommand;
 import com.wire.backups.exports.model.Config;
-import com.wire.backups.exports.utils.ImagesBundle;
 import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import io.dropwizard.Application;
-import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
@@ -45,11 +43,6 @@ public class Service extends Server<Config> {
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
         super.initialize(bootstrap);
-
-        bootstrap.addBundle(new AssetsBundle("/recording/assets"));
-        bootstrap.addBundle(new AssetsBundle("/recording/scripts", "/recording/scripts", "index.htm", "scripts"));
-        bootstrap.addBundle(new ImagesBundle("/opt/recording/avatars", "/recording/avatars", "avatars"));
-        bootstrap.addBundle(new ImagesBundle("/opt/recording/html", "/recording/channel", "channels"));
 
         bootstrap.addCommand(new BackupDesktopCommand());
         bootstrap.addCommand(new BackupAndroidCommand());

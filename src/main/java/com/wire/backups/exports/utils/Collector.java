@@ -27,7 +27,6 @@ public class Collector {
     private final LinkedList<Day> days = new LinkedList<>();
     private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     public Details details;
-    private Message lastMessage = null;
     private String convName;
     private UUID conversationId;
 
@@ -284,7 +283,6 @@ public class Collector {
 
     private Sender append(Sender sender, Message message, String dateTime) throws ParseException {
         messagesHashMap.put(message.id, message);
-        lastMessage = message;
 
         Day day = newDay(sender, dateTime);
 
