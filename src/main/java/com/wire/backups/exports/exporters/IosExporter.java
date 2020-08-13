@@ -1,18 +1,15 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import com.waz.model.Messages;
-import com.wire.backups.exports.model.ExportConfig;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
-import io.dropwizard.setup.Bootstrap;
-import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
 import pw.forst.wire.backups.api.DatabaseExport;
 import pw.forst.wire.backups.ios.model.*;
 
+import javax.ws.rs.client.Client;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
@@ -20,92 +17,39 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
-public class BackupIosCommand extends BackupCommandBase {
-
+public class IosExporter extends ExporterBase {
     private final Map<UUID, ConversationDto> conversations = new HashMap<>();
     private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
     private User user;
     private IosDatabaseDto databaseMetadata;
 
-    public BackupIosCommand() {
-        super("ios-pdf", "Convert Wire iOS backup file into PDF");
+    public IosExporter(ExportConfiguration config, Client client) {
+        super(client, config);
     }
 
     @Override
-    public void configure(Subparser subparser) {
-        super.configure(subparser);
-
-        subparser.addArgument("-in", "--input")
-                .dest("in")
-                .type(String.class)
-                .required(true)
-                .help("Encrypted iOS database");
-
-        subparser.addArgument("-out", "--output")
-                .dest("out")
-                .type(String.class)
-                .required(false)
-                .help("Output directory");
-
-        subparser.addArgument("-e", "--email")
-                .dest("email")
-                .type(String.class)
-                .required(true)
-                .help("Email address");
-
-        subparser.addArgument("-p", "--password")
-                .dest("password")
-                .type(String.class)
-                .required(true)
-                .help("Password");
-
-        subparser.addArgument("-u", "--username")
-                .dest("username")
-                .type(String.class)
-                .required(true)
-                .help("Username");
-
-        subparser.addArgument("-bp", "--backup-password")
-                .dest("dbPassword")
-                .type(String.class)
-                .required(true)
-                .help("Backup password");
-    }
-
-    @Override
-    protected void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig configuration) throws Exception {
+    public void run() throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
-        final String email = namespace.getString("email");
-        final String password = namespace.getString("password");
-        final String in = namespace.getString("in");
-        final String userName = namespace.getString("username");
-        final String databasePassword = namespace.getString("dbPassword");
-
-        String out = namespace.getString("out");
-        if (out != null && out.endsWith("/")) {
-            out = out.substring(0, out.length() - 1);
-        }
-
         System.out.println("Logging into Wire services.");
-        final InstantCache cache = new InstantCache(email, password, getClient(bootstrap, configuration));
-        final UUID userId = cache.getUserId(userName);
+        final Helper helper = new Helper();
+        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
+        final UUID userId = cache.getUserId(config.getUserName());
         user = cache.getUser(userId);
 
         final String logicalRoot = user.id.toString();
-        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
+        final String fileSystemRoot = (config.getOut() != null ? config.getOut() : ".") + String.format("/%s", logicalRoot);
         makeDirs(fileSystemRoot); // create necessary directories
 
-        Helper.root = fileSystemRoot;
-        Collector.root = logicalRoot;
+        helper.setRoot(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
         System.out.println("Reading database.");
 
         final IosDatabaseExportDto databaseExport = DatabaseExport.builder()
                 .forUserId(user.id)
-                .fromEncryptedExport(in)
-                .withPassword(databasePassword)
+                .fromEncryptedExport(config.getIn())
+                .withPassword(config.getDatabasePassword())
                 .toOutputDirectory(fileSystemRoot)
                 .buildForIosBackup()
                 .exportDatabase();
@@ -270,7 +214,7 @@ public class BackupIosCommand extends BackupCommandBase {
         return collectorHashMap.computeIfAbsent(convId, x -> {
             final ConversationDto conversation = conversations.get(convId);
 
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             collector.setConvName(conversation.getName());
             collector.setConversationId(conversation.getId());
 

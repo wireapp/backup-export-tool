@@ -1,4 +1,4 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,7 +10,7 @@ import java.util.TreeMap;
 public class TimedMessagesExecutor {
     private final SortedMap<Long, List<Runnable>> timedMessages = new TreeMap<>();
 
-    protected static Long timeToMillis(String timestamp) {
+    private static Long timeToMillis(String timestamp) {
         try {
             return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(timestamp).getTime();
         } catch (ParseException ex) {

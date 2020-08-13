@@ -1,4 +1,4 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,17 +7,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
-import com.wire.backups.exports.model.ExportConfig;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
-import io.dropwizard.setup.Bootstrap;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
 
+import javax.ws.rs.client.Client;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -27,67 +24,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class BackupDesktopCommand extends BackupCommandBase {
+public class DesktopExporter extends ExporterBase {
     private final HashMap<UUID, _Conversation> conversationHashMap = new HashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private _Export export;
-
-    public BackupDesktopCommand() {
-        super("desktop-pdf", "Convert Wire Desktop backup file into PDF");
-    }
 
     private static void unzip(String source, String destination) throws ZipException {
         ZipFile zipFile = new ZipFile(source);
         zipFile.extractAll(destination);
     }
 
-    @Override
-    public void configure(Subparser subparser) {
-        super.configure(subparser);
-
-        subparser.addArgument("-in", "--input")
-                .dest("in")
-                .type(String.class)
-                .required(true)
-                .help("Backup file");
-
-        subparser.addArgument("-out", "--output")
-                .dest("out")
-                .type(String.class)
-                .required(false)
-                .help("Output directory");
-
-        subparser.addArgument("-e", "--email")
-                .dest("email")
-                .type(String.class)
-                .required(true)
-                .help("Email address");
-
-        subparser.addArgument("-p", "--password")
-                .dest("password")
-                .type(String.class)
-                .required(true)
-                .help("Password");
+    public DesktopExporter(ExportConfiguration config, Client client) {
+        super(client, config);
     }
 
     @Override
-    public void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig config) throws Exception {
-        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
-
-        final String email = namespace.getString("email");
-        final String password = namespace.getString("password");
-        final String in = namespace.getString("in");
-        String out = namespace.getString("out");
-        if (out != null && out.endsWith("/")) {
-            out = out.substring(0, out.length() - 1);
-        }
-        String temporaryExtractionDirectory = (out != null ? out : ".") + "/tmp";
+    public void run() throws Exception {
+        String temporaryExtractionDirectory = (config.getOut() != null ? config.getOut() : ".") + "/tmp";
 
         final File inputDir = new File(temporaryExtractionDirectory);
         inputDir.mkdirs();
 
-        unzip(in, inputDir.getAbsolutePath());
+        unzip(config.getIn(), inputDir.getAbsolutePath());
 
         objectMapper.addHandler(new _DeserializationProblemHandler());
 
@@ -105,7 +64,7 @@ public class BackupDesktopCommand extends BackupCommandBase {
                 export.version);
 
         final String logicalRoot = String.format("%s/%s", export.user_handle, export.creation_time.replace(":", "-"));
-        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
+        final String fileSystemRoot = (config.getOut() != null ? config.getOut() : ".") + String.format("/%s", logicalRoot);
         makeDirs(fileSystemRoot);
 
         final File eventsFile = new File(String.format("%s/in/%s", fileSystemRoot, "events.json"));
@@ -122,10 +81,10 @@ public class BackupDesktopCommand extends BackupCommandBase {
                 conversations.length,
                 events.length);
 
-        Helper.root = fileSystemRoot;
-        Collector.root = logicalRoot;
+        final Helper helper = new Helper(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
+        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
 
         processConversations(conversations, cache);
 
@@ -194,7 +153,7 @@ public class BackupDesktopCommand extends BackupCommandBase {
 
     private Collector getCollector(UUID convId, InstantCache cache) {
         return collectorHashMap.computeIfAbsent(convId, x -> {
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             _Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
             collector.setConversationId(convId);

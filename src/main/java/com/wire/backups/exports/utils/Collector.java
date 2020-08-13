@@ -18,22 +18,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Collector {
-    private static final MustacheFactory mf = new DefaultMustacheFactory();
-    private final Cache cache;
-    private final LinkedList<Day> days = new LinkedList<>();
-    private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
-    private Message lastMessage = null;
-    private String convName;
     private static final String regex = "http(?:s)?://(?:www\\.)?youtu(?:\\.be/|be\\.com/(?:watch\\?v=|v/|embed/" +
             "|user/(?:[\\w#]+/)+))([^&#?\\n]+)";
     private static final Pattern p = Pattern.compile(regex);
-    public static String root = "recording";
-    private UUID conversationId;
+    public final String root;
+    private final MustacheFactory mf = new DefaultMustacheFactory();
+    private final Cache cache;
+    private final LinkedList<Day> days = new LinkedList<>();
+    private final HashMap<UUID, Message> messagesHashMap = new HashMap<>();
     public Details details;
+    private String convName;
+    private UUID conversationId;
+
+    public Collector(Cache cache, String root) {
+        this.cache = cache;
+        this.root = root;
+    }
 
     public Collector(Cache cache) {
-
-        this.cache = cache;
+        this(cache, "recording");
     }
 
     private static Day newDay(Sender sender, String dateTime) throws ParseException {
@@ -254,7 +257,7 @@ public class Collector {
     }
 
     private String systemIcon(String type) {
-        final String base = String.format("/%s/assets/", Collector.root);
+        final String base = String.format("/%s/assets/", root);
         switch (type) {
             case "conversation.create":
                 return base + "icons8-record-48.png";
@@ -280,7 +283,6 @@ public class Collector {
 
     private Sender append(Sender sender, Message message, String dateTime) throws ParseException {
         messagesHashMap.put(message.id, message);
-        lastMessage = message;
 
         Day day = newDay(sender, dateTime);
 
@@ -343,10 +345,6 @@ public class Collector {
         return ret;
     }
 
-    public void setConvName(String convName) {
-        this.convName = convName;
-    }
-
     @Nullable
     public UUID getConversationId() {
         return this.conversationId;
@@ -356,9 +354,12 @@ public class Collector {
         this.conversationId = conversationId;
     }
 
-
     public String getConvName() {
         return convName;
+    }
+
+    public void setConvName(String convName) {
+        this.convName = convName;
     }
 
     public String getUserName(UUID userId) {
@@ -367,6 +368,30 @@ public class Collector {
 
     public Cache getCache() {
         return cache;
+    }
+
+    private Mustache compileTemplate() {
+        String path = "templates/conversation.html";
+        return mf.compile(path);
+    }
+
+    public File executeFile(String filename) throws IOException {
+        File file = new File(filename);
+        try (OutputStreamWriter sw = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            Mustache mustache = compileTemplate();
+            Conversation conversation = getConversation();
+            mustache.execute(new PrintWriter(sw), conversation).flush();
+        }
+        return file;
+    }
+
+    public String execute() throws IOException {
+        try (StringWriter sw = new StringWriter()) {
+            Mustache mustache = compileTemplate();
+            Conversation conversation = getConversation();
+            mustache.execute(new PrintWriter(sw), conversation).flush();
+            return sw.toString();
+        }
     }
 
     public static class Conversation {
@@ -389,31 +414,6 @@ public class Collector {
         public String version;
     }
 
-    private Mustache compileTemplate() {
-        String path = "templates/conversation.html";
-        return mf.compile(path);
-    }
-
-
-    public File executeFile(String filename) throws IOException {
-        File file = new File(filename);
-        try (OutputStreamWriter sw = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-            Mustache mustache = compileTemplate();
-            Conversation conversation = getConversation();
-            mustache.execute(new PrintWriter(sw), conversation).flush();
-        }
-        return file;
-    }
-
-    public String execute() throws IOException {
-        try (StringWriter sw = new StringWriter()) {
-            Mustache mustache = compileTemplate();
-            Conversation conversation = getConversation();
-            mustache.execute(new PrintWriter(sw), conversation).flush();
-            return sw.toString();
-        }
-    }
-
     public static class Day {
         String date;
         LinkedList<Sender> senders = new LinkedList<>();
@@ -424,6 +424,7 @@ public class Collector {
     }
 
     public static class Message {
+        private final HashSet<UUID> likers = new HashSet<>();
         UUID id;
         String name;
         String text;
@@ -435,7 +436,6 @@ public class Collector {
         String timeStamp;
         String likes;
         Message quotedMessage;
-        private final HashSet<UUID> likers = new HashSet<>();
 
         String getTime() throws ParseException {
             return toTime(timeStamp);
@@ -466,12 +466,12 @@ public class Collector {
     }
 
     public static class Sender {
+        private final ArrayList<Message> messages = new ArrayList<>();
         UUID senderId;
         String avatar;
         String name;
         String accent;
         String system;
-        private final ArrayList<Message> messages = new ArrayList<>();
 
         boolean equals(Sender s) {
             return Objects.equals(senderId, s.senderId);

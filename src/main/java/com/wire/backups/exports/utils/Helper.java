@@ -18,39 +18,20 @@ import java.util.List;
 
 public class Helper {
     private static final List<Extension> extensions = Collections.singletonList(AutolinkExtension.create());
-    public static String root = "recording";
 
     private static final Parser parser = Parser
             .builder()
             .extensions(extensions)
             .build();
+    private String root;
 
-    static File getProfile(byte[] profile, String key) throws Exception {
-        String filename = avatarFile(key);
-        File file = new File(filename);
-
-        Logger.info("downloaded profile: %s, size: %d, file: %s", key, profile.length, file.getAbsolutePath());
-        return save(profile, file);
+    public Helper(String root) {
+        this.root = root;
     }
 
-    static File saveAsset(byte[] image, MessageAssetBase message) throws Exception {
-        File file = assetFile(message.getAssetKey(), message.getMimeType());
-        return save(image, file);
-    }
 
-    private static File save(byte[] image, File file) throws IOException {
-        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
-            os.write(image);
-        }
-        return file;
-    }
-
-    static File assetFile(String assetKey, String mimeType) {
-        String extension = mimeType != null ? getExtension(mimeType) : "";
-        if (extension.isEmpty())
-            extension = "error";
-        String filename = String.format("%s/assets/%s.%s", root, assetKey, extension);
-        return new File(filename);
+    public Helper() {
+        this("recording");
     }
 
     static String getExtension(String mimeType) {
@@ -58,8 +39,11 @@ public class Helper {
         return split.length == 1 ? split[0] : split[1];
     }
 
-    static String avatarFile(String key) {
-        return String.format("%s/avatars/%s.png", root, key);
+    private static File save(byte[] image, File file) throws IOException {
+        try (DataOutputStream os = new DataOutputStream(new FileOutputStream(file))) {
+            os.write(image);
+        }
+        return file;
     }
 
     @Nullable
@@ -73,5 +57,34 @@ public class Helper {
                 .extensions(extensions)
                 .build()
                 .render(document);
+    }
+
+    public void setRoot(String root) {
+        this.root = root;
+    }
+
+    File getProfile(byte[] profile, String key) throws Exception {
+        String filename = avatarFile(key);
+        File file = new File(filename);
+
+        Logger.info("downloaded profile: %s, size: %d, file: %s", key, profile.length, file.getAbsolutePath());
+        return save(profile, file);
+    }
+
+    File saveAsset(byte[] image, MessageAssetBase message) throws Exception {
+        File file = assetFile(message.getAssetKey(), message.getMimeType());
+        return save(image, file);
+    }
+
+    File assetFile(String assetKey, String mimeType) {
+        String extension = mimeType != null ? getExtension(mimeType) : "";
+        if (extension.isEmpty())
+            extension = "error";
+        String filename = String.format("%s/assets/%s.%s", root, assetKey, extension);
+        return new File(filename);
+    }
+
+    String avatarFile(String key) {
+        return String.format("%s/avatars/%s.png", root, key);
     }
 }

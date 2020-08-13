@@ -16,7 +16,7 @@
 // along with this program. If not, see http://www.gnu.org/licenses/.
 //
 
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import com.waz.model.Messages;
 import com.wire.bots.sdk.models.*;

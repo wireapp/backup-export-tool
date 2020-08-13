@@ -1,15 +1,7 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.wire.backups.exports.model.ExportConfig;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.PdfGenerator;
-import io.dropwizard.cli.ConfiguredCommand;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import javax.ws.rs.client.Client;
 import java.io.File;
@@ -18,13 +10,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.UUID;
 
-abstract class BackupCommandBase extends ConfiguredCommand<ExportConfig> {
+abstract class ExporterBase implements Exporter {
     protected static final String VERSION = "1.1.0";
 
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
+    protected String logicalRoot;
+    protected final Client client;
+    protected final ExportConfiguration config;
 
-    protected BackupCommandBase(String name, String description) {
-        super(name, description);
+    protected ExporterBase(Client client, ExportConfiguration config) {
+        this.client = client;
+        this.config = config;
     }
 
     protected void makeDirs(String root) {
@@ -40,19 +36,6 @@ abstract class BackupCommandBase extends ConfiguredCommand<ExportConfig> {
         System.out.printf("Directories had to be created: %b\n", dirsCreated);
     }
 
-    protected Client getClient(Bootstrap<ExportConfig> bootstrap, ExportConfig configuration) {
-        final Environment environment = new Environment(getName(),
-                new ObjectMapper(),
-                bootstrap.getValidatorFactory().getValidator(),
-                bootstrap.getMetricRegistry(),
-                bootstrap.getClassLoader());
-
-        return new JerseyClientBuilder(environment)
-                .using(configuration.jerseyClient)
-                .withProvider(MultiPartFeature.class)
-                .withProvider(JacksonJsonProvider.class)
-                .build(getName());
-    }
 
     protected void createPDFs(String root, String htmlAssetsRoot) {
         for (Collector collector : collectorHashMap.values()) {
@@ -75,5 +58,4 @@ abstract class BackupCommandBase extends ConfiguredCommand<ExportConfig> {
             }
         }
     }
-
 }

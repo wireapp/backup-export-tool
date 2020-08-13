@@ -1,21 +1,18 @@
-package com.wire.backups.exports.commands;
+package com.wire.backups.exports.exporters;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.waz.model.Messages;
-import com.wire.backups.exports.model.ExportConfig;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
-import io.dropwizard.setup.Bootstrap;
-import net.sourceforge.argparse4j.inf.Namespace;
-import net.sourceforge.argparse4j.inf.Subparser;
 import pw.forst.wire.backups.android.database.dto.*;
 import pw.forst.wire.backups.android.model.AndroidDatabaseExportDto;
 import pw.forst.wire.backups.android.steps.ExportMetadata;
 import pw.forst.wire.backups.api.DatabaseExport;
 
+import javax.ws.rs.client.Client;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,8 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class BackupAndroidCommand extends BackupCommandBase {
-
+public class AndroidExporter extends ExporterBase {
     protected final HashMap<UUID, Conversation> conversationHashMap = new HashMap<>();
 
     private final TimedMessagesExecutor timedMessagesExecutor = new TimedMessagesExecutor();
@@ -33,85 +29,34 @@ public class BackupAndroidCommand extends BackupCommandBase {
     private DatabaseMetadata databaseMetadata;
     private UUID backupUserId;
 
-    public BackupAndroidCommand() {
-        super("android-pdf", "Convert Wire Android backup file into PDF");
+    public AndroidExporter(ExportConfiguration config, Client client) {
+        super(client, config);
     }
 
     @Override
-    public void configure(Subparser subparser) {
-        super.configure(subparser);
-
-        subparser.addArgument("-e", "--email")
-                .dest("email")
-                .type(String.class)
-                .required(true)
-                .help("Email address");
-
-        subparser.addArgument("-p", "--password")
-                .dest("password")
-                .type(String.class)
-                .required(true)
-                .help("Password");
-
-        subparser.addArgument("-in", "--input")
-                .dest("in")
-                .type(String.class)
-                .required(true)
-                .help("Backup file");
-
-        subparser.addArgument("-out", "--output")
-                .dest("out")
-                .type(String.class)
-                .required(false)
-                .help("Output directory");
-
-        subparser.addArgument("-u", "--username")
-                .dest("username")
-                .type(String.class)
-                .required(true)
-                .help("Username");
-
-        subparser.addArgument("-bp", "--backup-password")
-                .dest("dbPassword")
-                .type(String.class)
-                .required(true)
-                .help("Backup password");
-    }
-
-    @Override
-    public void run(Bootstrap<ExportConfig> bootstrap, Namespace namespace, ExportConfig config) throws Exception {
+    public void run() throws Exception {
         System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
 
-        final String email = namespace.getString("email");
-        final String password = namespace.getString("password");
-        final String in = namespace.getString("in");
-        final String userName = namespace.getString("username");
-        final String databasePassword = namespace.getString("dbPassword");
-
-        String out = namespace.getString("out");
-        if (out != null && out.endsWith("/")) {
-            out = out.substring(0, out.length() - 1);
-        }
-
         // init cache
-        InstantCache cache = new InstantCache(email, password, getClient(bootstrap, config));
-        backupUserId = cache.getUserId(userName);
+        final Helper helper = new Helper();
+        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
+        backupUserId = cache.getUserId(config.getUserName());
         if (backupUserId == null) {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");
         }
         // set root and create directories
         final String logicalRoot = backupUserId.toString();
-        final String fileSystemRoot = (out != null ? out : ".") + String.format("/%s", logicalRoot);
+        final String fileSystemRoot = (config.getOut() != null ? config.getOut() : ".") + String.format("/%s", logicalRoot);
 
         makeDirs(fileSystemRoot); // create necessary directories
-        Helper.root = fileSystemRoot; // set root for physical files
-        Collector.root = logicalRoot; // set root (last folder in path) for pdf links to asssets
+        helper.setRoot(fileSystemRoot);
+        this.logicalRoot = logicalRoot;
 
         // extract database data
         final AndroidDatabaseExportDto exportDto = DatabaseExport.builder()
                 .forUserId(backupUserId.toString())
-                .fromEncryptedExport(in)
-                .withPassword(databasePassword)
+                .fromEncryptedExport(config.getIn())
+                .withPassword(config.getDatabasePassword())
                 .toOutputDirectory(fileSystemRoot + "/tmp")
                 .buildForAndroidBackup()
                 .exportDatabase();
@@ -318,7 +263,7 @@ public class BackupAndroidCommand extends BackupCommandBase {
 
     private Collector getCollector(UUID convId, InstantCache cache) {
         return collectorHashMap.computeIfAbsent(convId, x -> {
-            Collector collector = new Collector(cache);
+            Collector collector = new Collector(cache, logicalRoot);
             Conversation conversation = getConversation(convId);
             collector.setConvName(conversation.name);
             collector.setConversationId(convId);
