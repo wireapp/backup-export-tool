@@ -1,6 +1,14 @@
 # Backup export tool 
+[![GitHub version](https://badge.fury.io/gh/wearezeta%2Fbackup-export-tool.svg)](https://github.com/wearezeta/backup-export-tool/releases)
+![CI/CD](https://github.com/wearezeta/backup-export-tool/workflows/CI/CD/badge.svg)
+
 Tool for exporting and viewing Wire client's backup. 
 Currently, supported clients are: webapps (including electron desktop apps), iOS and Android.
+
+## Download
+The latest stable version of the tool: [![GitHub version](https://badge.fury.io/gh/wearezeta%2Fbackup-export-tool.svg)](https://github.com/wearezeta/backup-export-tool/releases)
+Please use this version as the tag for the docker image - `lukaswire/backup-export-tool:<version>`.
+If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wearezeta/backup-export-tool/releases). 
 
 ## Execution
 There are two ways how to run the tool, using Docker (preferred) or Java.
@@ -24,7 +32,7 @@ docker run --rm -it \
   -e PROXY_URL=<proxy-url> \
   -e PROXY_PORT=<proxy-port> \
   -e NON_PROXY_HOSTS=<proxy-hosts> \
-  lukaswire/backup-export-tool:latest
+  lukaswire/backup-export-tool:<version>
 ```
 Where `<some value>` should be replaced by your own value. 
 Following variables are optional:
@@ -43,14 +51,15 @@ docker run --rm -it \
   -e WIRE_PASSWORD=VerySecretPassword1! \
   -e BACKUP_PASSWORD=Monkey123! \ 
   -e BACKUP_USERNAME=dejan56 \
-  lukaswire/backup-export-tool:latest
+  lukaswire/backup-export-tool:1.1.0
 ```
 
 
 ### Bare metal JVM
 One needs C library Libsodium installed. To install it, one should use [official documentation](https://libsodium.gitbook.io/doc/),
 or to use included binaries.
-One should use Java 8 to run the tool, but Java 11 seems to be working as well.
+One should use Java 8 (OpenJDK) to run the tool, but Java 11 (OpenJDK) seems to be working as well.
+We observed some problems running the tool under Windows and Oracle JDK, thus OpenJDK is required.
 
 Almost all parameters are set using arguments to the tool, however, in order to use different Wire backend,
 one must set environmental variable with backend URL:
