@@ -35,20 +35,27 @@ dependencies {
         // otherwise the application won't start, the problem of Dropwizard
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation("com.wire.bots", "lithium", "2.36.2")
+
+    implementation("com.wire.bots", "lithium", "2.36.2") {
+        // we're replacing it with newer version as the one included in Lithium has problems with JRE 11
+        exclude("com.google.protobuf", "protobuf-java")
+    }
+    implementation("com.google.protobuf", "protobuf-java", "3.12.4")
+
+    val atlassianVersion = "0.12.1"
+    implementation("com.atlassian.commonmark", "commonmark", atlassianVersion)
+    implementation("com.atlassian.commonmark", "commonmark-ext-autolink", atlassianVersion)
+
+    val htmlToPdfVersion = "1.0.2"
+    implementation("com.openhtmltopdf", "openhtmltopdf-core", htmlToPdfVersion)
+    implementation("com.openhtmltopdf", "openhtmltopdf-pdfbox", htmlToPdfVersion)
+    implementation("com.openhtmltopdf", "openhtmltopdf-svg-support", htmlToPdfVersion)
 
     implementation("com.github.spullara.mustache.java", "compiler", "0.9.5")
-    implementation("com.atlassian.commonmark", "commonmark", "0.12.1")
-    implementation("com.atlassian.commonmark", "commonmark-ext-autolink", "0.12.1")
-    implementation("com.openhtmltopdf", "openhtmltopdf-core", "1.0.2")
-    implementation("com.openhtmltopdf", "openhtmltopdf-pdfbox", "1.0.2")
-    implementation("com.openhtmltopdf", "openhtmltopdf-svg-support", "1.0.2")
-
     implementation("net.lingala.zip4j", "zip4j", "2.6.1")
 
     val junitVersion = "5.6.2"
     testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
-
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
 }
 
