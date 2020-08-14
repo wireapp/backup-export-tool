@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 abstract class ExporterBase implements Exporter {
-    protected static final String VERSION = "1.1.0";
+    protected static final String VERSION = "1.2.0";
 
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
     protected String logicalRoot;
