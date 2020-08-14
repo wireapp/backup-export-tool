@@ -5,12 +5,13 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    name: Java ${{ matrix.java }} on ${{ matrix.os }}
     strategy:
       matrix:
+        os: [windows-latest, ubuntu-latest]
         java: [ 8.0.242, 11.0.8 ]
-    name: Java ${{ matrix.java }} Test
-    
+
     steps:
       - uses: actions/checkout@v2
 
@@ -25,4 +26,4 @@ jobs:
 
       - name: Run tests application
         run: |
-          ./gradlew test
+          ./gradlew test --info
