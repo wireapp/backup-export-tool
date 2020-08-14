@@ -41,6 +41,8 @@ public class DesktopExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
+        printVersion();
+
         String temporaryExtractionDirectory = (config.getOut() != null ? config.getOut() : ".") + "/tmp";
 
         final File inputDir = new File(temporaryExtractionDirectory);

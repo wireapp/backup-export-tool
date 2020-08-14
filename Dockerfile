@@ -42,10 +42,5 @@ COPY libs/libsodium.so $APP_ROOT/libs/
 COPY export.yaml $APP_ROOT/
 COPY export-proxy.yaml $APP_ROOT/
 
-# create version file
-ARG release_version=development
-ENV RELEASE_FILE_PATH=$APP_ROOT/release.txt
-RUN echo $release_version > $RELEASE_FILE_PATH
-
 # execute run script
 ENTRYPOINT ["/bin/sh", "-c", "$APP_ROOT/entrypoint.sh"]

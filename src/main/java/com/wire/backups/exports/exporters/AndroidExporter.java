@@ -35,8 +35,7 @@ public class AndroidExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
-        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
-
+        printVersion();
         // init cache
         final Helper helper = new Helper();
         InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);

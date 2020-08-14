@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.konan.properties.saveToFile
+import java.util.Properties
+
 plugins {
     java
     kotlin("jvm") version "1.3.72"
@@ -7,7 +11,7 @@ plugins {
 }
 
 group = "com.wire.backups"
-version = versioning.info.lastTag
+version = versioning.info.lastTag + if(versioning.info.dirty) "-dirty" else ""
 
 val mClass = "com.wire.backups.exports.Service"
 
@@ -53,7 +57,7 @@ dependencies {
     implementation("pw.forst.tools", "katlib", "1.0.0")
 
     // libsodium for decryption
-    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.0")  {
+    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.0") {
         // otherwise the application won't start, the problem is combination of Dropwizard and sl4j 2.0
         exclude("org.slf4j", "slf4j-api")
     }
@@ -105,7 +109,6 @@ tasks {
 
     shadowJar {
         mergeServiceFiles()
-
         manifest {
             attributes(
                 mapOf(
@@ -125,6 +128,20 @@ tasks {
 
     test {
         useJUnitPlatform()
+    }
+
+    classes {
+        dependsOn("createVersionFile")
+    }
+
+    register("createVersionFile") {
+        dependsOn(processResources)
+        doLast {
+            Properties().apply {
+                setProperty("version", project.version.toString())
+                saveToFile(File("$buildDir/resources/main/version.properties"))
+            }
+        }
     }
 
     register("resolveDependencies") {

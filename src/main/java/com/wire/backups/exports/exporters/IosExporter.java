@@ -29,7 +29,7 @@ public class IosExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
-        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
+        printVersion();
 
         System.out.println("Logging into Wire services.");
         final Helper helper = new Helper();
