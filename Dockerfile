@@ -1,36 +1,51 @@
-FROM maven:3.6.3-jdk-8-slim AS build
+FROM adoptopenjdk/openjdk11:jdk-11.0.6_10-alpine AS build
 LABEL description="Wire Export Backup Tool"
 LABEL project="wire-bots:exports"
 
-WORKDIR /app
+ENV PROJECT_ROOT /src
+WORKDIR $PROJECT_ROOT
 
-# download dependencies
-COPY pom.xml ./
-RUN mvn verify --fail-never -U
+# Copy gradle settings
+COPY build.gradle.kts settings.gradle.kts gradle.properties gradlew $PROJECT_ROOT/
+# Make sure gradlew is executable
+RUN chmod +x gradlew
+# Copy gradle specification
+COPY gradle $PROJECT_ROOT/gradle
+# Download gradle
+RUN ./gradlew --version --no-daemon
+# download and cache dependencies
+RUN ./gradlew resolveDependencies --no-daemon
 
-# build stuff
-COPY src ./src
-RUN mvn -Dmaven.test.skip=true package
+# Copy project and build
+COPY src $PROJECT_ROOT/src
+RUN ./gradlew shadowJar --no-daemon
 
-FROM dejankovacevic/bots.runtime:2.10.3
+# Runtime
+FROM adoptopenjdk/openjdk11:jre-11.0.6_10-alpine
+RUN apk add bash
+
+ENV APP_ROOT /app
+WORKDIR $APP_ROOT
+
+# Obtain built from the base
+COPY --from=build /src/build/libs/backup-export.jar $APP_ROOT/
+
 # copy entrypoint
-COPY entrypoint.sh /opt/backup-export/entrypoint.sh
-RUN chmod +x /opt/backup-export/entrypoint.sh
+COPY entrypoint.sh $APP_ROOT/entrypoint.sh
+# ensure it is executable
+RUN chmod +x $APP_ROOT/entrypoint.sh
+
 # copy database decryption lib
-COPY libs/libsodium.so /opt/wire/lib/libsodium.so
+RUN mkdir $APP_ROOT/libs
+COPY libs/libsodium.so $APP_ROOT/libs/
 # copy configuration
-COPY export.yaml /etc/backup-export/export.yaml
-COPY export-proxy.yaml /etc/backup-export/export-proxy.yaml
+COPY export.yaml $APP_ROOT/
+COPY export-proxy.yaml $APP_ROOT/
 
-# copy built jars
-COPY --from=build /app/target/backup-export.jar /opt/backup-export/backup-export.jar
+# create version file
+ARG release_version=development
+ENV RELEASE_FILE_PATH=$APP_ROOT/release.txt
+RUN echo $release_version > $RELEASE_FILE_PATH
 
-RUN mkdir /opt/backup-export/assets
-RUN mkdir /opt/backup-export/avatars
-RUN mkdir /opt/backup-export/html
-
-COPY --from=build /app/src/main/resources/recording/assets/* /opt/backup-export/assets/
-
-WORKDIR /opt/backup-export
-
-ENTRYPOINT ["/bin/bash", "-c", "/opt/backup-export/entrypoint.sh"]
+# execute run script
+ENTRYPOINT ["/bin/sh", "-c", "$APP_ROOT/entrypoint.sh"]

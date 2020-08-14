@@ -87,8 +87,8 @@ run() {
   echo "Preparing arguments"
   # Build up array of arguments...
   args=()
-  args+=("-v" "${BACKUP_FILE}:/etc/backup-export/database-in")
-  args+=("-v" "${OUTPUT_PATH}:/etc/backup-export/database-out")
+  args+=("-v" "${BACKUP_FILE}:/app/database-in")
+  args+=("-v" "${OUTPUT_PATH}:/app/database-out")
   args+=("-e" "CLIENT_TYPE=${CLIENT_TYPE}")
   args+=("-e" "WIRE_USER=${WIRE_USER}")
   args+=("-e" "WIRE_PASSWORD=${WIRE_PASSWORD}")
