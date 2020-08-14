@@ -99,6 +99,10 @@ tasks {
         systemProperties["jna.library.path"] = "${projectDir}/libs"
     }
 
+    withType<JavaCompile> {
+        options.encoding = "UTF-8"
+    }
+
     shadowJar {
         mergeServiceFiles()
 

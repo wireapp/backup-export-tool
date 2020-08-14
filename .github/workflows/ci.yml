@@ -20,6 +20,10 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
 
+      - name: Display JDK version
+        run: |
+          java -version
+
       - name: Build application
         run: |
           ./gradlew assemble
