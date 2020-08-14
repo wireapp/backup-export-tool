@@ -110,6 +110,7 @@ tasks {
             )
         }
         // because there's some conflict (LICENSE already exists) during the unzipping process
+        // by excluding it from the shadow jar we try to fix problem on Oracle JVM 8
         exclude("LICENSE")
         // standard Dropwizard excludes
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
