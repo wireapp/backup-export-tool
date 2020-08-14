@@ -1,10 +1,13 @@
 plugins {
     java
-    `java-library`
     application
-    distribution
     id("com.github.johnrengelman.shadow") version "6.0.0"
 }
+
+group = "com.wire.backups"
+version = "0.3.0"
+
+val mClass = "com.wire.backups.exports.Service"
 
 repositories {
     mavenLocal()
@@ -28,24 +31,26 @@ repositories {
 
 
 dependencies {
-    implementation("pw.forst.wire:backups:3.2.1")
-    implementation("com.wire.bots:lithium:2.36.2")
-    implementation("ch.qos.logback:logback-classic:1.3.0-alpha5")
-    implementation("com.github.spullara.mustache.java:compiler:0.9.5")
-    implementation("com.atlassian.commonmark:commonmark:0.12.1")
-    implementation("com.atlassian.commonmark:commonmark-ext-autolink:0.12.1")
-    implementation("org.jsoup:jsoup:1.8.3")
-    implementation("com.openhtmltopdf:openhtmltopdf-core:1.0.2")
-    implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.2")
-    implementation("com.openhtmltopdf:openhtmltopdf-svg-support:1.0.2")
-    implementation("net.lingala.zip4j:zip4j:2.6.1")
-    testImplementation("junit:junit:4.11")
+    implementation("pw.forst.wire:backups:3.2.1") {
+        // otherwise the application won't start, the problem of Dropwizard
+        exclude("org.slf4j", "slf4j-api")
+    }
+    implementation("com.wire.bots", "lithium", "2.36.2")
+
+    implementation("com.github.spullara.mustache.java", "compiler", "0.9.5")
+    implementation("com.atlassian.commonmark", "commonmark", "0.12.1")
+    implementation("com.atlassian.commonmark", "commonmark-ext-autolink", "0.12.1")
+    implementation("com.openhtmltopdf", "openhtmltopdf-core", "1.0.2")
+    implementation("com.openhtmltopdf", "openhtmltopdf-pdfbox", "1.0.2")
+    implementation("com.openhtmltopdf", "openhtmltopdf-svg-support", "1.0.2")
+
+    implementation("net.lingala.zip4j", "zip4j", "2.6.1")
+
+    val junitVersion = "5.6.2"
+    testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
+
+    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
 }
-
-group = "com.wire.backups"
-version = "0.3.0"
-
-val mClass = "com.wire.backups.exports.Service"
 
 application {
     mainClassName = mClass
@@ -58,6 +63,7 @@ configure<JavaPluginConvention> {
 tasks {
     shadowJar {
         mergeServiceFiles()
+
         manifest {
             attributes(
                 mapOf(
@@ -66,19 +72,27 @@ tasks {
             )
         }
         // because there's some conflict (LICENSE already exists) during the unzipping process
-        exclude("LICENCE", "licence", "LICENSE", "license")
+        exclude("LICENSE")
+        // standard Dropwizard excludes
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
+
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         archiveFileName.set("backup-export.jar")
     }
 
-    register<Jar>("fatJar") {
-        manifest {
-            attributes["Main-Class"] = mClass
+    test {
+        useJUnitPlatform()
+    }
+
+    register("resolveDependencies") {
+        doLast {
+            project.allprojects.forEach { subProject ->
+                with(subProject) {
+                    buildscript.configurations.forEach { if (it.isCanBeResolved) it.resolve() }
+                    configurations.compileClasspath.get().resolve()
+                    configurations.testCompileClasspath.get().resolve()
+                }
+            }
         }
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        archiveFileName.set("backup-export-fat.jar")
-        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-        from(sourceSets.main.get().output)
     }
 }

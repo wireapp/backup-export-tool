@@ -20,8 +20,8 @@ Fill variables first.
 To run it manually inside the docker execute following:
 ```bash
 docker run --rm -it \
-  -v </path/to/database/file>:/etc/backup-export/database-in \
-  -v </path/to/output/folder>:/etc/backup-export/database-out \
+  -v </path/to/database/file>:/app/database-in \
+  -v </path/to/output/folder>:/app/database-out \
   -e CLIENT_TYPE=<ios,android,desktop> \ 
   -e WIRE_USER=<user-with-wire-account> \
   -e WIRE_PASSWORD=<password-for-that-user> \
@@ -44,8 +44,8 @@ if you specify these values, you must also add `-e USE_PROXY=true` to activate p
 Example:
 ```bash
 docker run --rm -it \
-  -v backups/dejan56.ios_wbu:/etc/backup-export/database-in \
-  -v backup-exports/dejan:/etc/backup-export/database-out \
+  -v backups/dejan56.ios_wbu:/app/database-in \
+  -v backup-exports/dejan:/app/database-out \
   -e CLIENT_TYPE=ios \ 
   -e WIRE_USER=my-testing-user@wire.com \
   -e WIRE_PASSWORD=VerySecretPassword1! \
@@ -68,7 +68,7 @@ WIRE_API_HOST=<your-wire-backend>
 ```
 For example to set it on unix systems: `export WIRE_API_HOST=https://staging-nginz-https.zinfra.io` for staging.
 
-To create executable `jar` please run `mvn package -DskipTests=true` which produces `target/backup-export.jar`.
+To create executable `jar` please run `./gradlew shadowJar` which produces `build/libs/backup-export.jar`.
 Generic way how to run the tool is following:
 ```bash
 java -Djna.library.path=<path-to-binaries> \
