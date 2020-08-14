@@ -6,8 +6,8 @@ import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
-import pw.forst.wire.backups.api.DatabaseExport;
-import pw.forst.wire.backups.ios.model.*;
+import com.wire.backups.exports.api.DatabaseExport;
+import com.wire.backups.exports.ios.model.*;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
