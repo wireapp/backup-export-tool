@@ -3,7 +3,7 @@ plugins {
     `java-library`
     application
     distribution
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 repositories {
@@ -47,10 +47,6 @@ version = "0.3.0"
 
 val mClass = "com.wire.backups.exports.Service"
 
-shadow {
-//    applicationDistribution.from("src/dist")
-}
-
 application {
     mainClassName = mClass
 }
@@ -69,6 +65,10 @@ tasks {
                 )
             )
         }
+        // because there's some conflict (LICENSE already exists) during the unzipping process
+        exclude("LICENCE", "licence", "LICENSE", "license")
+        exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         archiveFileName.set("backup-export.jar")
     }
 
