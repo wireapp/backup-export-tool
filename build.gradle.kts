@@ -47,10 +47,6 @@ dependencies {
 
     // ------- Common dependencies -------
     implementation("net.lingala.zip4j", "zip4j", "2.6.1")
-    implementation("com.fasterxml.jackson.core", "jackson-core", "2.11.1")
-    implementation("com.fasterxml.jackson.core", "jackson-databind", "2.11.1")
-    implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.1")
-
 
     // ------- Kotlin dependencies -------
     implementation(kotlin("stdlib-jdk8"))
@@ -71,6 +67,8 @@ dependencies {
     implementation("org.jetbrains.exposed", "exposed-jdbc", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-java-time", exposedVersion)
     implementation("org.xerial", "sqlite-jdbc", "3.32.3")
+    // jackson for kotlin
+    implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.1")
 
     // testing
     val junitVersion = "5.6.2"
