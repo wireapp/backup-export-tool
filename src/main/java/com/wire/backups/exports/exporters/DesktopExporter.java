@@ -361,6 +361,7 @@ public class DesktopExporter extends ExporterBase {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public Object handleUnexpectedToken(DeserializationContext c, Class<?> t, JsonToken j, JsonParser p, String f) {
             return null;
         }
