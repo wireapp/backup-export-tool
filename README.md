@@ -1,14 +1,14 @@
 # Backup export tool 
-[![GitHub version](https://badge.fury.io/gh/wearezeta%2Fbackup-export-tool.svg)](https://github.com/wearezeta/backup-export-tool/releases)
-![CI/CD](https://github.com/wearezeta/backup-export-tool/workflows/CI/CD/badge.svg)
+[![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
+![CI/CD](https://github.com/wireapp/backup-export-tool/workflows/CI/CD/badge.svg)
 
 Tool for exporting and viewing Wire client's backup. 
 Currently, supported clients are: webapps (including electron desktop apps), iOS and Android.
 
 ## Download
-The latest stable version of the tool: [![GitHub version](https://badge.fury.io/gh/wearezeta%2Fbackup-export-tool.svg)](https://github.com/wearezeta/backup-export-tool/releases)
+The latest stable version of the tool: [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
 Please use this version as the tag for the docker image - `lukaswire/backup-export-tool:<version>`.
-If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wearezeta/backup-export-tool/releases). 
+If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases). 
 
 ## Execution
 There are two ways how to run the tool, using Docker (preferred) or Java.
