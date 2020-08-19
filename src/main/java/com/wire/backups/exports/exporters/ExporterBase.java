@@ -5,13 +5,16 @@ import com.wire.backups.exports.utils.PdfGenerator;
 
 import javax.ws.rs.client.Client;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 
 abstract class ExporterBase implements Exporter {
-    protected static final String VERSION = "1.1.0";
+    protected static final String DEFAULT_VERSION = "development";
 
     protected final HashMap<UUID, Collector> collectorHashMap = new HashMap<>();
     protected String logicalRoot;
@@ -21,6 +24,35 @@ abstract class ExporterBase implements Exporter {
     protected ExporterBase(Client client, ExportConfiguration config) {
         this.client = client;
         this.config = config;
+    }
+
+    private String getVersion() {
+        final Properties props = new Properties();
+        InputStream propsStream = null;
+        try {
+            // Loading properties file from the classpath
+            propsStream = getClass().getClassLoader().getResourceAsStream("version.properties");
+            if (propsStream == null) {
+                return DEFAULT_VERSION;
+            }
+            props.load(propsStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (propsStream != null) {
+                    propsStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return props.getProperty("version", DEFAULT_VERSION);
+    }
+
+    protected void printVersion() {
+        System.out.printf("Backup to PDF converter version: %s\n\n", getVersion());
     }
 
     protected void makeDirs(String root) {

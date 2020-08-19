@@ -17,6 +17,7 @@
 
 package com.wire.backups.exports;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.wire.backups.exports.commands.EncryptedBackupCommand;
 import com.wire.backups.exports.commands.ExporterProducer;
 import com.wire.backups.exports.commands.OpenBackupCommand;
@@ -28,6 +29,7 @@ import com.wire.bots.sdk.MessageHandlerBase;
 import com.wire.bots.sdk.Server;
 import io.dropwizard.Application;
 import io.dropwizard.cli.Command;
+import io.dropwizard.jackson.Jackson;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
@@ -47,6 +49,8 @@ public class Service extends Server<Config> {
     @Override
     public void initialize(Bootstrap<Config> bootstrap) {
         super.initialize(bootstrap);
+        // because of the Java > 8 support
+        bootstrap.setObjectMapper(Jackson.newMinimalObjectMapper().registerModule(new Jdk8Module()));
 
         bootstrap.addCommand(openBackups("Desktop", DesktopExporter::new));
         bootstrap.addCommand(encryptedBackups("iOS", IosExporter::new));

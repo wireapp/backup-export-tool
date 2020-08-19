@@ -6,7 +6,7 @@ import com.wire.backups.exports.utils.TestCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.tools.Logger;
 import com.wire.bots.sdk.tools.Util;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.UUID;

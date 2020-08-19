@@ -54,12 +54,12 @@ jobs:
       # Builds application
       - name: Build application
         run: |
-          mvn package -DskipTests=true
+          ./gradlew shadowJar
 
       # Creates release zip
       - name: Create release zip
         run: |
-          cp target/backup-export.jar .
+          cp build/libs/backup-export.jar .
           zip -r backup-export.zip backup-export.jar export.yaml export-proxy.yaml libs README.md
 
       # Obtains release URL to upload assets

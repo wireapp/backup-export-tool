@@ -1,0 +1,8 @@
+.github
+.idea
+.gradle
+build
+data
+Dockerfile
+start.sh
+README.md

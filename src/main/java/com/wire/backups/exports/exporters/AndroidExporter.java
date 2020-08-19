@@ -7,10 +7,10 @@ import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
-import pw.forst.wire.backups.android.database.dto.*;
-import pw.forst.wire.backups.android.model.AndroidDatabaseExportDto;
-import pw.forst.wire.backups.android.steps.ExportMetadata;
-import pw.forst.wire.backups.api.DatabaseExport;
+import com.wire.backups.exports.android.database.dto.*;
+import com.wire.backups.exports.android.model.AndroidDatabaseExportDto;
+import com.wire.backups.exports.android.steps.ExportMetadata;
+import com.wire.backups.exports.api.DatabaseExport;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -35,8 +35,7 @@ public class AndroidExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
-        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
-
+        printVersion();
         // init cache
         final Helper helper = new Helper();
         InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);

@@ -41,6 +41,8 @@ public class DesktopExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
+        printVersion();
+
         String temporaryExtractionDirectory = (config.getOut() != null ? config.getOut() : ".") + "/tmp";
 
         final File inputDir = new File(temporaryExtractionDirectory);
@@ -361,6 +363,7 @@ public class DesktopExporter extends ExporterBase {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public Object handleUnexpectedToken(DeserializationContext c, Class<?> t, JsonToken j, JsonParser p, String f) {
             return null;
         }

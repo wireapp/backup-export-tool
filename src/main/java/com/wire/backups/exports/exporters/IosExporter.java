@@ -6,8 +6,8 @@ import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
-import pw.forst.wire.backups.api.DatabaseExport;
-import pw.forst.wire.backups.ios.model.*;
+import com.wire.backups.exports.api.DatabaseExport;
+import com.wire.backups.exports.ios.model.*;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -29,7 +29,7 @@ public class IosExporter extends ExporterBase {
 
     @Override
     public void run() throws Exception {
-        System.out.printf("Backup to PDF converter version: %s\n\n", VERSION);
+        printVersion();
 
         System.out.println("Logging into Wire services.");
         final Helper helper = new Helper();
