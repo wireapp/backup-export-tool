@@ -4,14 +4,15 @@ import java.util.Properties
 
 plugins {
     java
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.0"
     application
     id("net.nemerosa.versioning") version "2.8.2"
     id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 group = "com.wire.backups"
-version = versioning.info.lastTag + if(versioning.info.dirty) "-dirty" else ""
+version = (versioning.info.tag ?: versioning.info.lastTag) +
+        if (versioning.info.dirty) "-dirty" else ""
 
 val mClass = "com.wire.backups.exports.Service"
 
