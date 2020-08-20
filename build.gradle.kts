@@ -74,6 +74,8 @@ dependencies {
     implementation("org.xerial", "sqlite-jdbc", "3.32.3")
     // jackson for kotlin
     implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.1")
+    // correct reflect lib until jackson fixes theirs
+    implementation("org.jetbrains.kotlin", "kotlin-reflect", "1.4.0")
 
     // testing
     val junitVersion = "5.6.2"

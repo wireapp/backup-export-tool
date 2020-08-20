@@ -6,6 +6,8 @@ import com.wire.backups.exports.ios.database.model.Messages
 import com.wire.backups.exports.ios.database.model.SystemMessageType
 import com.wire.backups.exports.ios.model.IosUserAddedToConversation
 import com.wire.backups.exports.ios.model.IosUserLeftConversation
+import com.wire.backups.exports.utils.mapCatching
+import com.wire.backups.exports.utils.rowExportFailed
 import com.wire.backups.exports.utils.transactionsLogger
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -28,7 +30,7 @@ private fun IosDatabase.userAddedEvents(cache: EntityMappingCache): List<IosUser
             (it[messages.conversationId] != null && it[messages.senderId] != null)
                 .whenFalse { transactionsLogger.warn { "Filtering result set because either conversationId or senderId was null!\n$it" } }
         }
-        .map {
+        .mapCatching({
             IosUserAddedToConversation(
                 whoAddedUser = cache.getUsersUuid(
                     requireNotNull(it[messages.senderId]) { "Sender was null!" }
@@ -39,7 +41,7 @@ private fun IosDatabase.userAddedEvents(cache: EntityMappingCache): List<IosUser
                 ),
                 timestamp = it[messages.timestamp].toExportDateFromIos()
             )
-        }
+        }, rowExportFailed)
 
 private fun IosDatabase.userLeftEvent(cache: EntityMappingCache): List<IosUserLeftConversation> =
     (systemMessagesRelatedUsers innerJoin messages)
@@ -52,7 +54,7 @@ private fun IosDatabase.userLeftEvent(cache: EntityMappingCache): List<IosUserLe
             (it[messages.conversationId] != null)
                 .whenFalse { transactionsLogger.warn { "Filtering result set because conversationId was null!\n$it" } }
         }
-        .map {
+        .mapCatching({
             IosUserLeftConversation(
                 userSendingLeftMessage = it[messages.senderId]?.let { userId -> cache.getUsersUuid(userId) },
                 leavingUser = cache.getUsersUuid(it[systemMessagesRelatedUsers.userId]),
@@ -61,4 +63,4 @@ private fun IosDatabase.userLeftEvent(cache: EntityMappingCache): List<IosUserLe
                 ),
                 timestamp = it[messages.timestamp].toExportDateFromIos()
             )
-        }
+        }, rowExportFailed)

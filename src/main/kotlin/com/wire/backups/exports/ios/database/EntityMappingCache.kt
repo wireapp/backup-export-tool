@@ -1,9 +1,12 @@
 package com.wire.backups.exports.ios.database
 
-import org.jetbrains.exposed.sql.selectAll
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.model.ReactionDto
 import com.wire.backups.exports.ios.toUuid
+import com.wire.backups.exports.utils.mapCatching
+import com.wire.backups.exports.utils.rowExportFailed
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import java.util.UUID
 
 internal class EntityMappingCache(
@@ -16,15 +19,14 @@ internal class EntityMappingCache(
     fun getConversationUuid(primaryKey: Int) = conversationMap.getValue(primaryKey)
 
     fun getReactionsForMessagePk(primaryKey: Int) =
-        reactionsMap.getOrDefault(primaryKey, emptyList())
-            .let {
-                it.map { (userPk, reaction) ->
-                    ReactionDto(
-                        userId = getUsersUuid(userPk),
-                        unicodeValue = reaction
-                    )
-                }
+        reactionsMap.getOrDefault(primaryKey, emptyList()).let { reactions ->
+            reactions.map { (userPk, reaction) ->
+                ReactionDto(
+                    userId = getUsersUuid(userPk),
+                    unicodeValue = reaction
+                )
             }
+        }
 }
 
 internal fun IosDatabase.buildMappingCache() =
@@ -37,21 +39,21 @@ internal fun IosDatabase.buildMappingCache() =
 private fun IosDatabase.conversationsMap(): Map<Int, UUID> =
     conversations
         .slice(conversations.id, conversations.remoteUuid)
-        .selectAll()
+        .select { conversations.id.isNotNull() and conversations.remoteUuid.isNotNull() }
         .associate { it[conversations.id] to it[conversations.remoteUuid].bytes.toUuid() }
 
 
 private fun IosDatabase.usersMap(): Map<Int, UUID> =
     users
         .slice(users.id, users.remoteUuid)
-        .selectAll()
+        .select { users.id.isNotNull() and users.remoteUuid.isNotNull() }
         .associate { it[users.id] to it[users.remoteUuid].bytes.toUuid() }
 
 internal fun IosDatabase.getReactionsMap(): Map<Int, List<Pair<Int, String>>> =
     usersReactions
         .innerJoin(reactions)
         .slice(reactions.unicodeValue, reactions.messageId, usersReactions.userId)
-        .selectAll()
-        .map { Triple(it[reactions.messageId], it[usersReactions.userId], it[reactions.unicodeValue]) }
+        .select { reactions.unicodeValue.isNotNull() and reactions.messageId.isNotNull() and usersReactions.userId.isNotNull() }
+        .mapCatching({ Triple(it[reactions.messageId], it[usersReactions.userId], it[reactions.unicodeValue]) }, rowExportFailed)
         .groupBy { (messageId, _, _) -> messageId }
         .mapValues { (_, value) -> value.map { (_, userId, unicodeValue) -> userId to unicodeValue } }

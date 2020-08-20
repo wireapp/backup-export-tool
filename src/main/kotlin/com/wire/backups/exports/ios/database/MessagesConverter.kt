@@ -5,6 +5,8 @@ import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.database.model.GenericMessageData
 import com.wire.backups.exports.ios.database.model.Messages
 import com.wire.backups.exports.ios.model.IosMessageDto
+import com.wire.backups.exports.utils.mapCatching
+import com.wire.backups.exports.utils.rowExportFailed
 import com.wire.backups.exports.utils.transactionsLogger
 import org.jetbrains.exposed.sql.ColumnSet
 import org.jetbrains.exposed.sql.JoinType
@@ -26,7 +28,7 @@ private fun IosDatabase.getMessages(cache: EntityMappingCache) =
     ).messagesSlice()
         .select { messages.conversationId.isNotNull() }
         .filter { filterRow(it) }
-        .map { mapGenericMessage(it, cache) }
+        .mapCatching({ mapGenericMessage(it, cache) }, rowExportFailed)
 
 private fun IosDatabase.getAssets(cache: EntityMappingCache) =
     genericMessageData.join(messages, JoinType.INNER,
@@ -36,7 +38,7 @@ private fun IosDatabase.getAssets(cache: EntityMappingCache) =
     ).messagesSlice()
         .select { messages.conversationId.isNotNull() }
         .filter { filterRow(it) }
-        .map { mapGenericMessage(it, cache) }
+        .mapCatching({ mapGenericMessage(it, cache) }, rowExportFailed)
 
 private fun IosDatabase.filterRow(it: ResultRow) =
     (it[messages.senderId] != null && it[messages.conversationId] != null)

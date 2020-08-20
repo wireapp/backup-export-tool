@@ -3,6 +3,8 @@ package com.wire.backups.exports.android.database.converters
 import com.wire.backups.exports.android.database.dto.AttachmentDto
 import com.wire.backups.exports.android.database.model.Assets2
 import com.wire.backups.exports.android.database.model.Messages
+import com.wire.backups.exports.utils.mapCatching
+import com.wire.backups.exports.utils.rowExportFailed
 import com.wire.backups.exports.utils.transactionsLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.and
@@ -11,7 +13,7 @@ import pw.forst.tools.katlib.whenFalse
 
 @Suppress("unused") // because we need it to run inside transaction
 fun Transaction.getAttachments(): List<AttachmentDto> =
-    (Messages leftJoin Assets2)
+    (Messages innerJoin Assets2)
         .slice(
             Messages.id, Messages.conversationId, Assets2.name, Messages.userId, Messages.time,
             Assets2.size, Assets2.mime, Assets2.token, Assets2.id, Assets2.sha, Messages.protos
@@ -22,7 +24,7 @@ fun Transaction.getAttachments(): List<AttachmentDto> =
                 transactionsLogger.warn { "Filtering result set because either asset token or message bytes were null!\n$it" }
             }
         }
-        .map {
+        .mapCatching({
             AttachmentDto(
                 id = it[Messages.id].toUuid(),
                 conversationId = it[Messages.conversationId].toUuid(),
@@ -36,5 +38,5 @@ fun Transaction.getAttachments(): List<AttachmentDto> =
                 sha = it[Assets2.sha].bytes,
                 protobuf = requireNotNull(it[Messages.protos]?.bytes) { "Protobuf for asset was null!" }
             )
-        }
+        }, rowExportFailed)
 

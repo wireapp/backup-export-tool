@@ -5,6 +5,8 @@ import com.wire.backups.exports.android.database.dto.LikingsDto
 import com.wire.backups.exports.android.database.dto.MessageDto
 import com.wire.backups.exports.android.database.model.Likings
 import com.wire.backups.exports.android.database.model.Messages
+import com.wire.backups.exports.utils.mapCatching
+import com.wire.backups.exports.utils.rowExportFailed
 import com.wire.backups.exports.utils.transactionsLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.select
@@ -15,18 +17,17 @@ import pw.forst.tools.katlib.whenNull
 
 @Suppress("unused") // we need to force it to run inside transaction
 fun Transaction.getLikings() =
-    (Likings leftJoin Messages)
+    (Likings innerJoin Messages)
         .slice(Likings.messageId, Likings.userId, Messages.conversationId, Likings.timestamp)
         .selectAll()
-        .map {
+        .mapCatching({
             LikingsDto(
                 messageId = it[Likings.messageId].toUuid(),
                 userId = it[Likings.userId].toUuid(),
                 conversationId = it[Messages.conversationId].toUuid(),
                 time = it[Likings.timestamp].toExportDateFromAndroid()
             )
-        }
-
+        }, rowExportFailed)
 
 @Suppress("unused") // we need to force it to run inside transaction
 fun Transaction.getTextMessages() =
@@ -39,7 +40,7 @@ fun Transaction.getTextMessages() =
             (it[Messages.content] != null)
                 .whenFalse { transactionsLogger.warn { "Filtering result set because content was null!\n$it" } }
         }
-        .map { row ->
+        .mapCatching({ row ->
             MessageDto(
                 id = row[Messages.id].toUuid(),
                 conversationId = row[Messages.conversationId].toUuid(),
@@ -49,7 +50,7 @@ fun Transaction.getTextMessages() =
                 quote = row[Messages.quote]?.toUuid(),
                 edited = row[Messages.editTime] != 0L
             )
-        }
+        }, rowExportFailed)
 
 private fun parseContent(content: String?): String =
     requireNotNull(content) { "Content was null!" }.let {

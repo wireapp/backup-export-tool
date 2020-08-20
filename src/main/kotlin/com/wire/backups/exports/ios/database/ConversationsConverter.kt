@@ -1,9 +1,11 @@
 package com.wire.backups.exports.ios.database
 
-import org.jetbrains.exposed.sql.selectAll
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.model.ConversationDto
 import com.wire.backups.exports.ios.toUuid
+import com.wire.backups.exports.utils.mapCatching
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import java.util.UUID
 
 
@@ -12,12 +14,14 @@ internal fun IosDatabase.getConversations(userId: UUID) =
         .innerJoin(conversations)
         .innerJoin(users)
         .slice(conversations.remoteUuid, conversations.name, users.remoteUuid, users.name)
-        .selectAll()
+        .select {
+            conversations.remoteUuid.isNotNull() and users.remoteUuid.isNotNull()
+        }
         .groupBy(
             { it[conversations.remoteUuid].bytes.toUuid() to it[conversations.name] },
             { it[users.remoteUuid].bytes.toUuid() to it[users.name] }
         )
-        .map { (idName, users) ->
+        .mapCatching({ (idName, users) ->
             val (conversationId, conversationName) = idName
             ConversationDto(
                 id = conversationId,
@@ -30,4 +34,4 @@ internal fun IosDatabase.getConversations(userId: UUID) =
                     ?: "No name",
                 members = users.map { (id, _) -> id }
             )
-        }
+        }, { "It was not possible to transform data\n$it" })
