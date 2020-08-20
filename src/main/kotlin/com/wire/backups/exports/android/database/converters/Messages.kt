@@ -1,15 +1,17 @@
 package com.wire.backups.exports.android.database.converters
 
 import com.fasterxml.jackson.databind.JsonNode
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import pw.forst.tools.katlib.parseJson
-import pw.forst.tools.katlib.whenNull
 import com.wire.backups.exports.android.database.dto.LikingsDto
 import com.wire.backups.exports.android.database.dto.MessageDto
 import com.wire.backups.exports.android.database.model.Likings
 import com.wire.backups.exports.android.database.model.Messages
+import com.wire.backups.exports.utils.transactionsLogger
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
+import pw.forst.tools.katlib.parseJson
+import pw.forst.tools.katlib.whenFalse
+import pw.forst.tools.katlib.whenNull
 
 @Suppress("unused") // we need to force it to run inside transaction
 fun Transaction.getLikings() =
@@ -32,9 +34,12 @@ fun Transaction.getTextMessages() =
         .slice(
             Messages.messageType, Messages.id, Messages.conversationId, Messages.userId, Messages.time,
             Messages.quote, Messages.editTime, Messages.content
-        ).select {
-            Messages.messageType eq "Text"
-        }.map { row ->
+        ).select { Messages.messageType eq "Text" }
+        .filter {
+            (it[Messages.content] != null)
+                .whenFalse { transactionsLogger.warn { "Filtering result set because content was null!\n$it" } }
+        }
+        .map { row ->
             MessageDto(
                 id = row[Messages.id].toUuid(),
                 conversationId = row[Messages.conversationId].toUuid(),
