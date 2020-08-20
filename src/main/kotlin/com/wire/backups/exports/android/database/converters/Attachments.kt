@@ -1,11 +1,13 @@
 package com.wire.backups.exports.android.database.converters
 
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import com.wire.backups.exports.android.database.dto.AttachmentDto
 import com.wire.backups.exports.android.database.model.Assets2
 import com.wire.backups.exports.android.database.model.Messages
+import com.wire.backups.exports.utils.transactionsLogger
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import pw.forst.tools.katlib.whenFalse
 
 @Suppress("unused") // because we need it to run inside transaction
 fun Transaction.getAttachments(): List<AttachmentDto> =
@@ -14,8 +16,11 @@ fun Transaction.getAttachments(): List<AttachmentDto> =
             Messages.id, Messages.conversationId, Assets2.name, Messages.userId, Messages.time,
             Assets2.size, Assets2.mime, Assets2.token, Assets2.id, Assets2.sha, Messages.protos
         )
-        .select {
-            Messages.assetId.isNotNull() and Assets2.id.isNotNull()
+        .select { Messages.assetId.isNotNull() and Assets2.id.isNotNull() }
+        .filter {
+            (it[Assets2.token] != null && it[Messages.protos]?.bytes != null).whenFalse {
+                transactionsLogger.warn { "Filtering result set because either asset token or message bytes were null!\n$it" }
+            }
         }
         .map {
             AttachmentDto(

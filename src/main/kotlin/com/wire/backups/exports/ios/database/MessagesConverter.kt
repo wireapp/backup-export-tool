@@ -1,14 +1,16 @@
 package com.wire.backups.exports.ios.database
 
-import org.jetbrains.exposed.sql.ColumnSet
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.select
 import com.wire.backups.exports.android.database.converters.toExportDateFromIos
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.database.model.GenericMessageData
 import com.wire.backups.exports.ios.database.model.Messages
 import com.wire.backups.exports.ios.model.IosMessageDto
+import com.wire.backups.exports.utils.transactionsLogger
+import org.jetbrains.exposed.sql.ColumnSet
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.select
+import pw.forst.tools.katlib.whenFalse
 
 internal fun IosDatabase.getGenericMessages(): List<IosMessageDto> =
     getGenericMessages(buildMappingCache())
@@ -23,6 +25,7 @@ private fun IosDatabase.getMessages(cache: EntityMappingCache) =
         additionalConstraint = { genericMessageData.messageId.isNotNull() }
     ).messagesSlice()
         .select { messages.conversationId.isNotNull() }
+        .filter { filterRow(it) }
         .map { mapGenericMessage(it, cache) }
 
 private fun IosDatabase.getAssets(cache: EntityMappingCache) =
@@ -32,7 +35,16 @@ private fun IosDatabase.getAssets(cache: EntityMappingCache) =
         additionalConstraint = { genericMessageData.assetId.isNotNull() }
     ).messagesSlice()
         .select { messages.conversationId.isNotNull() }
+        .filter { filterRow(it) }
         .map { mapGenericMessage(it, cache) }
+
+private fun IosDatabase.filterRow(it: ResultRow) =
+    (it[messages.senderId] != null && it[messages.conversationId] != null)
+        .whenFalse {
+            transactionsLogger.warn {
+                "Filtering result set because either senderId or conversationId was null!\n$it"
+            }
+        }
 
 private fun IosDatabase.mapGenericMessage(it: ResultRow, cache: EntityMappingCache) =
     IosMessageDto(

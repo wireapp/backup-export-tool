@@ -1,13 +1,15 @@
 package com.wire.backups.exports.ios.database
 
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import com.wire.backups.exports.android.database.converters.toExportDateFromIos
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.database.model.Messages
 import com.wire.backups.exports.ios.database.model.SystemMessageType
 import com.wire.backups.exports.ios.model.IosUserAddedToConversation
 import com.wire.backups.exports.ios.model.IosUserLeftConversation
+import com.wire.backups.exports.utils.transactionsLogger
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import pw.forst.tools.katlib.whenFalse
 
 internal fun IosDatabase.getUserAddedToConversation(cache: EntityMappingCache): List<IosUserAddedToConversation> =
     userAddedEvents(cache)
@@ -21,7 +23,12 @@ private fun IosDatabase.userAddedEvents(cache: EntityMappingCache): List<IosUser
         .select {
             messages.entityType.eq(entityTypePks.systemMessageEntityTypePk) and
                     messages.systemMessageType.eq(SystemMessageType.ZMSystemMessageTypeParticipantsAdded.ordinal)
-        }.map {
+        }
+        .filter {
+            (it[messages.conversationId] != null && it[messages.senderId] != null)
+                .whenFalse { transactionsLogger.warn { "Filtering result set because either conversationId or senderId was null!\n$it" } }
+        }
+        .map {
             IosUserAddedToConversation(
                 whoAddedUser = cache.getUsersUuid(
                     requireNotNull(it[messages.senderId]) { "Sender was null!" }
@@ -40,7 +47,12 @@ private fun IosDatabase.userLeftEvent(cache: EntityMappingCache): List<IosUserLe
         .select {
             messages.entityType.eq(entityTypePks.systemMessageEntityTypePk) and
                     messages.systemMessageType.eq(SystemMessageType.ZMSystemMessageTypeParticipantsRemoved.ordinal)
-        }.map {
+        }
+        .filter {
+            (it[messages.conversationId] != null)
+                .whenFalse { transactionsLogger.warn { "Filtering result set because conversationId was null!\n$it" } }
+        }
+        .map {
             IosUserLeftConversation(
                 userSendingLeftMessage = it[messages.senderId]?.let { userId -> cache.getUsersUuid(userId) },
                 leavingUser = cache.getUsersUuid(it[systemMessagesRelatedUsers.userId]),
