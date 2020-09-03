@@ -1,9 +1,9 @@
-package com.wire.backups.exports.android.database.model.v2
+package com.wire.backups.exports.android.database.v2.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ConversationMember(
-    val userId: String,
-    val conversationId: String
+    val userId: UserId,
+    val conversationId: ConversationId
 )

@@ -1,13 +1,13 @@
-package com.wire.backups.exports.android.database.model.v2
+package com.wire.backups.exports.android.database.v2.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Message(
-    val id: String,
-    val conversationId: String,
+    val id: MessageId,
+    val conversationId: ConversationId,
     val messageType: String,
-    val userId: String,
+    val userId: UserId,
     val content: String?,
     val protos: ByteArray?,
     val time: Long,
@@ -15,7 +15,7 @@ data class Message(
     val name: String?,
     val editTime: Long,
     val quote: String?,
-    val assetId: String?
+    val assetId: AssetId?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -2,7 +2,6 @@ package com.wire.backups.exports.utils
 
 import mu.KLogger
 import mu.KLogging
-import org.jetbrains.exposed.sql.ResultRow
 import kotlin.reflect.full.primaryConstructor
 
 inline fun <reified T : Any> primaryConstructorParameters() =
@@ -33,7 +32,7 @@ inline fun <T, R> Iterable<T>.mapCatching(errorLog: String, transform: (T) -> R)
     mapCatching(transform, { errorLog })
 
 
-val rowExportFailed: (ResultRow) -> String = { "It was not possible to map row:\n$it" }
+val rowExportFailed: (Any) -> String = { "It was not possible to map record:\n$it" }
 
 
 inline fun <K, V, R> Map<out K, V>.mapCatching(transform: (Map.Entry<K, V>) -> R): List<R> =

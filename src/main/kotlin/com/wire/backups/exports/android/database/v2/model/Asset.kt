@@ -1,17 +1,17 @@
-package com.wire.backups.exports.android.database.model.v2
+package com.wire.backups.exports.android.database.v2.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Asset(
-    val id: String,
+    val id: AssetId,
     val token: String?,
     val name: String,
     val encryption: String,
     val mime: String,
     val sha: ByteArray?,
     val size: Int,
-    val conversationId: String?
+    val conversationId: ConversationId?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
