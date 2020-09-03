@@ -4,13 +4,13 @@ import com.wire.backups.exports.android.database.dto.AttachmentDto
 import com.wire.backups.exports.android.database.v2.loaders.BackupExport
 import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
+import pw.forst.tools.katlib.filterNotNullBy
 
-fun BackupExport.getAttachments() =
-    messages
-        .filterValues { it.assetId != null }
-        .mapNotNull { (_, message) ->
-            assets[message.assetId]
-                ?.let { it to message }
+internal fun BackupExport.getAttachments() =
+    messages.values
+        .filterNotNullBy { it.assetId }
+        .mapNotNull { message ->
+            assets[message.assetId]?.let { it to message }
         }.mapCatching({ (asset, message) ->
             AttachmentDto(
                 id = message.id.toUuid(),

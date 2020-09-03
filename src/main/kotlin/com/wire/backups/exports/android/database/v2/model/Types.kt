@@ -1,6 +1,6 @@
 package com.wire.backups.exports.android.database.v2.model
 
-typealias AssetId = String
-typealias ConversationId = String
-typealias UserId = String
-typealias MessageId = String
+internal typealias AssetId = String
+internal typealias ConversationId = String
+internal typealias UserId = String
+internal typealias MessageId = String

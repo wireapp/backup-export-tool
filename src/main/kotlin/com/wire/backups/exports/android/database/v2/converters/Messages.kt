@@ -9,7 +9,7 @@ import com.wire.backups.exports.utils.rowExportFailed
 import pw.forst.tools.katlib.parseJson
 import pw.forst.tools.katlib.whenNull
 
-fun BackupExport.getLikings() =
+internal fun BackupExport.getLikings() =
     likes
         .mapNotNull { like -> messages[like.messageId]?.let { it to like } }
         .mapCatching({ (message, like) ->
@@ -22,7 +22,7 @@ fun BackupExport.getLikings() =
 
         }, rowExportFailed)
 
-fun BackupExport.getTextMessages() =
+internal fun BackupExport.getTextMessages() =
     messages.values
         .filter { it.content != null }
         .mapCatching({

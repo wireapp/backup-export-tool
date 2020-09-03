@@ -4,7 +4,7 @@ import com.wire.backups.exports.android.database.dto.DatabaseMetadata
 import com.wire.backups.exports.android.database.v2.loaders.BackupExport
 import java.util.UUID
 
-fun BackupExport.getDatabaseMetadata(myId: UUID) =
+internal fun BackupExport.getDatabaseMetadata(myId: UUID) =
     users.getValue(myId.toString())
         .let {
             DatabaseMetadata(

@@ -13,7 +13,7 @@ import pw.forst.tools.katlib.filterNotNullBy
 import java.util.UUID
 
 
-fun BackupExport.getNamedConversations() =
+internal fun BackupExport.getNamedConversations() =
     conversations.values
         .filterNotNullBy { it.name }
         .mapCatching({
@@ -23,7 +23,7 @@ fun BackupExport.getNamedConversations() =
             )
         }, rowExportFailed)
 
-fun BackupExport.getDirectMessages(myId: UUID) =
+internal fun BackupExport.getDirectMessages(myId: UUID) =
     conversations.values
         .filter { it.name == null }
         .mapNotNull { conv -> conversationMembers[conv.id]?.let { conv.id to it } }
@@ -34,7 +34,7 @@ fun BackupExport.getDirectMessages(myId: UUID) =
             )
         }, rowExportFailed)
 
-fun BackupExport.getConversationsData(): ConversationsDataDto {
+internal fun BackupExport.getConversationsData(): ConversationsDataDto {
     val addMembers = messages.values
         .filter { it.messageType == "MemberJoin" }
         .mapCatching({

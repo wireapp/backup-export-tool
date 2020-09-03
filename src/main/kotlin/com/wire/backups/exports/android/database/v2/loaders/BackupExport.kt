@@ -11,7 +11,7 @@ import com.wire.backups.exports.android.database.v2.model.User
 import com.wire.backups.exports.android.database.v2.model.UserId
 
 
-data class BackupExport(
+internal data class BackupExport(
     val assets: Map<AssetId, Asset>,
     val conversations: Map<ConversationId, Conversation>,
     val conversationMembers: Map<ConversationId, List<UserId>>,

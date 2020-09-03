@@ -8,7 +8,7 @@ import java.util.UUID
 /**
  * String date format in yyyy-MM-dd'T'HH:mm:ss.SSS'Z' format.
  */
-typealias ExportDate = String
+internal typealias ExportDate = String
 
 internal fun Long.toExportDateFromAndroid(): ExportDate = Instant.ofEpochMilli(this).let { dateFormatter.format(it) }
 

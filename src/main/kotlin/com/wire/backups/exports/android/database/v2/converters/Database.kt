@@ -7,7 +7,7 @@ import java.util.UUID
 /**
  * Exports data from the provided database.
  */
-fun convertDatabase(userId: UUID, export: BackupExport) = with(export) {
+internal fun convertDatabase(userId: UUID, export: BackupExport) = with(export) {
     DatabaseDto(
         getDatabaseMetadata(userId),
         getNamedConversations(),
