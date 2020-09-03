@@ -36,7 +36,7 @@ internal class ParsingIssueTest {
             actual.single().h
         }
         assertTrue {
-            ex.message?.startsWith("java.util.LinkedHashMap cannot be cast") ?: false
+            ex.message?.contains("java.util.LinkedHashMap cannot be cast") ?: false
         }
     }
 }
