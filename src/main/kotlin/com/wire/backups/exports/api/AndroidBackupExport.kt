@@ -1,7 +1,7 @@
 package com.wire.backups.exports.api
 
-import com.wire.backups.exports.android.database.v2.converters.convertDatabase
-import com.wire.backups.exports.android.database.v2.loaders.createBackupExport
+import com.wire.backups.exports.android.database.converters.convertDatabase
+import com.wire.backups.exports.android.database.loaders.createBackupExport
 import com.wire.backups.exports.android.model.AndroidDatabaseExportDto
 import com.wire.backups.exports.android.steps.DecryptionResult
 import com.wire.backups.exports.android.steps.decryptAndExtract

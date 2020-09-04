@@ -1,6 +1,6 @@
 package com.wire.backups.exports.ios.model
 
-import com.wire.backups.exports.android.database.converters.ExportDate
+import com.wire.backups.exports.utils.ExportDate
 import java.io.File
 import java.util.UUID
 

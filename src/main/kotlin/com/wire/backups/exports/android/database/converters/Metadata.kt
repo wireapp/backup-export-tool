@@ -1,20 +1,17 @@
 package com.wire.backups.exports.android.database.converters
 
 import com.wire.backups.exports.android.database.dto.DatabaseMetadata
-import com.wire.backups.exports.android.database.model.Users
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.select
+import com.wire.backups.exports.android.database.loaders.BackupExport
+import pw.forst.tools.katlib.toUuid
 import java.util.UUID
 
-@Suppress("unused") // we need to force it to run inside transaction
-fun Transaction.getDatabaseMetadata(myId: UUID) =
-    Users.select { Users.id eq myId.toString() }
-        .first()
+internal fun BackupExport.getDatabaseMetadata(myId: UUID) =
+    users.getValue(myId.toString())
         .let {
             DatabaseMetadata(
-                userId = UUID.fromString(it[Users.id]),
-                name = it[Users.name],
-                handle = it[Users.handle],
-                email = it[Users.email]
+                userId = it.id.toUuid(),
+                name = it.name,
+                handle = requireNotNull(it.handle) { "Handle was null!" },
+                email = it.email ?: "no-email"
             )
         }

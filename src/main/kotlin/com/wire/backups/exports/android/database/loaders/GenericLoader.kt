@@ -1,12 +1,12 @@
-package com.wire.backups.exports.android.database.v2.loaders
+package com.wire.backups.exports.android.database.loaders
 
-import com.wire.backups.exports.android.database.v2.model.Asset
-import com.wire.backups.exports.android.database.v2.model.Conversation
-import com.wire.backups.exports.android.database.v2.model.ConversationMember
-import com.wire.backups.exports.android.database.v2.model.Like
-import com.wire.backups.exports.android.database.v2.model.Message
-import com.wire.backups.exports.android.database.v2.model.Model
-import com.wire.backups.exports.android.database.v2.model.User
+import com.wire.backups.exports.android.database.model.Asset
+import com.wire.backups.exports.android.database.model.Conversation
+import com.wire.backups.exports.android.database.model.ConversationMember
+import com.wire.backups.exports.android.database.model.Like
+import com.wire.backups.exports.android.database.model.Message
+import com.wire.backups.exports.android.database.model.Model
+import com.wire.backups.exports.android.database.model.User
 import com.wire.backups.exports.utils.mapCatching
 import pw.forst.tools.katlib.parseJson
 import java.io.File

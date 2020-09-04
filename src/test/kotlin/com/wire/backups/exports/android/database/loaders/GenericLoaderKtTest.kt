@@ -1,4 +1,4 @@
-package com.wire.backups.exports.android.database.v2.loaders
+package com.wire.backups.exports.android.database.loaders
 
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test

@@ -1,4 +1,4 @@
-package com.wire.backups.exports.android.database.v2.loaders
+package com.wire.backups.exports.android.database.loaders
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

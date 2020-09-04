@@ -2,7 +2,22 @@ package com.wire.backups.exports.utils
 
 import mu.KLogger
 import mu.KLogging
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 import kotlin.reflect.full.primaryConstructor
+
+/**
+ * String date format in yyyy-MM-dd'T'HH:mm:ss.SSS'Z' format.
+ */
+internal typealias ExportDate = String
+
+
+internal fun String.toUuid(): UUID = UUID.fromString(this)
+
+internal val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    .withZone(ZoneOffset.UTC)
+
 
 inline fun <reified T : Any> primaryConstructorParameters() =
     T::class.primaryConstructor?.parameters?.associateBy { it.name }

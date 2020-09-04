@@ -1,5 +1,3 @@
-@file:Suppress("unused") // we need to force it to run inside transaction
-
 package com.wire.backups.exports.android.database.converters
 
 import com.wire.backups.exports.android.database.dto.ConversationAddMemberDto
@@ -8,76 +6,68 @@ import com.wire.backups.exports.android.database.dto.ConversationMembersDto
 import com.wire.backups.exports.android.database.dto.ConversationsDataDto
 import com.wire.backups.exports.android.database.dto.DirectConversationDto
 import com.wire.backups.exports.android.database.dto.NamedConversationDto
-import com.wire.backups.exports.android.database.model.ConversationMembers
-import com.wire.backups.exports.android.database.model.Conversations
-import com.wire.backups.exports.android.database.model.Messages
+import com.wire.backups.exports.android.database.loaders.BackupExport
 import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import pw.forst.tools.katlib.filterNotNullBy
+import pw.forst.tools.katlib.toUuid
 import java.util.UUID
 
 
-fun Transaction.getNamedConversations() = Conversations
-    .slice(Conversations.id, Conversations.name)
-    .select { Conversations.name.isNotNull() }
-    .mapCatching({
-        NamedConversationDto(
-            it[Conversations.id].toUuid(),
-            it[Conversations.name] ?: "no name"
-        )
-    }, rowExportFailed)
+internal fun BackupExport.getNamedConversations() =
+    conversations.values
+        .filterNotNullBy { it.name }
+        .mapCatching({
+            NamedConversationDto(
+                it.id.toUuid(),
+                it.name ?: "no name"
+            )
+        }, rowExportFailed)
 
-fun Transaction.getDirectMessages(myId: UUID) = (Conversations leftJoin ConversationMembers)
-    .slice(Conversations.id, Conversations.name, ConversationMembers.userId, ConversationMembers.conversationId)
-    .select { Conversations.name.isNull() }
-    .groupBy({ it[Conversations.id].toUuid() }, { it[ConversationMembers.userId].toUuid() })
-    .mapValues { (_, values) -> values.firstOrNull { it != myId } ?: myId }
-    .mapCatching(
-        { (conversationId, userId) -> DirectConversationDto(conversationId, otherUser = userId) },
-        { "Data mapping failed:\n$it" }
-    )
+internal fun BackupExport.getDirectMessages(myId: UUID) =
+    conversations.values
+        .filter { it.name == null }
+        .mapNotNull { conv -> conversationMembers[conv.id]?.let { conv.id to it } }
+        .mapCatching({ (convId, members) ->
+            DirectConversationDto(
+                convId.toUuid(),
+                otherUser = members.first { it != myId.toString() }.toUuid()
+            )
+        }, rowExportFailed)
 
-fun Transaction.getConversationsData(): ConversationsDataDto {
-    val addMembers = Messages
-        .slice(Messages.messageType, Messages.conversationId, Messages.time, Messages.userId, Messages.members)
-        .select { Messages.messageType eq "MemberJoin" }
+internal fun BackupExport.getConversationsData(): ConversationsDataDto {
+    val addMembers = messages.values
+        .filter { it.messageType == "MemberJoin" }
         .mapCatching({
             ConversationAddMemberDto(
-                conversationId = it[Messages.conversationId].toUuid(),
-                timeStamp = it[Messages.time].toExportDateFromAndroid(),
-                addingUser = it[Messages.userId].toUuid(),
-                addedUsers = it[Messages.members]
+                conversationId = it.conversationId.toUuid(),
+                timeStamp = it.time.toExportDateFromAndroid(),
+                addingUser = it.userId.toUuid(),
+                addedUsers = it.members
                     ?.split(",")
                     ?.map(String::toUuid)
                     ?: emptyList()
             )
+
         }, rowExportFailed)
 
-    val leavingMembers = Messages
-        .slice(Messages.messageType, Messages.conversationId, Messages.time, Messages.members)
-        .select { Messages.messageType eq "MemberLeave" }
+    val leavingMembers = messages.values
+        .filter { it.messageType == "MemberLeave" }
         .mapCatching({
             ConversationLeaveMembersDto(
-                conversationId = it[Messages.conversationId].toUuid(),
-                timeStamp = it[Messages.time].toExportDateFromAndroid(),
-                leavingMembers = it[Messages.members]
+                conversationId = it.conversationId.toUuid(),
+                timeStamp = it.time.toExportDateFromAndroid(),
+                leavingMembers = it.members
                     ?.split(",")
                     ?.map(String::toUuid)
                     ?: emptyList()
             )
         }, rowExportFailed)
 
-    val members = ConversationMembers
-        .slice(ConversationMembers.conversationId, ConversationMembers.userId)
-        .selectAll()
-        .map { it[ConversationMembers.conversationId].toUuid() to it[ConversationMembers.userId].toUuid() }
-        .groupBy({ it.first }, { it.second })
-        .mapCatching(
-            { (conversationId, members) -> ConversationMembersDto(conversationId, members) },
-            { "Data mapping failed:\n$it" }
-        )
+    val members = conversationMembers
+        .mapCatching({ (convId, users) ->
+            ConversationMembersDto(convId.toUuid(), users.map { it.toUuid() })
+        }, rowExportFailed)
 
     return ConversationsDataDto(members, addMembers, leavingMembers)
 }
