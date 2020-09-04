@@ -133,4 +133,9 @@ public class Cache {
             }
         });
     }
+
+    public String getUserName(UUID userId) {
+        final User user = getUser(userId);
+        return !user.name.equals("default") ? user.name : userId.toString();
+    }
 }

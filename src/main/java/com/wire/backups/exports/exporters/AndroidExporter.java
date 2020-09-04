@@ -144,7 +144,7 @@ public class AndroidExporter extends ExporterBase {
         );
 
         db.getDirectConversations().forEach(conversation -> {
-            final String name = cache.getUser(conversation.getOtherUser()).name;
+            final String name = cache.getUserName(conversation.getOtherUser());
             final Conversation conv = new Conversation(conversation.getId(), name);
             conversationHashMap.put(conv.id, conv);
 
