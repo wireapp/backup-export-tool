@@ -1,5 +1,6 @@
 package com.wire.backups.exports.android.database.v2.converters
 
+import com.wire.backups.exports.android.database.converters.toUuid
 import com.wire.backups.exports.android.database.dto.ConversationAddMemberDto
 import com.wire.backups.exports.android.database.dto.ConversationLeaveMembersDto
 import com.wire.backups.exports.android.database.dto.ConversationMembersDto

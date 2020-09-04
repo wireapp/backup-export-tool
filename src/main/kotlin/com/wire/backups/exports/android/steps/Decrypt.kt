@@ -32,7 +32,7 @@ internal fun SodiumJava.decrypt(input: ByteArray, password: ByteArray, metadata:
 /**
  * Creates hash from the given input.
  */
-fun SodiumJava.hash(
+internal fun SodiumJava.hash(
     passBytes: ByteArray,
     salt: ByteArray,
     opslimit: Int = crypto_pwhash_OPSLIMIT_INTERACTIVE,

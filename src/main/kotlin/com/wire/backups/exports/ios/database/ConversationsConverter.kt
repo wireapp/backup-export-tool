@@ -2,10 +2,10 @@ package com.wire.backups.exports.ios.database
 
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.model.ConversationDto
-import com.wire.backups.exports.ios.toUuid
 import com.wire.backups.exports.utils.mapCatching
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
+import pw.forst.tools.katlib.toUuid
 import java.util.UUID
 
 

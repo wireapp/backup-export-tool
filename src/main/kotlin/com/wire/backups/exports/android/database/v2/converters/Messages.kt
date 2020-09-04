@@ -1,6 +1,7 @@
 package com.wire.backups.exports.android.database.v2.converters
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.wire.backups.exports.android.database.converters.toUuid
 import com.wire.backups.exports.android.database.dto.LikingsDto
 import com.wire.backups.exports.android.database.dto.MessageDto
 import com.wire.backups.exports.android.database.v2.loaders.BackupExport

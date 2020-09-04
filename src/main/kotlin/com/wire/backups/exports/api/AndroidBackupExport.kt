@@ -1,6 +1,7 @@
 package com.wire.backups.exports.api
 
-import com.wire.backups.exports.android.database.converters.extractDatabase
+import com.wire.backups.exports.android.database.v2.converters.convertDatabase
+import com.wire.backups.exports.android.database.v2.loaders.createBackupExport
 import com.wire.backups.exports.android.model.AndroidDatabaseExportDto
 import com.wire.backups.exports.android.steps.DecryptionResult
 import com.wire.backups.exports.android.steps.decryptAndExtract
@@ -33,7 +34,7 @@ class AndroidBackupExport internal constructor(
         internallyDecrypt().let { decrypted ->
             AndroidDatabaseExportDto(
                 exportMetadata = decrypted.metadata,
-                database = extractDatabase(userId, decrypted.databaseFile)
+                database = convertDatabase(userId, createBackupExport(decrypted.databaseFile))
             )
         }
 

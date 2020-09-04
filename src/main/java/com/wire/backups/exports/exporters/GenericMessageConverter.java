@@ -160,7 +160,7 @@ public class GenericMessageConverter {
 
             if (asset.hasPreview()) {
                 ImageMessage msg = new ImageMessage(messageId, convId, clientId, from);
-                return handleVideoPreview(asset.getPreview(), msg, time);  // todo check if wee need to process the rest of proto
+                return handleVideoPreview(asset.getPreview(), msg, time);
             }
 
             if (asset.hasUploaded()) {

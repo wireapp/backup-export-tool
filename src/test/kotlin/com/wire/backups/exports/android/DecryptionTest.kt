@@ -1,9 +1,9 @@
 package com.wire.backups.exports.android
 
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import com.wire.backups.exports.android.steps.decryptDatabase
 import com.wire.backups.exports.android.steps.extractBackup
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.UUID
 import kotlin.test.assertNotNull
@@ -18,7 +18,7 @@ class DecryptionTest {
         val password = "Qwerty1!".toByteArray()
         val decrypted = decryptDatabase(db, password, userId)
 
-        val (metadata, file) = extractBackup(decrypted, userId, ".")
+        val (metadata, file) = extractBackup(decrypted, ".")
         assertNotNull(file)
         print(metadata)
     }
@@ -30,7 +30,7 @@ class DecryptionTest {
         val password = "Wire12345!".toByteArray()
         val decrypted = decryptDatabase(db, password, userId)
 
-        val (metadata, file) = extractBackup(decrypted, userId, ".")
+        val (metadata, file) = extractBackup(decrypted, ".")
         assertNotNull(file)
         print(metadata)
     }

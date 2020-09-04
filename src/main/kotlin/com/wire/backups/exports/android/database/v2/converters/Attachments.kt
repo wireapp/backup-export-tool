@@ -1,5 +1,6 @@
 package com.wire.backups.exports.android.database.v2.converters
 
+import com.wire.backups.exports.android.database.converters.toUuid
 import com.wire.backups.exports.android.database.dto.AttachmentDto
 import com.wire.backups.exports.android.database.v2.loaders.BackupExport
 import com.wire.backups.exports.utils.mapCatching

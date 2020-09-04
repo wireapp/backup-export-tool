@@ -1,5 +1,6 @@
 package com.wire.backups.exports.android.steps
 
+import com.wire.backups.exports.android.model.ExportMetadata
 import java.io.File
 import java.util.UUID
 
@@ -7,7 +8,7 @@ import java.util.UUID
  * Decrypts the backup and export the database.
  * Returns database file or null when it was not possible to extract the database.
  */
-fun decryptAndExtract(databaseFilePath: String, password: String, userId: String, pathToNewFolder: String = "tmp") =
+internal fun decryptAndExtract(databaseFilePath: String, password: String, userId: String, pathToNewFolder: String = "tmp") =
     decryptAndExtract(
         File(databaseFilePath),
         password.toByteArray(),
@@ -19,13 +20,20 @@ fun decryptAndExtract(databaseFilePath: String, password: String, userId: String
  * Decrypts the backup and export the database.
  * Returns database file or null when it was not possible to extract the database.
  */
-internal fun decryptAndExtract(databaseFile: File, password: ByteArray, userId: UUID, pathToNewFolder: String = "tmp"): DecryptionResult =
-    decryptDatabase(databaseFile, password, userId).let {
-        val (metadata, db) = extractBackup(it, userId, pathToNewFolder)
-        DecryptionResult(metadata, db)
+internal fun decryptAndExtract(databaseFile: File, password: ByteArray, userId: UUID, pathToNewFolder: String = "tmp"): DecryptionResult {
+    // TODO enable decryption once we have encrypted backups
+    val shouldDecrypt = false
+    val file = if (shouldDecrypt) {
+        decryptDatabase(databaseFile, password, userId)
+    } else {
+        databaseFile
     }
 
-data class DecryptionResult(
+    val (metadata, db) = extractBackup(file, pathToNewFolder)
+    return DecryptionResult(metadata, db)
+}
+
+internal data class DecryptionResult(
     val metadata: ExportMetadata,
     val databaseFile: File
 )

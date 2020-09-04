@@ -8,7 +8,8 @@ import java.util.UUID
 /**
  * Decrypts given database file for given user.
  */
-fun decryptDatabase(databaseFile: File, password: ByteArray, userId: UUID): File {
+// TODO maybe replace this by original Android decryption in Kotlin once they have it
+internal fun decryptDatabase(databaseFile: File, password: ByteArray, userId: UUID): File {
     // read metadata
     val metadata = readEncryptedMetadata(databaseFile)
     // init sodium lib
