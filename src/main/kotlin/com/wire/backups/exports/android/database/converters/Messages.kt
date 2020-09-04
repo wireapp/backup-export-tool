@@ -6,13 +6,18 @@ import com.wire.backups.exports.android.database.dto.MessageDto
 import com.wire.backups.exports.android.database.loaders.BackupExport
 import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
+import pw.forst.tools.katlib.filterNotNullBy
 import pw.forst.tools.katlib.parseJson
 import pw.forst.tools.katlib.toUuid
 import pw.forst.tools.katlib.whenNull
 
 internal fun BackupExport.getLikings() =
     likes
-        .mapNotNull { like -> messages[like.messageId]?.let { it to like } }
+        .mapNotNull { like ->
+            messages[like.messageId]
+                ?.let { it to like }
+                .whenNull { parsingLogger.warn { "Database is missing referenced message: $like" } }
+        }
         .mapCatching({ (message, like) ->
             LikingsDto(
                 messageId = like.messageId.toUuid(),
@@ -25,7 +30,7 @@ internal fun BackupExport.getLikings() =
 
 internal fun BackupExport.getTextMessages() =
     messages.values
-        .filter { it.content != null }
+        .filterNotNullBy { it.content }
         .mapCatching({
             MessageDto(
                 id = it.id.toUuid(),

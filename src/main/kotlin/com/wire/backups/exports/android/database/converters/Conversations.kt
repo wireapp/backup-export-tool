@@ -11,6 +11,7 @@ import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
 import pw.forst.tools.katlib.filterNotNullBy
 import pw.forst.tools.katlib.toUuid
+import pw.forst.tools.katlib.whenNull
 import java.util.UUID
 
 
@@ -20,18 +21,26 @@ internal fun BackupExport.getNamedConversations() =
         .mapCatching({
             NamedConversationDto(
                 it.id.toUuid(),
-                it.name ?: "no name"
+                // safe as we're filtering in previous step
+                requireNotNull(it.name) { "Name was null" }
             )
         }, rowExportFailed)
 
 internal fun BackupExport.getDirectMessages(myId: UUID) =
     conversations.values
         .filter { it.name == null }
-        .mapNotNull { conv -> conversationMembers[conv.id]?.let { conv.id to it } }
+        .mapNotNull { conv ->
+            conversationMembers[conv.id]
+                ?.let { conv.id to it }
+                .whenNull { parsingLogger.warn { "Database is missing referenced conversation members: $conv" } }
+        }
         .mapCatching({ (convId, members) ->
             DirectConversationDto(
                 convId.toUuid(),
-                otherUser = members.first { it != myId.toString() }.toUuid()
+                otherUser = (members
+                    .firstOrNull { it != myId.toString() }
+                    ?: members.first())
+                    .toUuid()
             )
         }, rowExportFailed)
 

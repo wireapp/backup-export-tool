@@ -6,12 +6,15 @@ import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
 import pw.forst.tools.katlib.filterNotNullBy
 import pw.forst.tools.katlib.toUuid
+import pw.forst.tools.katlib.whenNull
 
 internal fun BackupExport.getAttachments() =
     messages.values
         .filterNotNullBy { it.assetId }
         .mapNotNull { message ->
-            assets[message.assetId]?.let { it to message }
+            assets[message.assetId]
+                ?.let { it to message }
+                .whenNull { parsingLogger.warn { "Database is missing referenced asset: $message" } }
         }.mapCatching({ (asset, message) ->
             AttachmentDto(
                 id = message.id.toUuid(),
