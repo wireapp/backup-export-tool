@@ -220,7 +220,7 @@ public class IosExporter extends ExporterBase {
 
             collector.details = new Collector.Details();
 
-            collector.details.name = !user.name.equals("default") ? user.name : user.id.toString();
+            collector.details.name = cache.getUserName(user);
             collector.details.handle = user.handle;
             collector.details.id = user.id.toString();
             collector.details.platform = databaseMetadata.getPlatform();
