@@ -1,30 +1,20 @@
 package com.wire.backups.exports.android.steps
 
+import com.wire.backups.exports.android.decryption.decryptAndroidBackup
 import com.wire.backups.exports.android.model.ExportMetadata
 import java.io.File
 import java.util.UUID
 
-/**
- * Decrypts the backup and export the database.
- * Returns database file or null when it was not possible to extract the database.
- */
-internal fun decryptAndExtract(databaseFilePath: String, password: String, userId: String, pathToNewFolder: String = "tmp") =
-    decryptAndExtract(
-        File(databaseFilePath),
-        password.toByteArray(),
-        UUID.fromString(userId),
-        pathToNewFolder
-    )
 
 /**
  * Decrypts the backup and export the database.
  * Returns database file or null when it was not possible to extract the database.
  */
-internal fun decryptAndExtract(databaseFile: File, password: ByteArray, userId: UUID, pathToNewFolder: String = "tmp"): DecryptionResult {
+internal fun decryptAndExtract(databaseFile: File, password: String, userId: UUID, pathToNewFolder: String = "tmp"): DecryptionResult {
     // TODO enable decryption once we have encrypted backups
     val shouldDecrypt = false
     val file = if (shouldDecrypt) {
-        decryptDatabase(databaseFile, password, userId)
+        decryptAndroidBackup(databaseFile, userId.toString(), password)
     } else {
         databaseFile
     }

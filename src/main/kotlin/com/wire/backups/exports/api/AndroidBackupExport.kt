@@ -42,7 +42,7 @@ class AndroidBackupExport internal constructor(
     private fun internallyDecrypt(): DecryptionResult =
         decryptAndExtract(
             databaseFile = inputFile,
-            password = databasePassword.toByteArray(),
+            password = databasePassword,
             userId = userId,
             pathToNewFolder = outputDirectory.absolutePath
         )
