@@ -23,3 +23,8 @@ internal const val crypto_pwhash_MEMLIMIT_INTERACTIVE =
     crypto_pwhash_argon2d_MEMLIMIT_INTERACTIVE
 internal const val crypto_pwhash_OPSLIMIT_INTERACTIVE =
     crypto_pwhash_argon2d_OPSLIMIT_INTERACTIVE
+
+
+internal const val crypto_aead_chacha20poly1305_keybytes = 32
+internal const val crypto_aead_xchacha20poly1305_ietf_abytes = 16
+

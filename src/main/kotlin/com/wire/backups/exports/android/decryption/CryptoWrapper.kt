@@ -3,6 +3,8 @@ package com.wire.backups.exports.android.decryption
 import com.goterl.lazycode.lazysodium.SodiumJava
 import com.sun.jna.NativeLong
 import com.wire.backups.exports.utils.LIBSODIUM_BINARIES_LOADING
+import com.wire.backups.exports.utils.crypto_aead_chacha20poly1305_keybytes
+import com.wire.backups.exports.utils.crypto_aead_xchacha20poly1305_ietf_abytes
 import com.wire.backups.exports.utils.crypto_pwhash_MEMLIMIT_INTERACTIVE
 import com.wire.backups.exports.utils.crypto_pwhash_OPSLIMIT_INTERACTIVE
 import com.wire.backups.exports.utils.crypto_pwhash_alg_default
@@ -12,14 +14,11 @@ import com.wire.backups.exports.utils.crypto_pwhash_alg_default
  *
  * https://github.com/wireapp/wire-android/blob/develop/app/src/main/kotlin/com/waz/zclient/feature/backup/crypto/CryptoWrapper.kt
  */
-// TODO check the constants
 internal class CryptoWrapper {
 
     private val sodium by lazy { SodiumJava(LIBSODIUM_BINARIES_LOADING) }
 
-    internal fun polyABytes() =
-//        sodium.crypto_aead_xchacha20poly1305_ietf_abytes()
-        sodium.crypto_secretstream_xchacha20poly1305_abytes()
+    internal fun polyABytes() = crypto_aead_xchacha20poly1305_ietf_abytes
 
     internal fun decrypt(decrypted: ByteArray, cipherText: ByteArray, key: ByteArray, nonce: ByteArray): Int =
         sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
@@ -46,7 +45,5 @@ internal class CryptoWrapper {
             crypto_pwhash_alg_default
         )
 
-    internal fun aedPolyKeyBytes() =
-//        crypto_aead_chacha20poly1305_keybytes()
-        sodium.crypto_secretstream_xchacha20poly1305_keybytes()
+    internal fun aedPolyKeyBytes() = crypto_aead_chacha20poly1305_keybytes
 }
