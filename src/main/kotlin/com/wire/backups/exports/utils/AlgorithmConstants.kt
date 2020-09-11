@@ -1,7 +1,9 @@
 package com.wire.backups.exports.utils
 
 // taken from rust version of libsodium
-// https://docs.rs/libsodium-sys/0.2.5/src/libsodium_sys/sodium_bindings.rs.html#2463-2467
+// https://docs.rs/libsodium-sys/0.2.6/src/libsodium_sys/sodium_bindings.rs.html
+
+
 internal const val crypto_pwhash_argon2i_ALG_ARGON2I13 = 1
 
 internal const val crypto_pwhash_argon2i_MEMLIMIT_INTERACTIVE = 33554432
