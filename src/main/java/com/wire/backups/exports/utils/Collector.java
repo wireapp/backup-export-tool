@@ -240,9 +240,10 @@ public class Collector {
 
     private Sender sender(UUID userId) {
         User user = cache.getUser(userId);
+
         Sender sender = new Sender();
         sender.senderId = userId;
-        sender.name = user.name;
+        sender.name = cache.getUserName(user);
         sender.accent = toColor(user.accent);
         sender.avatar = getAvatar(user.id);
         return sender;
@@ -363,7 +364,7 @@ public class Collector {
     }
 
     public String getUserName(UUID userId) {
-        return cache.getUser(userId).name;
+        return cache.getUserName(userId);
     }
 
     public Cache getCache() {

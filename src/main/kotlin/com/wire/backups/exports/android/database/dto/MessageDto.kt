@@ -1,6 +1,6 @@
 package com.wire.backups.exports.android.database.dto
 
-import com.wire.backups.exports.android.database.converters.ExportDate
+import com.wire.backups.exports.utils.ExportDate
 import java.util.UUID
 
 data class MessageDto(

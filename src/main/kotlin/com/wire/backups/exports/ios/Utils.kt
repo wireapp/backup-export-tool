@@ -1,10 +1,10 @@
 package com.wire.backups.exports.ios
 
-import java.nio.ByteBuffer
-import java.util.UUID
+import com.wire.backups.exports.utils.ExportDate
+import com.wire.backups.exports.utils.dateFormatter
+import java.time.Instant
 
-
-internal fun ByteArray.toUuid(): UUID =
-    ByteBuffer.wrap(this).let {
-        UUID(it.long, it.long)
-    }
+internal fun Double.toExportDateFromIos(): ExportDate =
+    // iOS has custom time format - see https://stackoverflow.com/a/54914712/7169288
+    Instant.ofEpochSecond(this.toLong() + 978307200L)
+        .let { dateFormatter.format(it) }

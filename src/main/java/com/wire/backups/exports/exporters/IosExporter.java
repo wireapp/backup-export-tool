@@ -1,13 +1,13 @@
 package com.wire.backups.exports.exporters;
 
 import com.waz.model.Messages;
+import com.wire.backups.exports.api.DatabaseExport;
+import com.wire.backups.exports.ios.model.*;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
 import com.wire.bots.sdk.server.model.User;
-import com.wire.backups.exports.api.DatabaseExport;
-import com.wire.backups.exports.ios.model.*;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -206,7 +206,7 @@ public class IosExporter extends ExporterBase {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-            System.out.println(String.format("Conversation \"%s\" processed.", conversation.getName()));
+            System.out.printf("Conversation \"%s\" processed.%n", conversation.getName());
         });
     }
 
@@ -220,7 +220,7 @@ public class IosExporter extends ExporterBase {
 
             collector.details = new Collector.Details();
 
-            collector.details.name = user.name;
+            collector.details.name = cache.getUserName(user);
             collector.details.handle = user.handle;
             collector.details.id = user.id.toString();
             collector.details.platform = databaseMetadata.getPlatform();

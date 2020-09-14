@@ -3,14 +3,14 @@ package com.wire.backups.exports.exporters;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.waz.model.Messages;
+import com.wire.backups.exports.android.database.dto.*;
+import com.wire.backups.exports.android.model.AndroidDatabaseExportDto;
+import com.wire.backups.exports.android.model.ExportMetadata;
+import com.wire.backups.exports.api.DatabaseExport;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
 import com.wire.bots.sdk.models.*;
-import com.wire.backups.exports.android.database.dto.*;
-import com.wire.backups.exports.android.model.AndroidDatabaseExportDto;
-import com.wire.backups.exports.android.steps.ExportMetadata;
-import com.wire.backups.exports.api.DatabaseExport;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -144,7 +144,7 @@ public class AndroidExporter extends ExporterBase {
         );
 
         db.getDirectConversations().forEach(conversation -> {
-            final String name = cache.getUser(conversation.getOtherUser()).name;
+            final String name = cache.getUserName(conversation.getOtherUser());
             final Conversation conv = new Conversation(conversation.getId(), name);
             conversationHashMap.put(conv.id, conv);
 
@@ -164,10 +164,9 @@ public class AndroidExporter extends ExporterBase {
                     .collect(Collectors.toList());
 
             final String message = String.format("Members at the time of export: %s", String.join(", ", members));
-
-            delayedCollector(exportMetadata.getCreationTime(), () -> {
+            delayedCollector(exportMetadata.getCreatedTime(), () -> {
                 try {
-                    collector.addSystem(message, exportMetadata.getCreationTime(), "", UUID.randomUUID());
+                    collector.addSystem(message, exportMetadata.getCreatedTime(), "", UUID.randomUUID());
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -272,8 +271,9 @@ public class AndroidExporter extends ExporterBase {
             collector.details.handle = databaseMetadata.getHandle();
             collector.details.id = backupUserId.toString();
             collector.details.platform = exportMetadata.getPlatform();
-            collector.details.date = exportMetadata.getCreationTime();
-            collector.details.version = String.valueOf(exportMetadata.getVersion());
+            collector.details.date = exportMetadata.getCreatedTime();
+            collector.details.version = exportMetadata.getVersion();
+            collector.details.device = exportMetadata.getClientId();
             return collector;
         });
     }

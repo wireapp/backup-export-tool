@@ -1,9 +1,10 @@
 package com.wire.backups.exports.api
 
-import com.wire.backups.exports.android.database.converters.extractDatabase
+import com.wire.backups.exports.android.database.converters.convertDatabase
+import com.wire.backups.exports.android.database.loaders.createBackupExport
+import com.wire.backups.exports.android.decryption.DecryptionResult
+import com.wire.backups.exports.android.decryption.decryptAndExtractAndroidBackup
 import com.wire.backups.exports.android.model.AndroidDatabaseExportDto
-import com.wire.backups.exports.android.steps.DecryptionResult
-import com.wire.backups.exports.android.steps.decryptAndExtract
 import java.io.File
 import java.util.UUID
 
@@ -33,15 +34,15 @@ class AndroidBackupExport internal constructor(
         internallyDecrypt().let { decrypted ->
             AndroidDatabaseExportDto(
                 exportMetadata = decrypted.metadata,
-                database = extractDatabase(userId, decrypted.databaseFile)
+                database = convertDatabase(userId, createBackupExport(decrypted.databaseFile))
             )
         }
 
     @Suppress("ComplexRedundantLet")
     private fun internallyDecrypt(): DecryptionResult =
-        decryptAndExtract(
+        decryptAndExtractAndroidBackup(
             databaseFile = inputFile,
-            password = databasePassword.toByteArray(),
+            password = databasePassword,
             userId = userId,
             pathToNewFolder = outputDirectory.absolutePath
         )

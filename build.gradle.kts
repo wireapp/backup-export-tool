@@ -6,7 +6,7 @@ plugins {
     java
     kotlin("jvm") version "1.4.0"
     application
-    id("net.nemerosa.versioning") version "2.8.2"
+    id("net.nemerosa.versioning") version "2.14.0"
     id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
@@ -55,7 +55,7 @@ dependencies {
 
     // ------- Kotlin dependencies -------
     implementation(kotlin("stdlib-jdk8"))
-    implementation("pw.forst.tools", "katlib", "1.0.0")
+    implementation("pw.forst.tools", "katlib", "1.1.2")
 
     // libsodium for decryption
     implementation("com.goterl.lazycode", "lazysodium-java", "4.3.0") {

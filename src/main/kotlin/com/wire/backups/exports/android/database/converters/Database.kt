@@ -1,29 +1,13 @@
 package com.wire.backups.exports.android.database.converters
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
 import com.wire.backups.exports.android.database.dto.DatabaseDto
-import java.io.File
+import com.wire.backups.exports.android.database.loaders.BackupExport
 import java.util.UUID
 
 /**
  * Exports data from the provided database.
  */
-@Suppress("unused") // library API used in recording bot
-fun extractDatabase(userId: UUID, databaseFile: File) = extractDatabase(userId, databaseFile.absolutePath)
-
-/**
- * Exports data from the provided database.
- */
-fun extractDatabase(userId: UUID, databasePath: String): DatabaseDto {
-    Database.connect("jdbc:sqlite:$databasePath")
-    return extractDatabase(userId)
-}
-
-/**
- * Exports data from the provided database.
- */
-fun extractDatabase(userId: UUID) = transaction {
+internal fun convertDatabase(userId: UUID, export: BackupExport) = with(export) {
     DatabaseDto(
         getDatabaseMetadata(userId),
         getNamedConversations(),

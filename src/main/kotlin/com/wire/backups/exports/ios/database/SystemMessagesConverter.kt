@@ -1,11 +1,11 @@
 package com.wire.backups.exports.ios.database
 
-import com.wire.backups.exports.android.database.converters.toExportDateFromIos
 import com.wire.backups.exports.ios.database.config.IosDatabase
 import com.wire.backups.exports.ios.database.model.Messages
 import com.wire.backups.exports.ios.database.model.SystemMessageType
 import com.wire.backups.exports.ios.model.IosUserAddedToConversation
 import com.wire.backups.exports.ios.model.IosUserLeftConversation
+import com.wire.backups.exports.ios.toExportDateFromIos
 import com.wire.backups.exports.utils.mapCatching
 import com.wire.backups.exports.utils.rowExportFailed
 import com.wire.backups.exports.utils.transactionsLogger

@@ -100,7 +100,7 @@ public class DesktopExporter extends ExporterBase {
             try {
                 if (conversation.name == null || conversation.name.isEmpty()) {
                     if (conversation.others != null && !conversation.others.isEmpty())
-                        conversation.name = cache.getUser(conversation.others.get(0)).name;
+                        conversation.name = cache.getUserName(conversation.others.get(0));
                 }
                 conversationHashMap.put(conversation.id, conversation);
 
