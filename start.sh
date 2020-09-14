@@ -2,7 +2,7 @@
 set -e
 
 # version which should be used for export
-EXPORT_TOOL_VERSION=1.1.3
+EXPORT_TOOL_VERSION=1.2.3
 DOCKER_IMAGE="lukaswire/backup-export-tool:${EXPORT_TOOL_VERSION}"
 
 # ----- mandatory variables -----
