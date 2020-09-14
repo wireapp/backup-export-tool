@@ -24,6 +24,7 @@ internal class EncryptionHeaderMapper {
     internal fun readMetadata(encryptedBackup: File): EncryptedBackupHeader {
         require(encryptedBackup.length() > TOTAL_HEADER_LENGTH) { "UnableToReadMetaData" }
         val encryptedMetadataBytes = ByteArray(TOTAL_HEADER_LENGTH)
+
         encryptedBackup.inputStream().buffered().read(encryptedMetadataBytes)
         return fromByteArray(encryptedMetadataBytes)
     }

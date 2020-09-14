@@ -11,14 +11,7 @@ import java.util.UUID
  * Returns database file or null when it was not possible to extract the database.
  */
 internal fun decryptAndExtract(databaseFile: File, password: String, userId: UUID, pathToNewFolder: String = "tmp"): DecryptionResult {
-    // TODO enable decryption once we have encrypted backups
-    val shouldDecrypt = false
-    val file = if (shouldDecrypt) {
-        decryptAndroidBackup(databaseFile, userId.toString(), password)
-    } else {
-        databaseFile
-    }
-
+    val file = decryptAndroidBackup(databaseFile, userId.toString(), password)
     val (metadata, db) = extractBackup(file, pathToNewFolder)
     return DecryptionResult(metadata, db)
 }
