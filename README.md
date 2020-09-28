@@ -10,7 +10,7 @@ The latest stable version of the tool: [![GitHub version](https://badge.fury.io/
 Please use this version as the tag for the docker image - `lukaswire/backup-export-tool:<version>`.
 If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases). 
 
-## DL;DR
+## TL;DR
 How to generate PDF files using Desktop app backup file
 ```bash
 java -jar backup-export.jar desktop-pdf -in "mybackup.desktop_wbu" -e "dejan56@wire.com" -p "MyCoolPasswordForWire1" export.yaml
