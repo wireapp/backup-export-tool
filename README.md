@@ -2,13 +2,19 @@
 [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
 ![CI/CD](https://github.com/wireapp/backup-export-tool/workflows/CI/CD/badge.svg)
 
-Tool for exporting and viewing Wire client's backup. 
-Currently, supported clients are: webapps (including electron desktop apps), iOS and Android.
+Tool for generating PDF files from the backup.
+All backup formats are supported (Desktop, iOS, Android)
 
 ## Download
 The latest stable version of the tool: [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
 Please use this version as the tag for the docker image - `lukaswire/backup-export-tool:<version>`.
 If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases). 
+
+## DL;DR
+How to generate PDF files using Desktop app backup file
+```bash
+java -jar backup-export.jar desktop-pdf -in "mybackup.desktop_wbu" -e "dejan56@wire.com" -p "MyCoolPasswordForWire1" export.yaml
+```
 
 ## Execution
 There are two ways how to run the tool, using Docker (preferred) or Java.
