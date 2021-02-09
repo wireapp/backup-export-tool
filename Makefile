@@ -1,5 +1,5 @@
 build:
-	mvn install -DskipTests=true
+	./gradlew shadowJar
 
 docker-build:
 	docker build -t lukaswire/backup-export-tool .
