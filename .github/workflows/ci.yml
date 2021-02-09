@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        java: [ 8.0.242, 11.0.8 ]
+        java: [ 8, 11 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -28,6 +28,10 @@ jobs:
       - name: Build application
         run: |
           ./gradlew assemble
+
+      - name: Build final shadow jar
+        run: |
+          ./gradlew shadowJar
 
       - name: Run tests application
         run: |
