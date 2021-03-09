@@ -42,8 +42,12 @@ dependencies {
     implementation("org.glassfish.jersey.media", "jersey-media-json-jackson", "2.32")
     implementation("javax.activation", "activation", "1.1.1")
 
+    implementation("org.slf4j", "slf4j-simple", "2.0.0-alpha1")
+
+    // command line arguments parsing
     implementation("info.picocli", "picocli", "4.6.1")
 
+    // html compilation
     val atlassianVersion = "0.17.1"
     implementation("org.commonmark", "commonmark", atlassianVersion)
     implementation("org.commonmark", "commonmark-ext-autolink", atlassianVersion)
@@ -86,7 +90,6 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
     testImplementation(kotlin("test"))
     testImplementation(kotlin("test-junit5"))
-
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
 }
 
