@@ -39,9 +39,9 @@ dependencies {
     }
     implementation("com.google.protobuf", "protobuf-java", "3.12.4")
 
-    val atlassianVersion = "0.12.1"
-    implementation("com.atlassian.commonmark", "commonmark", atlassianVersion)
-    implementation("com.atlassian.commonmark", "commonmark-ext-autolink", atlassianVersion)
+    val atlassianVersion = "0.17.1"
+    implementation("org.commonmark", "commonmark", atlassianVersion)
+    implementation("org.commonmark", "commonmark-ext-autolink", atlassianVersion)
 
     val htmlToPdfVersion = "1.0.6"
     implementation("com.openhtmltopdf", "openhtmltopdf-core", htmlToPdfVersion)
