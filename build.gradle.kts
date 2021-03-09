@@ -95,6 +95,9 @@ dependencies {
 
 application {
     mainClass.set(mClass)
+    // Desired way mainClass.set("<main class>") causes an issue during jar packaging
+    @Suppress("DEPRECATION")
+    mainClassName = mClass
 }
 
 configure<JavaPluginConvention> {
@@ -127,7 +130,6 @@ tasks {
         exclude("LICENSE")
         // standard Dropwizard excludes
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
-
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         archiveFileName.set("backup-export.jar")
     }
