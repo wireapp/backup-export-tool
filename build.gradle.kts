@@ -4,10 +4,10 @@ import java.util.Properties
 
 plugins {
     java
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.4.31"
     application
     id("net.nemerosa.versioning") version "2.14.0"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 group = "com.wire.backups"
@@ -43,42 +43,41 @@ dependencies {
     implementation("com.atlassian.commonmark", "commonmark", atlassianVersion)
     implementation("com.atlassian.commonmark", "commonmark-ext-autolink", atlassianVersion)
 
-    val htmlToPdfVersion = "1.0.2"
+    val htmlToPdfVersion = "1.0.6"
     implementation("com.openhtmltopdf", "openhtmltopdf-core", htmlToPdfVersion)
     implementation("com.openhtmltopdf", "openhtmltopdf-pdfbox", htmlToPdfVersion)
     implementation("com.openhtmltopdf", "openhtmltopdf-svg-support", htmlToPdfVersion)
 
-    implementation("com.github.spullara.mustache.java", "compiler", "0.9.5")
+    implementation("com.github.spullara.mustache.java", "compiler", "0.9.7")
 
     // ------- Common dependencies -------
     implementation("net.lingala.zip4j", "zip4j", "2.6.1")
 
     // ------- Kotlin dependencies -------
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("pw.forst.tools", "katlib", "1.1.2")
+    implementation("pw.forst.tools", "katlib", "1.2.1")
 
     // libsodium for decryption
-    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.0") {
+    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.4") {
         // otherwise the application won't start, the problem is combination of Dropwizard and sl4j 2.0
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation("net.java.dev.jna", "jna", "5.6.0")
+    implementation("net.java.dev.jna", "jna", "5.7.0")
     // logging
-    implementation("io.github.microutils", "kotlin-logging", "1.7.9")
+    implementation("io.github.microutils", "kotlin-logging", "2.0.6")
     // database
-    val exposedVersion = "0.26.1"
+    val exposedVersion = "0.29.1"
     implementation("org.jetbrains.exposed", "exposed-core", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-dao", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-jdbc", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-java-time", exposedVersion)
-    implementation("org.xerial", "sqlite-jdbc", "3.32.3")
+    implementation("org.xerial", "sqlite-jdbc", "3.34.0")
     // jackson for kotlin
     implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.1")
     // correct reflect lib until jackson fixes theirs
-    implementation("org.jetbrains.kotlin", "kotlin-reflect", "1.4.0")
+    implementation("org.jetbrains.kotlin", "kotlin-reflect", "1.4.31")
 
     // testing
-    val junitVersion = "5.6.2"
+    val junitVersion = "5.7.1"
     testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
     testImplementation(kotlin("test"))
     testImplementation(kotlin("test-junit5"))
