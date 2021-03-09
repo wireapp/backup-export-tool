@@ -3,9 +3,9 @@ package com.wire.backups.exports;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.PdfGenerator;
 import com.wire.backups.exports.utils.TestCache;
-import com.wire.bots.sdk.models.*;
-import com.wire.bots.sdk.tools.Logger;
-import com.wire.bots.sdk.tools.Util;
+import com.wire.xenon.models.*;
+import com.wire.xenon.tools.Logger;
+import com.wire.xenon.tools.Util;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -86,6 +86,7 @@ public class ConversationTemplateTest {
     }
 
     //@Before
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void clean() {
         String pdf = getFilename(CONV_NAME, "pdf");
         String html = getFilename(CONV_NAME, "html");

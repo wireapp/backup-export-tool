@@ -19,8 +19,8 @@
 package com.wire.backups.exports.exporters;
 
 import com.waz.model.Messages;
-import com.wire.bots.sdk.models.*;
-import com.wire.bots.sdk.tools.Logger;
+import com.wire.xenon.models.*;
+import com.wire.xenon.tools.Logger;
 
 import java.util.List;
 import java.util.UUID;

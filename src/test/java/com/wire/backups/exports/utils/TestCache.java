@@ -1,9 +1,9 @@
 package com.wire.backups.exports.utils;
 
 import com.wire.backups.exports.ConversationTemplateTest;
-import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.server.model.Asset;
-import com.wire.bots.sdk.server.model.User;
+import com.wire.xenon.backend.models.Asset;
+import com.wire.xenon.backend.models.User;
+import com.wire.xenon.models.MessageAssetBase;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.UUID;
 public class TestCache extends Cache {
 
     public TestCache() {
-        super(null);
+        super(null, null, null, null);
     }
 
     @Override

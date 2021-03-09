@@ -1,15 +1,16 @@
 package com.wire.backups.exports.utils;
 
-import com.wire.backups.exports.Service;
-import com.wire.bots.sdk.WireClient;
-import com.wire.bots.sdk.exceptions.HttpException;
-import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.server.model.User;
-import com.wire.bots.sdk.tools.Logger;
-import com.wire.bots.sdk.user.API;
-import com.wire.bots.sdk.user.LoginClient;
-import com.wire.bots.sdk.user.model.Access;
+import com.wire.backups.exports.exporters.ExportConfiguration;
+import com.wire.helium.API;
+import com.wire.helium.LoginClient;
+import com.wire.helium.models.Access;
+import com.wire.xenon.WireClient;
+import com.wire.xenon.backend.models.User;
+import com.wire.xenon.exceptions.HttpException;
+import com.wire.xenon.models.MessageAssetBase;
+import com.wire.xenon.tools.Logger;
 
+import javax.ws.rs.client.Client;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,16 +23,25 @@ public class Cache {
     private static final ConcurrentHashMap<UUID, User> users = new ConcurrentHashMap<>();//<userId, User>
     private static final ConcurrentHashMap<UUID, User> profiles = new ConcurrentHashMap<>();//<userId, User>
 
-    private final WireClient client;
+    private final Client httpClient;
+    private final WireClient wireClient;
     private final Helper helper;
+    private final ExportConfiguration configuration;
 
-    public Cache(WireClient client, Helper helper) {
-        this.client = client;
+    public Cache(
+            Client httpClient,
+            WireClient wireClient,
+            Helper helper,
+            ExportConfiguration configuration
+    ) {
+        this.httpClient = httpClient;
+        this.wireClient = wireClient;
         this.helper = helper;
+        this.configuration = configuration;
     }
 
-    public Cache(WireClient client) {
-        this(client, new Helper());
+    public Cache(Client httpClient, WireClient wireClient, ExportConfiguration configuration) {
+        this(httpClient, wireClient, new Helper(), configuration);
     }
 
     public static void clear(UUID userId) {
@@ -64,18 +74,18 @@ public class Cache {
     }
 
     protected byte[] downloadAsset(MessageAssetBase message) throws Exception {
-        return client.downloadAsset(message.getAssetKey(),
+        return wireClient.downloadAsset(message.getAssetKey(),
                 message.getAssetToken(),
                 message.getSha256(),
                 message.getOtrKey());
     }
 
     protected User getUserInternal(UUID userId) throws HttpException {
-        return client.getUser(userId);
+        return wireClient.getUser(userId);
     }
 
     protected byte[] downloadProfilePicture(String key) throws Exception {
-        return client.downloadProfilePicture(key);
+        return wireClient.downloadProfilePicture(key);
     }
 
     public User getProfile(UUID userId) {
@@ -83,13 +93,13 @@ public class Cache {
     }
 
     protected User getUserObject(UUID userId) {
-        String email = Service.instance.getConfig().email;
-        String password = Service.instance.getConfig().password;
+        String email = configuration.getEmail();
+        String password = configuration.getPassword();
 
-        LoginClient loginClient = new LoginClient(Service.instance.getClient());
+        LoginClient loginClient = new LoginClient(this.httpClient);
         try {
             Access access = getAccess(email, password, loginClient);
-            API api = new API(Service.instance.getClient(), null, access.getToken());
+            API api = new API(this.httpClient, null, access.getAccessToken());
             return api.getUser(userId);
         } catch (Exception e) {
             Logger.error("Cache.getUserObject: userId: %s, ex: %s", userId, e);

@@ -3,11 +3,11 @@ package com.wire.backups.exports.utils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import com.wire.bots.sdk.models.*;
-import com.wire.bots.sdk.server.model.Asset;
-import com.wire.bots.sdk.server.model.User;
+import com.wire.xenon.backend.models.Asset;
+import com.wire.xenon.backend.models.User;
+import com.wire.xenon.models.*;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -204,12 +204,8 @@ public class Collector {
      * Adds new message with _name_ `system` and avatar based on _type_. If the last message has the same timestamp as
      * this one then this message will not be added and FALSE is returned
      *
-     * @param text
-     * @param dateTime
-     * @param type
-     * @param msgId
      * @return true if the message was added
-     * @throws ParseException
+     * @throws ParseException when it was not possible to parse
      */
     public boolean addSystem(String text, String dateTime, String type, UUID msgId) throws ParseException {
 //        if (lastMessage != null && lastMessage.timeStamp.equals(dateTime))

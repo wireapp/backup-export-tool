@@ -21,7 +21,11 @@ repositories {
 
     // lithium
     maven {
-        url = uri("https://packagecloud.io/dkovacevic/lithium/maven2")
+        url = uri("https://packagecloud.io/dkovacevic/helium/maven2")
+    }
+
+    maven {
+        url = uri("https://packagecloud.io/dkovacevic/xenon/maven2")
     }
 
     // transitive dependency for the lithium
@@ -33,11 +37,12 @@ repositories {
 
 dependencies {
     // ------- Java dependencies -------
-    implementation("com.wire.bots", "lithium", "2.36.2") {
-        // we're replacing it with newer version as the one included in Lithium has problems with JRE 11
-        exclude("com.google.protobuf", "protobuf-java")
-    }
-    implementation("com.google.protobuf", "protobuf-java", "3.12.4")
+    implementation("com.wire", "helium", "1.0-SNAPSHOT")
+    implementation("org.glassfish.jersey.inject", "jersey-hk2", "2.32")
+    implementation("org.glassfish.jersey.media", "jersey-media-json-jackson", "2.32")
+    implementation("javax.activation", "activation", "1.1.1")
+
+    implementation("info.picocli", "picocli", "4.6.1")
 
     val atlassianVersion = "0.17.1"
     implementation("org.commonmark", "commonmark", atlassianVersion)
@@ -86,7 +91,7 @@ dependencies {
 }
 
 application {
-    mainClassName = mClass
+    mainClass.set(mClass)
 }
 
 configure<JavaPluginConvention> {
@@ -112,11 +117,7 @@ tasks {
     shadowJar {
         mergeServiceFiles()
         manifest {
-            attributes(
-                mapOf(
-                    "Main-Class" to mClass
-                )
-            )
+            attributes(mapOf("Main-Class" to mClass))
         }
         // because there's some conflict (LICENSE already exists) during the unzipping process
         // by excluding it from the shadow jar we try to fix problem on Oracle JVM 8
