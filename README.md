@@ -11,9 +11,14 @@ Please use this version as the tag for the docker image - `lukaswire/backup-expo
 If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases). 
 
 ## TL;DR
-How to generate PDF files using Desktop app backup file
+How to generate PDF files using Desktop (or Web) app backup file
+
 ```bash
-java -jar backup-export.jar desktop-pdf -in "mybackup.desktop_wbu" -e "dejan56@wire.com" -p "MyCoolPasswordForWire1" export.yaml
+java -jar backup-export.jar \ 
+  web \
+  "mybackup.desktop_wbu" \
+  --email "dejan56@wire.com" \
+  --password "MyCoolPasswordForWire1"
 ```
 
 ## Execution
@@ -28,7 +33,7 @@ To run it manually inside the docker execute following:
 docker run --rm -it \
   -v </path/to/database/file>:/app/database-in \
   -v </path/to/output/folder>:/app/database-out \
-  -e CLIENT_TYPE=<ios,android,desktop> \ 
+  -e CLIENT_TYPE=<ios,android,web> \ 
   -e WIRE_USER=<user-with-wire-account> \
   -e WIRE_PASSWORD=<password-for-that-user> \
   -e BACKUP_PASSWORD=<password-for-backup-file> \ 
@@ -38,7 +43,7 @@ docker run --rm -it \
   -e PROXY_URL=<proxy-url> \
   -e PROXY_PORT=<proxy-port> \
   -e NON_PROXY_HOSTS=<proxy-hosts> \
-  lukaswire/backup-export-tool:<version>
+  quay.io/wire/backup-export-tool:<version>
 ```
 Where `<some value>` should be replaced by your own value. 
 Following variables are optional:
@@ -57,7 +62,7 @@ docker run --rm -it \
   -e WIRE_PASSWORD=VerySecretPassword1! \
   -e BACKUP_PASSWORD=Monkey123! \ 
   -e BACKUP_USERNAME=dejan56 \
-  lukaswire/backup-export-tool:1.1.3
+  quay.io/wire/backup-export-tool:1.1.3
 ```
 
 
@@ -76,45 +81,48 @@ For example to set it on unix systems: `export WIRE_API_HOST=https://staging-ngi
 
 To create executable `jar` please run `./gradlew shadowJar` which produces `build/libs/backup-export.jar`.
 Generic way how to run the tool is following:
+
 ```bash
 java -Djna.library.path=<path-to-binaries> \
   -Xmx4g \
   -jar <path-to-jar> \
-  <ios-pdf,android-pdf,desktop-pdf> \
-  -in "</path/to/database/file>" \
-  -out "</path/to/output/folder>" \
-  -e "<user-with-wire-account>" \
-  -p "<password-for-that-user>" \
-  -u "<username-who-created-backup>" \
-  -bp "<password-for-backup-file>" \
-  <export.yaml,export-proxy.yaml>
+  <ios,android,desktop> \
+  "</path/to/database/file>" \
+  --output "</path/to/output/folder>" \
+  --email "<user-with-wire-account>" \
+  --password "<password-for-that-user>" \
+  --username"<username-who-created-backup>" \
+  --backup-password "<password-for-backup-file>"
 ```
 
 An example for iOS backup without proxy (the build is downloaded and extracted `zip` from the release page)
+
 ```bash
 java -Djna.library.path=libs \
   -Xmx4g \
   -jar backup-export.jar \
-  ios-pdf \
-  -in "backups/dejan56.ios_wbu" \
-  -out "dejans-export" \
-  -e "dejan56@wire.com" \
-  -p "MyCoolPasswordForWire1" \
-  -u "dejan56" \
-  -bp "AnotherCoolPasswordForBackups" \
-  export.yaml
+  ios \
+  "backups/dejan56.ios_wbu" \
+  --output "dejans-export" \
+  --email "dejan56@wire.com" \
+  --password "MyCoolPasswordForWire1" \
+  --username "dejan56" \
+  --backup-password "AnotherCoolPasswordForBackups"
 ```
 
-If one needs to use proxy, `export-proxy.yaml` must be modified - replace `${PROXY_URL:}`, 
-`${PROXY_PORT:-8080}` and `${NON_PROXY_HOSTS:-}` with correct values and execute (example with web client): 
+If one needs to use proxy, `--use-proxy` must be set, see example:
+
 ```bash
 java -Djna.library.path=libs \
   -Xmx4g \
   -jar backup-export.jar \
-  desktop-pdf \
-  -in "backups/Wire-fredjones_Demo_Backup.zip" \
-  -out "backup-exports" \
-  -e "dejan56@wire.com" \
-  -p "MyCoolPasswordForWire1" \
-  export-proxy.yaml
+  web \
+  "backups/Wire-fredjones_Demo_Backup.zip" \
+  --output "backup-exports" \
+  --email "dejan56@wire.com" \
+  --password "MyCoolPasswordForWire1" \
+  --use-proxy"true" \
+  --proxy-host "my-proxy-domain.com" \
+  --proxy-port 8080 \
+  --proxy-non-proxy-hosts "non-proxied-host.com"
 ```

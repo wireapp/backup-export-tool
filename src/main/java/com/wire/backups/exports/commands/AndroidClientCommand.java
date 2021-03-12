@@ -15,4 +15,3 @@ public class AndroidClientCommand extends EncryptedClientCommand {
         return new AndroidExporter(configuration, httpClient);
     }
 }
-

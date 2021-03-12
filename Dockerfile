@@ -38,9 +38,6 @@ RUN chmod +x $APP_ROOT/entrypoint.sh
 # copy database decryption lib
 RUN mkdir $APP_ROOT/libs
 COPY libs/libsodium.so $APP_ROOT/libs/
-# copy configuration
-COPY export.yaml $APP_ROOT/
-COPY export-proxy.yaml $APP_ROOT/
 
 # execute run script
 ENTRYPOINT ["/bin/sh", "-c", "$APP_ROOT/entrypoint.sh"]

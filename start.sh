@@ -2,19 +2,19 @@
 set -e
 
 # version which should be used for export
-EXPORT_TOOL_VERSION=1.2.3
-DOCKER_IMAGE="lukaswire/backup-export-tool:${EXPORT_TOOL_VERSION}"
+EXPORT_TOOL_VERSION=2.0.0
+DOCKER_IMAGE="quay.io/wire/backup-export-tool:${EXPORT_TOOL_VERSION}"
 
 # ----- mandatory variables -----
 # encrypted client export
 BACKUP_FILE=""
-# client which created this backup - ios,android,desktop
+# client which created this backup - ios,android,web (web is same as desktop)
 CLIENT_TYPE=""
 # password which was used to encrypt the backup
-# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
+# if CLIENT_TYPE=web leave it empty, otherwise mandatory
 BACKUP_PASSWORD=""
 # username of the user who created the backup
-# if CLIENT_TYPE=desktop leave it empty, otherwise mandatory
+# if CLIENT_TYPE=web leave it empty, otherwise mandatory
 BACKUP_USERNAME=""
 # application user - any account that have access to Wire
 # (not necessarily same user as created the account)
@@ -46,18 +46,18 @@ run_check() {
   fi
   if [ -z "${CLIENT_TYPE}" ]; then
     echo "CLIENT_TYPE variable not set, set it to platform which was used to create backup."
-    echo "Options: ios, android, desktop"
+    echo "Options: ios, android, web"
     exit 1
   fi
-  if [[ "${CLIENT_TYPE}" != "ios" && "${CLIENT_TYPE}" != "android" && "${CLIENT_TYPE}" != "desktop" ]]; then
-    echo "CLIENT_TYPE set to incorrect value: ${CLIENT_TYPE}, set it to: ios, android, desktop."
+  if [[ "${CLIENT_TYPE}" != "ios" && "${CLIENT_TYPE}" != "android" && "${CLIENT_TYPE}" != "web" ]]; then
+    echo "CLIENT_TYPE set to incorrect value: ${CLIENT_TYPE}, set it to: ios, android, web."
     exit 1
   fi
-  if [ -z "${BACKUP_PASSWORD}" ] && [ "${CLIENT_TYPE}" != "desktop" ]; then
+  if [ -z "${BACKUP_PASSWORD}" ] && [ "${CLIENT_TYPE}" != "web" ]; then
     echo "BACKUP_PASSWORD variable not set, set it to password used during export."
     exit 1
   fi
-  if [ -z "${BACKUP_USERNAME}" ] && [ "${CLIENT_TYPE}" != "desktop" ]; then
+  if [ -z "${BACKUP_USERNAME}" ] && [ "${CLIENT_TYPE}" != "web" ]; then
     echo "BACKUP_USERNAME variable not set, set it to username of user who created backup."
     exit 1
   fi

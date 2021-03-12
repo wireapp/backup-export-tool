@@ -25,6 +25,4 @@ abstract public class EncryptedClientCommand extends OpenClientCommand implement
         buildExporter(ec, buildClient()).run();
         return 0;
     }
-
 }
-
