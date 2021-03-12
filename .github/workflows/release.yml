@@ -17,7 +17,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           # login to repo
-          repository: lukaswire/backup-export-tool
+          repository: quay.io/wire/backup-export-tool
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           # pass release_version
@@ -60,7 +60,7 @@ jobs:
       - name: Create release zip
         run: |
           cp build/libs/backup-export.jar .
-          zip -r backup-export.zip backup-export.jar export.yaml export-proxy.yaml libs README.md
+          zip -r backup-export.zip backup-export.jar libs README.md
 
       # Obtains release URL to upload assets
       - name: Get Release Id

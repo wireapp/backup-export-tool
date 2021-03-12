@@ -6,9 +6,10 @@ Tool for generating PDF files from the backup.
 All backup formats are supported (Desktop, iOS, Android)
 
 ## Download
-The latest stable version of the tool: [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
-Please use this version as the tag for the docker image - `lukaswire/backup-export-tool:<version>`.
-If you'd like to run the tool on bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases). 
+The latest stable version of the
+tool: [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
+Please use this version as the tag for the docker image - `quay.io/wire/backup-export-tool:<version>`. If you'd like to run the tool on bare
+metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases).
 
 ## TL;DR
 How to generate PDF files using Desktop (or Web) app backup file
@@ -62,7 +63,7 @@ docker run --rm -it \
   -e WIRE_PASSWORD=VerySecretPassword1! \
   -e BACKUP_PASSWORD=Monkey123! \ 
   -e BACKUP_USERNAME=dejan56 \
-  quay.io/wire/backup-export-tool:1.1.3
+  quay.io/wire/backup-export-tool:2.0.0
 ```
 
 
