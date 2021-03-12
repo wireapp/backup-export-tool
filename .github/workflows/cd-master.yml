@@ -37,5 +37,16 @@ jobs:
         with:
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
-          # push only if this is indeed a taged release
-          push: ${{ startsWith(github.ref, 'refs/tags/') }}
+          push: true
+
+      # Send webhook to Wire using Slack Bot
+      - name: Webhook to Wire
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: Backups Exports Docker Master Pipeline
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOK_CI }}
+        # Notify every release
+        if: always()
+
