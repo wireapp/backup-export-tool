@@ -22,6 +22,7 @@ RUN ./gradlew shadowJar --no-daemon
 
 # Runtime
 FROM adoptopenjdk/openjdk11:alpine-jre
+RUN apk add bash
 
 ENV APP_ROOT /app
 WORKDIR $APP_ROOT
