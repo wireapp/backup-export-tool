@@ -1,14 +1,15 @@
 package com.wire.backups.exports.utils;
 
 
-import com.wire.bots.sdk.exceptions.HttpException;
-import com.wire.bots.sdk.models.MessageAssetBase;
-import com.wire.bots.sdk.server.model.User;
-import com.wire.bots.sdk.tools.Logger;
-import com.wire.bots.sdk.tools.Util;
-import com.wire.bots.sdk.user.API;
-import com.wire.bots.sdk.user.LoginClient;
-import com.wire.bots.sdk.user.model.Access;
+import com.wire.backups.exports.exporters.ExportConfiguration;
+import com.wire.helium.API;
+import com.wire.helium.LoginClient;
+import com.wire.helium.models.Access;
+import com.wire.xenon.backend.models.User;
+import com.wire.xenon.exceptions.HttpException;
+import com.wire.xenon.models.MessageAssetBase;
+import com.wire.xenon.tools.Logger;
+import com.wire.xenon.tools.Util;
 
 import javax.ws.rs.client.Client;
 import java.security.MessageDigest;
@@ -16,24 +17,23 @@ import java.util.Arrays;
 import java.util.UUID;
 
 public class InstantCache extends Cache {
-    private final String email;
-    private final String password;
-    private final Client client;
+    private final Client httpClient;
     private API api;
 
-    public InstantCache(String email, String password, Client client, Helper helper) throws HttpException {
-        super(null, helper);
+    private final ExportConfiguration configuration;
 
-        this.email = email;
-        this.password = password;
-        this.client = client;
-        Access access = new LoginClient(client).login(email, password);
-        this.api = new API(client, null, access.getToken());
+    public InstantCache(
+            ExportConfiguration configuration,
+            Client httpClient,
+            Helper helper
+    ) throws HttpException {
+        super(httpClient, null, helper, configuration);
 
-    }
-
-    public InstantCache(String email, String password, Client client) throws HttpException {
-        this(email, password, client, new Helper());
+        this.httpClient = httpClient;
+        this.configuration = configuration;
+        Access access = new LoginClient(this.httpClient)
+                .login(configuration.getEmail(), configuration.getPassword());
+        this.api = new API(this.httpClient, null, access.getAccessToken());
     }
 
     public UUID getUserId(String handle) {
@@ -66,8 +66,9 @@ public class InstantCache extends Cache {
             cipher = api.downloadAsset(message.getAssetKey(), message.getAssetToken());
         } catch (HttpException e) {
             if (e.getCode() == 401) {
-                Access access = new LoginClient(client).login(email, password);
-                this.api = new API(client, null, access.getToken());
+                Access access = new LoginClient(httpClient)
+                        .login(configuration.getEmail(), configuration.getPassword());
+                this.api = new API(httpClient, null, access.getAccessToken());
                 cipher = api.downloadAsset(message.getAssetKey(), message.getAssetToken());
             } else {
                 throw e;

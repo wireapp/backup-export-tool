@@ -4,10 +4,10 @@ import java.util.Properties
 
 plugins {
     java
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.4.31"
     application
     id("net.nemerosa.versioning") version "2.14.0"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
 group = "com.wire.backups"
@@ -21,7 +21,11 @@ repositories {
 
     // lithium
     maven {
-        url = uri("https://packagecloud.io/dkovacevic/lithium/maven2")
+        url = uri("https://packagecloud.io/dkovacevic/helium/maven2")
+    }
+
+    maven {
+        url = uri("https://packagecloud.io/dkovacevic/xenon/maven2")
     }
 
     // transitive dependency for the lithium
@@ -33,60 +37,66 @@ repositories {
 
 dependencies {
     // ------- Java dependencies -------
-    implementation("com.wire.bots", "lithium", "2.36.2") {
-        // we're replacing it with newer version as the one included in Lithium has problems with JRE 11
-        exclude("com.google.protobuf", "protobuf-java")
-    }
-    implementation("com.google.protobuf", "protobuf-java", "3.12.4")
+    implementation("com.wire", "helium", "1.0-SNAPSHOT")
+    implementation("org.glassfish.jersey.inject", "jersey-hk2", "2.32")
+    implementation("org.glassfish.jersey.media", "jersey-media-json-jackson", "2.32")
+    implementation("javax.activation", "activation", "1.1.1")
 
-    val atlassianVersion = "0.12.1"
-    implementation("com.atlassian.commonmark", "commonmark", atlassianVersion)
-    implementation("com.atlassian.commonmark", "commonmark-ext-autolink", atlassianVersion)
+    implementation("org.slf4j", "slf4j-simple", "2.0.0-alpha1")
 
-    val htmlToPdfVersion = "1.0.2"
+    // command line arguments parsing
+    implementation("info.picocli", "picocli", "4.6.1")
+
+    // html compilation
+    val atlassianVersion = "0.17.1"
+    implementation("org.commonmark", "commonmark", atlassianVersion)
+    implementation("org.commonmark", "commonmark-ext-autolink", atlassianVersion)
+
+    val htmlToPdfVersion = "1.0.6"
     implementation("com.openhtmltopdf", "openhtmltopdf-core", htmlToPdfVersion)
     implementation("com.openhtmltopdf", "openhtmltopdf-pdfbox", htmlToPdfVersion)
     implementation("com.openhtmltopdf", "openhtmltopdf-svg-support", htmlToPdfVersion)
 
-    implementation("com.github.spullara.mustache.java", "compiler", "0.9.5")
+    implementation("com.github.spullara.mustache.java", "compiler", "0.9.7")
 
     // ------- Common dependencies -------
     implementation("net.lingala.zip4j", "zip4j", "2.6.1")
 
     // ------- Kotlin dependencies -------
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("pw.forst.tools", "katlib", "1.1.2")
+    implementation("pw.forst.tools", "katlib", "1.2.1")
 
     // libsodium for decryption
-    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.0") {
+    implementation("com.goterl.lazycode", "lazysodium-java", "4.3.4") {
         // otherwise the application won't start, the problem is combination of Dropwizard and sl4j 2.0
         exclude("org.slf4j", "slf4j-api")
     }
-    implementation("net.java.dev.jna", "jna", "5.6.0")
+    implementation("net.java.dev.jna", "jna", "5.7.0")
     // logging
-    implementation("io.github.microutils", "kotlin-logging", "1.7.9")
+    implementation("io.github.microutils", "kotlin-logging", "2.0.6")
     // database
-    val exposedVersion = "0.26.1"
+    val exposedVersion = "0.29.1"
     implementation("org.jetbrains.exposed", "exposed-core", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-dao", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-jdbc", exposedVersion)
     implementation("org.jetbrains.exposed", "exposed-java-time", exposedVersion)
-    implementation("org.xerial", "sqlite-jdbc", "3.32.3")
+    implementation("org.xerial", "sqlite-jdbc", "3.34.0")
     // jackson for kotlin
     implementation("com.fasterxml.jackson.module", "jackson-module-kotlin", "2.11.1")
     // correct reflect lib until jackson fixes theirs
-    implementation("org.jetbrains.kotlin", "kotlin-reflect", "1.4.0")
+    implementation("org.jetbrains.kotlin", "kotlin-reflect", "1.4.31")
 
     // testing
-    val junitVersion = "5.6.2"
+    val junitVersion = "5.7.1"
     testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
     testImplementation(kotlin("test"))
     testImplementation(kotlin("test-junit5"))
-
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
 }
 
 application {
+    mainClass.set(mClass)
+    // Desired way mainClass.set("<main class>") causes an issue during jar packaging
+    @Suppress("DEPRECATION")
     mainClassName = mClass
 }
 
@@ -113,18 +123,13 @@ tasks {
     shadowJar {
         mergeServiceFiles()
         manifest {
-            attributes(
-                mapOf(
-                    "Main-Class" to mClass
-                )
-            )
+            attributes(mapOf("Main-Class" to mClass))
         }
         // because there's some conflict (LICENSE already exists) during the unzipping process
         // by excluding it from the shadow jar we try to fix problem on Oracle JVM 8
         exclude("LICENSE")
         // standard Dropwizard excludes
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
-
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         archiveFileName.set("backup-export.jar")
     }

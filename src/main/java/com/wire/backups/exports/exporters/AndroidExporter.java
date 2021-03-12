@@ -10,7 +10,7 @@ import com.wire.backups.exports.api.DatabaseExport;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
-import com.wire.bots.sdk.models.*;
+import com.wire.xenon.models.*;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -38,7 +38,7 @@ public class AndroidExporter extends ExporterBase {
         printVersion();
         // init cache
         final Helper helper = new Helper();
-        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
+        InstantCache cache = new InstantCache(config, client, helper);
         backupUserId = cache.getUserId(config.getUserName());
         if (backupUserId == null) {
             throw new IllegalStateException("It was not possible to obtain user id! Check for other errors.");

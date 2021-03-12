@@ -6,8 +6,8 @@ import com.wire.backups.exports.ios.model.*;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
-import com.wire.bots.sdk.models.*;
-import com.wire.bots.sdk.server.model.User;
+import com.wire.xenon.backend.models.User;
+import com.wire.xenon.models.*;
 
 import javax.ws.rs.client.Client;
 import java.text.ParseException;
@@ -33,7 +33,7 @@ public class IosExporter extends ExporterBase {
 
         System.out.println("Logging into Wire services.");
         final Helper helper = new Helper();
-        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
+        InstantCache cache = new InstantCache(config, client, helper);
         final UUID userId = cache.getUserId(config.getUserName());
         user = cache.getUser(userId);
 

@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:jdk-11.0.6_10-alpine AS build
+FROM adoptopenjdk/openjdk11:alpine AS build
 LABEL description="Wire Export Backup Tool"
 LABEL project="wire-bots:exports"
 
@@ -21,8 +21,7 @@ COPY src $PROJECT_ROOT/src
 RUN ./gradlew shadowJar --no-daemon
 
 # Runtime
-FROM adoptopenjdk/openjdk11:jre-11.0.6_10-alpine
-RUN apk add bash
+FROM adoptopenjdk/openjdk11:alpine-jre
 
 ENV APP_ROOT /app
 WORKDIR $APP_ROOT
@@ -38,9 +37,6 @@ RUN chmod +x $APP_ROOT/entrypoint.sh
 # copy database decryption lib
 RUN mkdir $APP_ROOT/libs
 COPY libs/libsodium.so $APP_ROOT/libs/
-# copy configuration
-COPY export.yaml $APP_ROOT/
-COPY export-proxy.yaml $APP_ROOT/
 
 # execute run script
 ENTRYPOINT ["/bin/sh", "-c", "$APP_ROOT/entrypoint.sh"]

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import com.wire.backups.exports.utils.Collector;
 import com.wire.backups.exports.utils.Helper;
 import com.wire.backups.exports.utils.InstantCache;
-import com.wire.bots.sdk.models.*;
+import com.wire.xenon.models.*;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
@@ -46,6 +46,7 @@ public class DesktopExporter extends ExporterBase {
         String temporaryExtractionDirectory = (config.getOut() != null ? config.getOut() : ".") + "/tmp";
 
         final File inputDir = new File(temporaryExtractionDirectory);
+        //noinspection ResultOfMethodCallIgnored
         inputDir.mkdirs();
 
         unzip(config.getIn(), inputDir.getAbsolutePath());
@@ -86,7 +87,7 @@ public class DesktopExporter extends ExporterBase {
         final Helper helper = new Helper(fileSystemRoot);
         this.logicalRoot = logicalRoot;
 
-        InstantCache cache = new InstantCache(config.getEmail(), config.getPassword(), client, helper);
+        InstantCache cache = new InstantCache(config, client, helper);
 
         processConversations(conversations, cache);
 
