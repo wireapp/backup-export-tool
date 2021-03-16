@@ -130,7 +130,7 @@ java -Djna.library.path=libs \
   --output "backup-exports" \
   --email "dejan56@wire.com" \
   --password "MyCoolPasswordForWire1" \
-  --use-proxy"true" \
+  --use-proxy "true" \
   --proxy-host "my-proxy-domain.com" \
   --proxy-port 8080 \
   --proxy-non-proxy-hosts "non-proxied-host.com"
