@@ -1,17 +1,25 @@
-# Backup export tool 
-[![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
-![CI/CD](https://github.com/wireapp/backup-export-tool/workflows/CI/CD/badge.svg)
+# Backup export tool
 
-Tool for generating PDF files from the backup.
-All backup formats are supported (Desktop, iOS, Android)
+[![GitHub version](https://badgen.net/github/release/wireapp/backup-export-tool)](https://github.com/wireapp/backup-export-tool/releases)
+![CI/CD](https://github.com/wireapp/backup-export-tool/workflows/CI/CD/badge.svg)
+![Release Pipeline](https://github.com/wireapp/backup-export-tool/actions/workflows/release.yml/badge.svg)
+
+Tool for generating PDF files from the backup. All backup formats are supported (Desktop, iOS, Android).
+
+Please note that this tool is not for public use, but was rather developed for specific enterprise customers. However, we believe in
+open-source world, so if you manage to get it working, feel free to use it.
 
 ## Download
+
 The latest stable version of the
-tool: [![GitHub version](https://badge.fury.io/gh/wireapp%2Fbackup-export-tool.svg)](https://github.com/wireapp/backup-export-tool/releases)
-Please use this version as the tag for the docker image - `quay.io/wire/backup-export-tool:<version>`. If you'd like to run the tool on bare
-metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases).
+tool: [![GitHub version](https://badgen.net/github/release/wireapp/backup-export-tool)](https://github.com/wireapp/backup-export-tool/releases)
+. Please use this version as the tag for the docker image - `quay.io/wire/backup-export-tool:<version>`. If you'd like to run the tool on
+bare metal, download all assets on the [release page](https://github.com/wireapp/backup-export-tool/releases).
+
+See available docker image tags [here on Quay](https://quay.io/repository/wire/backup-export-tool?tab=tags).
 
 ## TL;DR
+
 How to generate PDF files using Desktop (or Web) app backup file
 
 ```bash
