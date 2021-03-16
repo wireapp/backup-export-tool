@@ -4,7 +4,9 @@ import com.wire.backups.exports.android.database.converters.convertDatabase
 import com.wire.backups.exports.android.database.loaders.createBackupExport
 import com.wire.backups.exports.android.decryption.DecryptionResult
 import com.wire.backups.exports.android.decryption.decryptAndExtractAndroidBackup
+import com.wire.backups.exports.android.decryption.extractBackup
 import com.wire.backups.exports.android.model.AndroidDatabaseExportDto
+import mu.KLogging
 import java.io.File
 import java.util.UUID
 
@@ -18,6 +20,8 @@ class AndroidBackupExport internal constructor(
     private val databasePassword: String
 ) : BackupExport<AndroidDatabaseExportDto> {
 
+    private companion object : KLogging()
+
     internal constructor(topBuilder: DatabaseExport.Builder) : this(
         topBuilder.userId,
         topBuilder.inputFile,
@@ -25,20 +29,31 @@ class AndroidBackupExport internal constructor(
         topBuilder.databasePassword
     )
 
-    @Suppress("ComplexRedundantLet") // not true, we need to init sodium
-    override fun decryptDatabase(): File =
-        internallyDecrypt().databaseFile
-
-
     override fun exportDatabase(): AndroidDatabaseExportDto =
-        internallyDecrypt().let { decrypted ->
-            AndroidDatabaseExportDto(
-                exportMetadata = decrypted.metadata,
-                database = convertDatabase(userId, createBackupExport(decrypted.databaseFile))
-            )
-        }
+        tryToExtractDependingOnExtension() ?: extractClassicExtraction()
 
-    @Suppress("ComplexRedundantLet")
+    private fun extractClassicExtraction() = internallyDecrypt().let { decrypted ->
+        AndroidDatabaseExportDto(
+            exportMetadata = decrypted.metadata,
+            database = convertDatabase(userId, createBackupExport(decrypted.databaseFile))
+        )
+    }
+
+    private fun tryToExtractDependingOnExtension(): AndroidDatabaseExportDto? = runCatching {
+        val decrypted = if (inputFile.extension == "zip") {
+            val (metadata, db) = extractBackup(inputFile, outputDirectory.absolutePath)
+            DecryptionResult(metadata, db)
+        } else {
+            internallyDecrypt()
+        }
+        AndroidDatabaseExportDto(
+            exportMetadata = decrypted.metadata,
+            database = convertDatabase(userId, createBackupExport(decrypted.databaseFile))
+        )
+    }.onFailure {
+        logger.warn { "It was not possible to decrypt the database based on the file extension. Trying classic decryption." }
+    }.getOrNull()
+
     private fun internallyDecrypt(): DecryptionResult =
         decryptAndExtractAndroidBackup(
             databaseFile = inputFile,
