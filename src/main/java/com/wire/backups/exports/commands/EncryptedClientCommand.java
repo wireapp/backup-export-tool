@@ -6,14 +6,16 @@ import picocli.CommandLine.Option;
 
 import java.util.concurrent.Callable;
 
-@Command()
+@Command
 abstract public class EncryptedClientCommand extends OpenClientCommand implements Callable<Integer> {
 
-    @Option(names = {"-u", "--username"}, description = "Username of the user who created the backup.", required = true)
+    // TODO this required false might be temporary as Android backups are broken and don't encrypt the backups
+
+    @Option(names = {"-u", "--username"}, description = "Username of the user who created the backup.", defaultValue = "")
     protected String userName;
 
 
-    @Option(names = {"-bp", "--backup-password"}, description = "Password used during backup creation.", required = true)
+    @Option(names = {"-bp", "--backup-password"}, description = "Password used during backup creation.", defaultValue = "")
     protected String backupPassword;
 
     @Override

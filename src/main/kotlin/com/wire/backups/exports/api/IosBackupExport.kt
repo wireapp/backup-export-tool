@@ -1,6 +1,5 @@
 package com.wire.backups.exports.api
 
-import com.wire.backups.exports.ios.export.exportIosDatabase
 import com.wire.backups.exports.ios.model.IosDatabaseExportDto
 import com.wire.backups.exports.ios.processIosBackup
 import java.io.File
@@ -22,15 +21,6 @@ class IosBackupExport internal constructor(
         topBuilder.outputDirectory,
         topBuilder.databasePassword
     )
-
-    @Suppress("ComplexRedundantLet") // not true, we need to init sodium
-    override fun decryptDatabase(): File =
-        exportIosDatabase(
-            inputFile = inputFile.absolutePath,
-            password = databasePassword,
-            userId = userId,
-            outputPath = outputDirectory.absolutePath
-        ).databaseFile
 
     override fun exportDatabase(): IosDatabaseExportDto =
         processIosBackup(
