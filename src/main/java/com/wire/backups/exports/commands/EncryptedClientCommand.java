@@ -9,11 +9,12 @@ import java.util.concurrent.Callable;
 @Command
 abstract public class EncryptedClientCommand extends OpenClientCommand implements Callable<Integer> {
 
-    // TODO this required false might be temporary as Android backups are broken and don't encrypt the backups
-
-    @Option(names = {"-u", "--username"}, description = "Username of the user who created the backup.", defaultValue = "")
+    @Option(
+            names = {"-u", "--username"},
+            description = "Username of the user who created the backup.",
+            required = true
+    )
     protected String userName;
-
 
     @Option(names = {"-bp", "--backup-password"}, description = "Password used during backup creation.", defaultValue = "")
     protected String backupPassword;
